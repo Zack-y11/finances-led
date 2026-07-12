@@ -1,0 +1,38 @@
+{
+  "name": "finance-ledger",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Privacy-first personal finance ledger",
+  "scripts": {
+    "dev": "turbo dev --filter=@finance/web --filter=@finance/api",
+    "dev:all": "turbo dev",
+    "dev:web": "turbo dev --filter=@finance/web",
+    "dev:api": "turbo dev --filter=@finance/api",
+    "dev:mobile": "turbo dev --filter=@finance/mobile",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "check-types": "turbo check-types",
+    "test": "turbo test",
+    "format": "prettier --write .",
+    "db:generate": "pnpm --filter @finance/database db:generate",
+    "db:migrate": "pnpm --filter @finance/database db:migrate",
+    "db:studio": "pnpm --filter @finance/database db:studio"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "prettier": "latest",
+    "prisma": "^7.8.0",
+    "turbo": "latest",
+    "typescript": "latest"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@10.26.1",
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "dotenv": "^17.4.2",
+    "pg": "^8.22.0"
+  }
+}

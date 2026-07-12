@@ -1,0 +1,11 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+sharedWorkspaceLockfile: true
+saveWorkspaceProtocol: rolling
+disallowWorkspaceCycles: true
+
+ignoredBuiltDependencies:
+  - sharp
+  - unrs-resolver
