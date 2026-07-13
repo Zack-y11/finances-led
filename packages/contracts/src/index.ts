@@ -1,4 +1,4 @@
-import {z} from "zod";
+import { z } from "zod";
 
 export const transactionTypeSchema = z.enum([
     "income",
@@ -17,15 +17,13 @@ export const createLedgerEntrySchema = z.object({
     type: transactionTypeSchema,
     amount: z.number().positive(),
     currency: z.string().length(3).default("USD"),
-    ocurredAt: z.string().datetime(),
+    occurredAt: z.string().datetime({ offset: true }),
     merchant: z.string().trim().min(1).optional(),
-    categoryId: z.string().uuid().optional(),
-    accountId: z.string().uuid().optional(),
-    groupId: z.string().uuid().optional(),
+    categoryId: z.string().uuid(),
+    accountId: z.string().uuid(),
     note: z.string().trim().max(500).optional(),
     inputMethod: inputMethodSchema.default("manual"),
-    confidence: z.number().min(0).max(1).optional(),
 })
 
-export type transactionType = z.infer<typeof transactionTypeSchema>
-export type createLedgerEntry = z.infer<typeof createLedgerEntrySchema>
+export type TransactionType = z.infer<typeof transactionTypeSchema>
+export type CreateLedgerEntry = z.infer<typeof createLedgerEntrySchema>
