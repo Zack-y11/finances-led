@@ -16,7 +16,10 @@
     "format": "prettier --write .",
     "db:generate": "pnpm --filter @finance/database db:generate",
     "db:migrate": "pnpm --filter @finance/database db:migrate",
-    "db:studio": "pnpm --filter @finance/database db:studio"
+    "db:studio": "pnpm --filter @finance/database db:studio",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down",
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f"
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",
@@ -26,7 +29,7 @@
     "typescript": "latest"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.26.1",
   "dependencies": {
