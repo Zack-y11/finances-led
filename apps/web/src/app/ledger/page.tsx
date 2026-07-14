@@ -16,7 +16,7 @@ type LedgerData = {
   error?: string;
 };
 
-const apiUrl = process.env.API_URL ?? "http://localhost:3001";
+const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 async function getLedgerData(): Promise<LedgerData> {
   try {
