@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: finance-ledger-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finance_ledger
+    ports:
+      - "5433:5432"
+    volumes:
+      - finance-ledger-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  finance-ledger-postgres-data:

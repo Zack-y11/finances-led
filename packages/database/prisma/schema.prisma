@@ -10,4 +10,152 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LedgerEntryType {
+  INCOME
+  EXPENSE
+  ADJUSTMENT
+}
+
+enum LedgerEntryStatus {
+  POSTED
+  NEEDS_REVIEW
+  IGNORED
+}
+
+enum InputMethod {
+  MANUAL
+  TEXT
+  VOICE
+  RECEIPT
+}
+
+enum AccountType {
+  BANK
+  CASH
+  WALLET
+  CREDIT_CARD
+}
+
+enum CategoryKind {
+  INCOME
+  EXPENSE
+  BOTH
+}
+
+enum EntryGroupType {
+  INCOME
+  EXPENSE
+  MIXED
+}
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts Account[]
+  categories Category[]
+  groups EntryGroup[]
+  ledgerEntries LedgerEntry[]
+  auditLogs AuditLog[]
+}
+
+model Account {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  name String
+  type AccountType
+  currency String @default("USD") @db.VarChar(3)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Category {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  name String
+  kind CategoryKind
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model EntryGroup {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  name String
+  type EntryGroupType
+  description String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntries LedgerEntry[]
+  @@index([userId])
+}
+
+model LedgerEntry {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  accountId String? @db.Uuid
+  categoryId String? @db.Uuid
+  groupId String? @db.Uuid
+
+  type LedgerEntryType
+  amount Decimal @db.Decimal(12, 2)
+  currency String @default("USD") @db.VarChar(3)
+  merchant String?
+  note String?
+  occurredAt DateTime @db.Timestamptz(6)
+  monthKey String @db.VarChar(7)
+  inputMethod InputMethod @default(MANUAL)
+  confidence Decimal? @db.Decimal(4, 3)
+  status LedgerEntryStatus @default(POSTED)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account Account? @relation(fields: [accountId], references: [id])
+  category Category? @relation(fields: [categoryId], references: [id])
+  group EntryGroup? @relation(fields: [groupId], references: [id])
+
+  @@index([userId, occurredAt])
+  @@index([userId, monthKey])
+  @@index([userId, type])
+  @@index([categoryId])
+  @@index([groupId])
+
+}
+
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  entityType String
+  entityId String
+  action String
+  reason String?
+  metadata Json?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
 }
