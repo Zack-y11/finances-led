@@ -14,6 +14,8 @@ describe('Ledger endpoints (e2e)', () => {
   let unownedCategoryId: string;
   let unownedUserId: string;
   let createdEntryId: string | undefined;
+  let createdGroupId: string | undefined;
+  let groupedEntryId: string | undefined;
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -156,6 +158,74 @@ describe('Ledger endpoints (e2e)', () => {
     expect(response.body.message).toBe('Category not found');
   });
 
+  it('creates an entry group, appends entries, and calculates the total from ledger entries', async () => {
+    const groupResponse = await request(app.getHttpServer())
+      .post('/entry-groups')
+      .send({
+        name: `Hackathon expenses ${fixtureId}`,
+        type: 'expense',
+        description: 'Expenses related to the event',
+      })
+      .expect(201);
+
+    createdGroupId = groupResponse.body.id;
+    expect(groupResponse.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        name: `Hackathon expenses ${fixtureId}`,
+        type: 'EXPENSE',
+        total: '0.00',
+      }),
+    );
+
+    const appendResponse = await request(app.getHttpServer())
+      .post(`/entry-groups/${createdGroupId}/entries`)
+      .send({ ...createInput(), amount: 5, merchant: 'E2E Bus', accountId, categoryId })
+      .expect(201);
+
+    groupedEntryId = appendResponse.body.id;
+    expect(appendResponse.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        groupId: createdGroupId,
+        merchant: 'E2E Bus',
+      }),
+    );
+
+    const appendAuditLog = await prisma.auditLog.findFirst({
+      where: {
+        entityType: 'EntryGroup',
+        entityId: createdGroupId,
+        action: 'APPEND_ENTRY',
+      },
+    });
+    expect(appendAuditLog).toEqual(
+      expect.objectContaining({ metadata: { ledgerEntryId: groupedEntryId } }),
+    );
+
+    const listResponse = await request(app.getHttpServer())
+      .get('/entry-groups')
+      .expect(200);
+    expect(listResponse.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: createdGroupId, total: '5' }),
+      ]),
+    );
+
+    const detailResponse = await request(app.getHttpServer())
+      .get(`/entry-groups/${createdGroupId}`)
+      .expect(200);
+    expect(detailResponse.body).toEqual(
+      expect.objectContaining({
+        id: createdGroupId,
+        total: '5',
+        ledgerEntries: expect.arrayContaining([
+          expect.objectContaining({ id: groupedEntryId, groupId: createdGroupId }),
+        ]),
+      }),
+    );
+  });
+
   afterAll(async () => {
     if (prisma) {
       if (createdEntryId) {
@@ -163,6 +233,18 @@ describe('Ledger endpoints (e2e)', () => {
           where: { entityType: 'LedgerEntry', entityId: createdEntryId },
         });
         await prisma.ledgerEntry.delete({ where: { id: createdEntryId } });
+      }
+      if (groupedEntryId) {
+        await prisma.auditLog.deleteMany({
+          where: { entityType: 'LedgerEntry', entityId: groupedEntryId },
+        });
+        await prisma.ledgerEntry.delete({ where: { id: groupedEntryId } });
+      }
+      if (createdGroupId) {
+        await prisma.auditLog.deleteMany({
+          where: { entityType: 'EntryGroup', entityId: createdGroupId },
+        });
+        await prisma.entryGroup.delete({ where: { id: createdGroupId } });
       }
       if (accountId) await prisma.account.delete({ where: { id: accountId } });
       if (categoryId) await prisma.category.delete({ where: { id: categoryId } });
