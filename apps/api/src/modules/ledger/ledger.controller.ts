@@ -6,7 +6,6 @@ import {
   type LedgerEntriesQuery,
 } from '@finance/contracts';
 
-
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import { LedgerService } from './ledger.service.js';
 

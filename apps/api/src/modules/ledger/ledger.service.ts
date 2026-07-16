@@ -80,10 +80,21 @@ export class LedgerService {
   }
 
   async findAll(query: LedgerEntriesQuery) {
-    const { type, month, categoryId, accountId, groupId, search, page, pageSize } = query;
+    const {
+      type,
+      month,
+      categoryId,
+      accountId,
+      groupId,
+      search,
+      page,
+      pageSize,
+    } = query;
     const where: Prisma.LedgerEntryWhereInput = {
       userId: this.userId,
-      ...(type ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' } : {}),
+      ...(type
+        ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
+        : {}),
       ...(month ? { monthKey: month } : {}),
       ...(categoryId ? { categoryId } : {}),
       ...(accountId ? { accountId } : {}),
@@ -91,8 +102,12 @@ export class LedgerService {
       ...(search
         ? {
             OR: [
-              { merchant: { 
-                contains: search, mode: 'insensitive' } },
+              {
+                merchant: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
               { note: { contains: search, mode: 'insensitive' } },
             ],
           }
@@ -154,10 +169,10 @@ export class LedgerService {
   private async assertOwnedReferences(accountId: string, categoryId: string) {
     const [account, category] = await Promise.all([
       this.prisma.db.account.findFirst({
-        where: { id: accountId, userId: this.userId }
+        where: { id: accountId, userId: this.userId },
       }),
       this.prisma.db.category.findFirst({
-        where: { id: categoryId, userId: this.userId }
+        where: { id: categoryId, userId: this.userId },
       }),
     ]);
     if (!account) throw new NotFoundException('Account not found');
