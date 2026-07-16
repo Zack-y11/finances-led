@@ -6,6 +6,16 @@ export const transactionTypeSchema = z.enum([
     "adjustment",
 ])
 
+export const ledgerEntriesQuerySchema = z.object({
+    type: transactionTypeSchema.optional(),
+    month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
+    categoryId: z.string().uuid().optional(),
+    accountId: z.string().uuid().optional(),
+    groupId: z.string().uuid().optional(),
+    search: z.string().trim().min(1).max(500).optional(),
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
+})
 export const inputMethodSchema = z.enum([
     "manual",
     "text",
@@ -40,6 +50,7 @@ export const createEntryGroupSchema = z.object({
 export const appendEntryToGroupSchema = createLedgerEntrySchema
 
 export type TransactionType = z.infer<typeof transactionTypeSchema>
+export type LedgerEntriesQuery = z.infer<typeof ledgerEntriesQuerySchema>
 export type EntryGroupType = z.infer<typeof entryGroupTypeSchema>
 export type CreateLedgerEntry = z.infer<typeof createLedgerEntrySchema>
 export type CreateEntryGroup = z.infer<typeof createEntryGroupSchema>
