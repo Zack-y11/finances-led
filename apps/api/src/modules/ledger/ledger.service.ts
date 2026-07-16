@@ -16,7 +16,17 @@ export class LedgerService {
   }
 
   async create(input: CreateLedgerEntry) {
+    return this.createEntry(input);
+  }
+
+  async createInGroup(groupId: string, input: CreateLedgerEntry) {
+    return this.createEntry(input, groupId);
+  }
+
+  private async createEntry(input: CreateLedgerEntry, groupId?: string) {
     await this.assertOwnedReferences(input.accountId, input.categoryId);
+    if (groupId) await this.assertOwnedGroup(groupId);
+
     const occurredAt = new Date(input.occurredAt);
     const monthKey = input.occurredAt.slice(0, 7);
 
@@ -26,6 +36,7 @@ export class LedgerService {
           userId: this.userId,
           accountId: input.accountId,
           categoryId: input.categoryId,
+          groupId,
           type: input.type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT',
           amount: input.amount,
           currency: input.currency,
@@ -36,7 +47,7 @@ export class LedgerService {
           inputMethod: input.inputMethod.toUpperCase() as
             'MANUAL' | 'TEXT' | 'VOICE' | 'RECEIPT',
         },
-        include: { account: true, category: true },
+        include: { account: true, category: true, group: true },
       });
 
       await tx.auditLog.create({
@@ -45,9 +56,24 @@ export class LedgerService {
           entityType: 'LedgerEntry',
           entityId: entry.id,
           action: 'CREATE',
-          metadata: { inputMethod: input.inputMethod },
+          metadata: groupId
+            ? { inputMethod: input.inputMethod, groupId }
+            : { inputMethod: input.inputMethod },
         },
       });
+
+      if (groupId) {
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'EntryGroup',
+            entityId: groupId,
+            action: 'APPEND_ENTRY',
+            metadata: { ledgerEntryId: entry.id },
+          },
+        });
+      }
+
       return entry;
     });
   }
@@ -56,7 +82,7 @@ export class LedgerService {
     const [entries, accounts, categories] = await Promise.all([
       this.prisma.db.ledgerEntry.findMany({
         where: { userId: this.userId },
-        include: { account: true, category: true },
+        include: { account: true, category: true, group: true },
         orderBy: { occurredAt: 'desc' },
       }),
       this.prisma.db.account.findMany({
@@ -76,7 +102,7 @@ export class LedgerService {
   async findOne(id: string) {
     const entry = await this.prisma.db.ledgerEntry.findFirst({
       where: { id, userId: this.userId },
-      include: { account: true, category: true },
+      include: { account: true, category: true, group: true },
     });
     if (!entry) throw new NotFoundException('Ledger entry not found');
     return entry;
@@ -93,5 +119,12 @@ export class LedgerService {
     ]);
     if (!account) throw new NotFoundException('Account not found');
     if (!category) throw new NotFoundException('Category not found');
+  }
+
+  private async assertOwnedGroup(groupId: string) {
+    const group = await this.prisma.db.entryGroup.findFirst({
+      where: { id: groupId, userId: this.userId },
+    });
+    if (!group) throw new NotFoundException('Entry group not found');
   }
 }
