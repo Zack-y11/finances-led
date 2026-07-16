@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
 
 type ValidationSchema<T> = {
-  safeParse(value: unknown):
+  safeParse(
+    value: unknown,
+  ):
     | { success: true; data: T }
     | { success: false; error: { issues: unknown[] } };
 };
