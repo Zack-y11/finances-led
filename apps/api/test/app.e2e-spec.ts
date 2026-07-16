@@ -19,6 +19,8 @@ describe('Ledger endpoints (e2e)', () => {
   let filterAccountId: string | undefined;
   let filterCategoryId: string | undefined;
   const filterEntryIds: string[] = [];
+  const analyticsEntryIds: string[] = [];
+  const analyticsCategoryIds: string[] = [];
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -373,8 +375,124 @@ describe('Ledger endpoints (e2e)', () => {
       await request(app.getHttpServer()).get(`/ledger-entries?${query}`).expect(400);
     }
   });
+  it('calculates monthly analytics directly from user-owned ledger entries', async () => {
+    const userId = process.env.DEV_USER_ID!;
+    const analyticsMonth = '2199-04';
+    const nextMonth = '2199-05';
+    const [foodCategory, transportCategory] = await Promise.all([
+      prisma.category.create({
+        data: { userId, name: `Analytics Food ${fixtureId}`, kind: 'EXPENSE' },
+      }),
+      prisma.category.create({
+        data: { userId, name: `Analytics Transport ${fixtureId}`, kind: 'EXPENSE' },
+      }),
+    ]);
+    analyticsCategoryIds.push(foodCategory.id, transportCategory.id);
+
+    async function addAnalyticsEntry(input: {
+      type: 'INCOME' | 'EXPENSE' | 'ADJUSTMENT';
+      amount: number;
+      month: string;
+      categoryId?: string;
+    }) {
+      const entry = await prisma.ledgerEntry.create({
+        data: {
+          userId,
+          accountId,
+          categoryId: input.categoryId ?? categoryId,
+          type: input.type,
+          amount: input.amount,
+          currency: 'USD',
+          merchant: `Analytics fixture ${fixtureId}`,
+          occurredAt: new Date(`${input.month}-15T12:00:00.000Z`),
+          monthKey: input.month,
+          inputMethod: 'MANUAL',
+        },
+      });
+      analyticsEntryIds.push(entry.id);
+    }
+
+    await addAnalyticsEntry({ type: 'INCOME', amount: 1200, month: analyticsMonth });
+    await addAnalyticsEntry({ type: 'EXPENSE', amount: 100.32, month: analyticsMonth, categoryId: foodCategory.id });
+    await addAnalyticsEntry({ type: 'EXPENSE', amount: 45, month: analyticsMonth, categoryId: foodCategory.id });
+    await addAnalyticsEntry({ type: 'EXPENSE', amount: 87, month: analyticsMonth, categoryId: transportCategory.id });
+    await addAnalyticsEntry({ type: 'ADJUSTMENT', amount: 999, month: analyticsMonth });
+    await addAnalyticsEntry({ type: 'EXPENSE', amount: 50, month: nextMonth });
+
+    await prisma.ledgerEntry.create({
+      data: {
+        userId: unownedUserId,
+        accountId: unownedAccountId,
+        categoryId: unownedCategoryId,
+        type: 'INCOME',
+        amount: 5000,
+        currency: 'USD',
+        merchant: `Unowned analytics fixture ${fixtureId}`,
+        occurredAt: new Date(`${analyticsMonth}-15T12:00:00.000Z`),
+        monthKey: analyticsMonth,
+        inputMethod: 'MANUAL',
+      },
+    });
+
+    const summaryResponse = await request(app.getHttpServer())
+      .get(`/analytics/monthly-summary?month=${analyticsMonth}`)
+      .expect(200);
+    expect(summaryResponse.body).toEqual({
+      month: analyticsMonth,
+      income: 1200,
+      expenses: 232.32,
+      net: 967.68,
+    });
+
+    const breakdownResponse = await request(app.getHttpServer())
+      .get(`/analytics/monthly-breakdown?month=${analyticsMonth}`)
+      .expect(200);
+    expect(breakdownResponse.body).toEqual({
+      expenses: [
+        { category: `Analytics Food ${fixtureId}`, amount: 145.32 },
+        { category: `Analytics Transport ${fixtureId}`, amount: 87 },
+      ],
+    });
+
+    const historyResponse = await request(app.getHttpServer())
+      .get('/analytics/net-history')
+      .expect(200);
+    expect(historyResponse.body).toEqual(
+      expect.arrayContaining([
+        { month: analyticsMonth, income: 1200, expenses: 232.32, net: 967.68 },
+        { month: nextMonth, income: 0, expenses: 50, net: -50 },
+      ]),
+    );
+    const historyMonths = historyResponse.body.map((item: { month: string }) => item.month);
+    expect(historyMonths).toEqual([...historyMonths].sort());
+
+    await request(app.getHttpServer())
+      .get('/analytics/monthly-summary?month=2199-13')
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/analytics/monthly-breakdown')
+      .expect(400);
+
+    const emptySummaryResponse = await request(app.getHttpServer())
+      .get('/analytics/monthly-summary?month=2199-06')
+      .expect(200);
+    expect(emptySummaryResponse.body).toEqual({
+      month: '2199-06',
+      income: 0,
+      expenses: 0,
+      net: 0,
+    });
+
+    const emptyBreakdownResponse = await request(app.getHttpServer())
+      .get('/analytics/monthly-breakdown?month=2199-06')
+      .expect(200);
+    expect(emptyBreakdownResponse.body).toEqual({ expenses: [] });
+  });
   afterAll(async () => {
     if (prisma) {
+      if (analyticsEntryIds.length) {
+        await prisma.ledgerEntry.deleteMany({ where: { id: { in: analyticsEntryIds } } });
+      }
       if (filterEntryIds.length) {
         await prisma.ledgerEntry.deleteMany({ where: { id: { in: filterEntryIds } } });
       }
@@ -395,6 +513,9 @@ describe('Ledger endpoints (e2e)', () => {
           where: { entityType: 'EntryGroup', entityId: createdGroupId },
         });
         await prisma.entryGroup.delete({ where: { id: createdGroupId } });
+      }
+      if (analyticsCategoryIds.length) {
+        await prisma.category.deleteMany({ where: { id: { in: analyticsCategoryIds } } });
       }
       if (filterAccountId) await prisma.account.delete({ where: { id: filterAccountId } });
       if (filterCategoryId) await prisma.category.delete({ where: { id: filterCategoryId } });
