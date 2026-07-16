@@ -36,19 +36,19 @@ async function getGroupData(id: string): Promise<{
   error?: string;
 }> {
   try {
-    const [groupResponse, ledgerResponse] = await Promise.all([
+    const [groupResponse, optionsResponse] = await Promise.all([
       fetch(`${apiUrl}/entry-groups/${id}`, { cache: "no-store" }),
-      fetch(`${apiUrl}/ledger-entries`, { cache: "no-store" }),
+      fetch(`${apiUrl}/ledger-entries/options`, { cache: "no-store" }),
     ]);
     if (!groupResponse.ok) throw new Error(`Group API returned ${groupResponse.status}`);
-    if (!ledgerResponse.ok) throw new Error(`Ledger API returned ${ledgerResponse.status}`);
+    if (!optionsResponse.ok) throw new Error(`Ledger options API returned ${optionsResponse.status}`);
 
     const group = (await groupResponse.json()) as EntryGroup;
-    const ledgerData = (await ledgerResponse.json()) as LedgerData;
-    if (!Array.isArray(group.ledgerEntries) || !Array.isArray(ledgerData.accounts) || !Array.isArray(ledgerData.categories)) {
+    const options = (await optionsResponse.json()) as LedgerData;
+    if (!Array.isArray(group.ledgerEntries) || !Array.isArray(options.accounts) || !Array.isArray(options.categories)) {
       throw new Error("API returned an unexpected group response");
     }
-    return { group, accounts: ledgerData.accounts, categories: ledgerData.categories };
+    return { group, accounts: options.accounts, categories: options.categories };
   } catch (reason) {
     const message = reason instanceof Error ? reason.message : "Unknown API error";
     return { accounts: [], categories: [], error: message };
