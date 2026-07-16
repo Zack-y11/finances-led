@@ -15,8 +15,24 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('returns API health instead of the framework placeholder', () => {
+      expect(appController.getRoot()).toEqual({
+        status: 'ok',
+        service: 'finance-ledger-api',
+        uptimeSeconds: expect.any(Number),
+        timestamp: expect.any(String),
+      });
+    });
+  });
+
+  describe('health', () => {
+    it('returns the same health contract for explicit probes', () => {
+      expect(appController.getHealth()).toEqual({
+        status: 'ok',
+        service: 'finance-ledger-api',
+        uptimeSeconds: expect.any(Number),
+        timestamp: expect.any(String),
+      });
     });
   });
 });

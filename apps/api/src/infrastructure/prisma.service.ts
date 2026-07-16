@@ -5,9 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { createPrismaClient, PrismaClient } from '@finance/database';
 
 @Injectable()
-export class PrismaService implements
-  OnModuleInit, OnModuleDestroy
-{
+export class PrismaService implements OnModuleInit, OnModuleDestroy {
   private readonly client: PrismaClient;
 
   constructor(configService: ConfigService) {

@@ -20,7 +20,7 @@ export class EntryGroupsController {
   ) {
     return this.entryGroupsService.create(input);
   }
-  
+
   @Get()
   findAll() {
     return this.entryGroupsService.findAll();

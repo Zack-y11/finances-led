@@ -19,6 +19,7 @@ export function createPrismaClient(
 }
 
 export {
+  Prisma,
   PrismaClient,
 } from "../generated/prisma/client.js";
 

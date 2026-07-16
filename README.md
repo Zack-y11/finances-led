@@ -74,6 +74,12 @@ Run migrations:
 pnpm db:migrate
 ```
 
+Seed repeatable development fixtures:
+
+```bash
+pnpm dev:seed
+```
+
 Start web and API:
 
 ```bash
@@ -96,8 +102,8 @@ auth should replace that before multi-user release.
 Expected local variables include:
 
 ```txt
-DATABASE_URL=
-DEV_USER_ID=
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/finance_ledger?schema=public
+DEV_USER_ID=1b58fb29-1f33-43d8-bdf0-b70844c20045
 NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
 

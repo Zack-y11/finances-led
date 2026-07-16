@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { CreateLedgerEntry } from '@finance/contracts';
+import type { CreateLedgerEntry, LedgerEntriesQuery } from '@finance/contracts';
+import { Prisma } from '@finance/database';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 
@@ -78,13 +79,65 @@ export class LedgerService {
     });
   }
 
-  async findAll() {
-    const [entries, accounts, categories] = await Promise.all([
+  async findAll(query: LedgerEntriesQuery) {
+    const {
+      type,
+      month,
+      categoryId,
+      accountId,
+      groupId,
+      search,
+      page,
+      pageSize,
+    } = query;
+    const where: Prisma.LedgerEntryWhereInput = {
+      userId: this.userId,
+      ...(type
+        ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
+        : {}),
+      ...(month ? { monthKey: month } : {}),
+      ...(categoryId ? { categoryId } : {}),
+      ...(accountId ? { accountId } : {}),
+      ...(groupId ? { groupId } : {}),
+      ...(search
+        ? {
+            OR: [
+              {
+                merchant: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              },
+              { note: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
+
+    const [data, total] = await Promise.all([
       this.prisma.db.ledgerEntry.findMany({
-        where: { userId: this.userId },
+        where,
         include: { account: true, category: true, group: true },
-        orderBy: { occurredAt: 'desc' },
+        orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
       }),
+      this.prisma.db.ledgerEntry.count({ where }),
+    ]);
+
+    return {
+      data,
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      },
+    };
+  }
+
+  async getOptions() {
+    const [accounts, categories, groups] = await Promise.all([
       this.prisma.db.account.findMany({
         where: { userId: this.userId, isActive: true },
         select: { id: true, name: true },
@@ -95,10 +148,15 @@ export class LedgerService {
         select: { id: true, name: true, kind: true },
         orderBy: { name: 'asc' },
       }),
+      this.prisma.db.entryGroup.findMany({
+        where: { userId: this.userId },
+        select: { id: true, name: true, type: true },
+        orderBy: { name: 'asc' },
+      }),
     ]);
-    return { entries, accounts, categories };
-  }
 
+    return { accounts, categories, groups };
+  }
   async findOne(id: string) {
     const entry = await this.prisma.db.ledgerEntry.findFirst({
       where: { id, userId: this.userId },
@@ -111,10 +169,10 @@ export class LedgerService {
   private async assertOwnedReferences(accountId: string, categoryId: string) {
     const [account, category] = await Promise.all([
       this.prisma.db.account.findFirst({
-        where: { id: accountId, userId: this.userId }
+        where: { id: accountId, userId: this.userId },
       }),
       this.prisma.db.category.findFirst({
-        where: { id: categoryId, userId: this.userId }
+        where: { id: categoryId, userId: this.userId },
       }),
     ]);
     if (!account) throw new NotFoundException('Account not found');
