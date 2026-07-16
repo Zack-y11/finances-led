@@ -60,7 +60,7 @@ export class AnalyticsService {
     const expenses = rows
       .map((row) => ({
         category: row.categoryId
-          ? categoryNames.get(row.categoryId) ?? 'Uncategorized'
+          ? (categoryNames.get(row.categoryId) ?? 'Uncategorized')
           : 'Uncategorized',
         amount: this.cents(row._sum.amount) / 100,
       }))
@@ -90,8 +90,10 @@ export class AnalyticsService {
         incomeCents: 0,
         expenseCents: 0,
       };
-      if (row.type === 'INCOME') totals.incomeCents = this.cents(row._sum.amount);
-      if (row.type === 'EXPENSE') totals.expenseCents = this.cents(row._sum.amount);
+      if (row.type === 'INCOME')
+        totals.incomeCents = this.cents(row._sum.amount);
+      if (row.type === 'EXPENSE')
+        totals.expenseCents = this.cents(row._sum.amount);
       totalsByMonth.set(row.monthKey, totals);
     }
 
@@ -108,8 +110,10 @@ export class AnalyticsService {
   ): MonthlyTotals {
     const totals: MonthlyTotals = { incomeCents: 0, expenseCents: 0 };
     for (const row of rows) {
-      if (row.type === 'INCOME') totals.incomeCents = this.cents(row._sum.amount);
-      if (row.type === 'EXPENSE') totals.expenseCents = this.cents(row._sum.amount);
+      if (row.type === 'INCOME')
+        totals.incomeCents = this.cents(row._sum.amount);
+      if (row.type === 'EXPENSE')
+        totals.expenseCents = this.cents(row._sum.amount);
     }
     return totals;
   }
