@@ -58,7 +58,10 @@ export class EntryGroupsService {
       _sum: { amount: true },
     });
     const totalsByGroupId = new Map(
-      totals.map((item) => [item.groupId, item._sum.amount?.toString() ?? '0.00']),
+      totals.map((item) => [
+        item.groupId,
+        item._sum.amount?.toString() ?? '0.00',
+      ]),
     );
 
     return groups.map((group) => ({

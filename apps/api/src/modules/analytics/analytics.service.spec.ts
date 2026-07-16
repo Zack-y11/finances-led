@@ -78,9 +78,21 @@ describe('AnalyticsService', () => {
 
   it('returns chronological monthly net history', async () => {
     groupByResult = [
-      { monthKey: '2026-06', type: 'EXPENSE', _sum: { amount: amount('50.00') } },
-      { monthKey: '2026-07', type: 'INCOME', _sum: { amount: amount('1200.00') } },
-      { monthKey: '2026-07', type: 'EXPENSE', _sum: { amount: amount('486.42') } },
+      {
+        monthKey: '2026-06',
+        type: 'EXPENSE',
+        _sum: { amount: amount('50.00') },
+      },
+      {
+        monthKey: '2026-07',
+        type: 'INCOME',
+        _sum: { amount: amount('1200.00') },
+      },
+      {
+        monthKey: '2026-07',
+        type: 'EXPENSE',
+        _sum: { amount: amount('486.42') },
+      },
     ];
 
     await expect(service.netHistory()).resolves.toEqual([
