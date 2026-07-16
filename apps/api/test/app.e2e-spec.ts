@@ -44,7 +44,9 @@ describe('Ledger endpoints (e2e)', () => {
     const databaseUrl = process.env.DATABASE_URL;
     const userId = process.env.DEV_USER_ID;
     if (!databaseUrl || !userId) {
-      throw new Error('DATABASE_URL and DEV_USER_ID are required for e2e tests');
+      throw new Error(
+        'DATABASE_URL and DEV_USER_ID are required for e2e tests',
+      );
     }
 
     prisma = createPrismaClient(databaseUrl);
@@ -131,7 +133,12 @@ describe('Ledger endpoints (e2e)', () => {
       expect.arrayContaining([expect.objectContaining({ id: createdEntryId })]),
     );
     expect(listResponse.body.pagination).toEqual(
-      expect.objectContaining({ page: 1, pageSize: 20, total: expect.any(Number), totalPages: expect.any(Number) }),
+      expect.objectContaining({
+        page: 1,
+        pageSize: 20,
+        total: expect.any(Number),
+        totalPages: expect.any(Number),
+      }),
     );
 
     const detailResponse = await request(app.getHttpServer())
@@ -182,7 +189,13 @@ describe('Ledger endpoints (e2e)', () => {
 
     const appendResponse = await request(app.getHttpServer())
       .post(`/entry-groups/${createdGroupId}/entries`)
-      .send({ ...createInput(), amount: 5, merchant: 'E2E Bus', accountId, categoryId })
+      .send({
+        ...createInput(),
+        amount: 5,
+        merchant: 'E2E Bus',
+        accountId,
+        categoryId,
+      })
       .expect(201);
 
     groupedEntryId = appendResponse.body.id;
@@ -222,7 +235,10 @@ describe('Ledger endpoints (e2e)', () => {
         id: createdGroupId,
         total: '5',
         ledgerEntries: expect.arrayContaining([
-          expect.objectContaining({ id: groupedEntryId, groupId: createdGroupId }),
+          expect.objectContaining({
+            id: groupedEntryId,
+            groupId: createdGroupId,
+          }),
         ]),
       }),
     );
@@ -243,10 +259,14 @@ describe('Ledger endpoints (e2e)', () => {
       expect.arrayContaining([expect.objectContaining({ id: createdGroupId })]),
     );
     expect(response.body.accounts).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: unownedAccountId })]),
+      expect.arrayContaining([
+        expect.objectContaining({ id: unownedAccountId }),
+      ]),
     );
     expect(response.body.categories).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: unownedCategoryId })]),
+      expect.arrayContaining([
+        expect.objectContaining({ id: unownedCategoryId }),
+      ]),
     );
   });
 
@@ -264,6 +284,7 @@ describe('Ledger endpoints (e2e)', () => {
     filterCategoryId = filterCategory.id;
 
     async function addFixtureEntry(input: {
+      id?: string;
       type: 'INCOME' | 'EXPENSE' | 'ADJUSTMENT';
       occurredAt: string;
       merchant: string;
@@ -274,6 +295,7 @@ describe('Ledger endpoints (e2e)', () => {
     }) {
       const entry = await prisma.ledgerEntry.create({
         data: {
+          id: input.id,
           userId,
           accountId: input.accountId ?? accountId,
           categoryId: input.categoryId ?? categoryId,
@@ -327,52 +349,134 @@ describe('Ledger endpoints (e2e)', () => {
       occurredAt: '2026-08-03T12:00:00.000Z',
       merchant: `Pagination ${fixtureId}`,
     });
+    const [sameTimestampLowId, sameTimestampHighId] = [
+      randomUUID(),
+      randomUUID(),
+    ].sort();
+    await addFixtureEntry({
+      id: sameTimestampLowId,
+      type: 'EXPENSE',
+      occurredAt: '2026-09-01T12:00:00.000Z',
+      merchant: `Same timestamp ${fixtureId}`,
+    });
+    await addFixtureEntry({
+      id: sameTimestampHighId,
+      type: 'EXPENSE',
+      occurredAt: '2026-09-01T12:00:00.000Z',
+      merchant: `Same timestamp ${fixtureId}`,
+    });
 
-    const typeResponse = await request(app.getHttpServer()).get('/ledger-entries?type=income').expect(200);
-    expect(typeResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: incomeEntry.id })]));
+    const typeResponse = await request(app.getHttpServer())
+      .get('/ledger-entries?type=income')
+      .expect(200);
+    expect(typeResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: incomeEntry.id })]),
+    );
 
-    const monthResponse = await request(app.getHttpServer()).get('/ledger-entries?month=2026-06').expect(200);
-    expect(monthResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]));
+    const monthResponse = await request(app.getHttpServer())
+      .get('/ledger-entries?month=2026-06')
+      .expect(200);
+    expect(monthResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]),
+    );
 
-    const categoryResponse = await request(app.getHttpServer()).get(`/ledger-entries?categoryId=${filterCategory.id}`).expect(200);
-    expect(categoryResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]));
+    const categoryResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?categoryId=${filterCategory.id}`)
+      .expect(200);
+    expect(categoryResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]),
+    );
 
-    const accountResponse = await request(app.getHttpServer()).get(`/ledger-entries?accountId=${filterAccount.id}`).expect(200);
-    expect(accountResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]));
+    const accountResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?accountId=${filterAccount.id}`)
+      .expect(200);
+    expect(accountResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: monthEntry.id })]),
+    );
 
-    const groupResponse = await request(app.getHttpServer()).get(`/ledger-entries?groupId=${createdGroupId}`).expect(200);
-    expect(groupResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: groupEntry.id })]));
+    const groupResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?groupId=${createdGroupId}`)
+      .expect(200);
+    expect(groupResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: groupEntry.id })]),
+    );
 
-    const merchantSearchResponse = await request(app.getHttpServer()).get(`/ledger-entries?search=mIxEd%20mErChAnT%20${fixtureId}`).expect(200);
-    expect(merchantSearchResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: incomeEntry.id })]));
+    const merchantSearchResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?search=mIxEd%20mErChAnT%20${fixtureId}`)
+      .expect(200);
+    expect(merchantSearchResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: incomeEntry.id })]),
+    );
 
-    const noteSearchResponse = await request(app.getHttpServer()).get(`/ledger-entries?search=lookup%20note%20${fixtureId}`).expect(200);
-    expect(noteSearchResponse.body.data).toEqual(expect.arrayContaining([expect.objectContaining({ id: groupEntry.id })]));
+    const noteSearchResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?search=lookup%20note%20${fixtureId}`)
+      .expect(200);
+    expect(noteSearchResponse.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: groupEntry.id })]),
+    );
 
     const combinedResponse = await request(app.getHttpServer())
-      .get(`/ledger-entries?type=income&month=2026-07&accountId=${accountId}&categoryId=${categoryId}&search=mixed%20merchant%20${fixtureId}`)
+      .get(
+        `/ledger-entries?type=income&month=2026-07&accountId=${accountId}&categoryId=${categoryId}&search=mixed%20merchant%20${fixtureId}`,
+      )
       .expect(200);
-    expect(combinedResponse.body).toEqual(expect.objectContaining({
-      data: [expect.objectContaining({ id: incomeEntry.id })],
-      pagination: expect.objectContaining({ total: 1, totalPages: 1 }),
-    }));
+    expect(combinedResponse.body).toEqual(
+      expect.objectContaining({
+        data: [expect.objectContaining({ id: incomeEntry.id })],
+        pagination: expect.objectContaining({ total: 1, totalPages: 1 }),
+      }),
+    );
 
     const firstPageResponse = await request(app.getHttpServer())
       .get(`/ledger-entries?search=pagination%20${fixtureId}&page=1&pageSize=2`)
       .expect(200);
-    expect(firstPageResponse.body.pagination).toEqual({ page: 1, pageSize: 2, total: 3, totalPages: 2 });
-    expect(firstPageResponse.body.data.map((entry: { id: string }) => entry.id)).toEqual([
-      newestPageEntry.id,
-      middlePageEntry.id,
-    ]);
+    expect(firstPageResponse.body.pagination).toEqual({
+      page: 1,
+      pageSize: 2,
+      total: 3,
+      totalPages: 2,
+    });
+    expect(
+      firstPageResponse.body.data.map((entry: { id: string }) => entry.id),
+    ).toEqual([newestPageEntry.id, middlePageEntry.id]);
 
     const secondPageResponse = await request(app.getHttpServer())
       .get(`/ledger-entries?search=pagination%20${fixtureId}&page=2&pageSize=2`)
       .expect(200);
-    expect(secondPageResponse.body.data.map((entry: { id: string }) => entry.id)).toEqual([oldestPageEntry.id]);
+    expect(
+      secondPageResponse.body.data.map((entry: { id: string }) => entry.id),
+    ).toEqual([oldestPageEntry.id]);
 
-    for (const query of ['type=transfer', 'month=2026-13', 'page=0', 'pageSize=101']) {
-      await request(app.getHttpServer()).get(`/ledger-entries?${query}`).expect(400);
+    const outOfRangePageResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?search=pagination%20${fixtureId}&page=3&pageSize=2`)
+      .expect(200);
+    expect(outOfRangePageResponse.body).toEqual({
+      data: [],
+      pagination: { page: 3, pageSize: 2, total: 3, totalPages: 2 },
+    });
+
+    const stableOrderResponse = await request(app.getHttpServer())
+      .get(
+        `/ledger-entries?search=same%20timestamp%20${fixtureId}&page=1&pageSize=2`,
+      )
+      .expect(200);
+    expect(
+      stableOrderResponse.body.data.map((entry: { id: string }) => entry.id),
+    ).toEqual([sameTimestampHighId, sameTimestampLowId]);
+
+    for (const query of [
+      'type=transfer',
+      'month=2026-13',
+      'categoryId=not-a-uuid',
+      'page=0',
+      'page=1.5',
+      'pageSize=0',
+      'pageSize=101',
+      'search=%20%20',
+    ]) {
+      await request(app.getHttpServer())
+        .get(`/ledger-entries?${query}`)
+        .expect(400);
     }
   });
   it('calculates monthly analytics directly from user-owned ledger entries', async () => {
@@ -384,12 +488,17 @@ describe('Ledger endpoints (e2e)', () => {
         data: { userId, name: `Analytics Food ${fixtureId}`, kind: 'EXPENSE' },
       }),
       prisma.category.create({
-        data: { userId, name: `Analytics Transport ${fixtureId}`, kind: 'EXPENSE' },
+        data: {
+          userId,
+          name: `Analytics Transport ${fixtureId}`,
+          kind: 'EXPENSE',
+        },
       }),
     ]);
     analyticsCategoryIds.push(foodCategory.id, transportCategory.id);
 
     async function addAnalyticsEntry(input: {
+      id?: string;
       type: 'INCOME' | 'EXPENSE' | 'ADJUSTMENT';
       amount: number;
       month: string;
@@ -412,11 +521,34 @@ describe('Ledger endpoints (e2e)', () => {
       analyticsEntryIds.push(entry.id);
     }
 
-    await addAnalyticsEntry({ type: 'INCOME', amount: 1200, month: analyticsMonth });
-    await addAnalyticsEntry({ type: 'EXPENSE', amount: 100.32, month: analyticsMonth, categoryId: foodCategory.id });
-    await addAnalyticsEntry({ type: 'EXPENSE', amount: 45, month: analyticsMonth, categoryId: foodCategory.id });
-    await addAnalyticsEntry({ type: 'EXPENSE', amount: 87, month: analyticsMonth, categoryId: transportCategory.id });
-    await addAnalyticsEntry({ type: 'ADJUSTMENT', amount: 999, month: analyticsMonth });
+    await addAnalyticsEntry({
+      type: 'INCOME',
+      amount: 1200,
+      month: analyticsMonth,
+    });
+    await addAnalyticsEntry({
+      type: 'EXPENSE',
+      amount: 100.32,
+      month: analyticsMonth,
+      categoryId: foodCategory.id,
+    });
+    await addAnalyticsEntry({
+      type: 'EXPENSE',
+      amount: 45,
+      month: analyticsMonth,
+      categoryId: foodCategory.id,
+    });
+    await addAnalyticsEntry({
+      type: 'EXPENSE',
+      amount: 87,
+      month: analyticsMonth,
+      categoryId: transportCategory.id,
+    });
+    await addAnalyticsEntry({
+      type: 'ADJUSTMENT',
+      amount: 999,
+      month: analyticsMonth,
+    });
     await addAnalyticsEntry({ type: 'EXPENSE', amount: 50, month: nextMonth });
 
     await prisma.ledgerEntry.create({
@@ -463,7 +595,9 @@ describe('Ledger endpoints (e2e)', () => {
         { month: nextMonth, income: 0, expenses: 50, net: -50 },
       ]),
     );
-    const historyMonths = historyResponse.body.map((item: { month: string }) => item.month);
+    const historyMonths = historyResponse.body.map(
+      (item: { month: string }) => item.month,
+    );
     expect(historyMonths).toEqual([...historyMonths].sort());
 
     await request(app.getHttpServer())
@@ -491,10 +625,14 @@ describe('Ledger endpoints (e2e)', () => {
   afterAll(async () => {
     if (prisma) {
       if (analyticsEntryIds.length) {
-        await prisma.ledgerEntry.deleteMany({ where: { id: { in: analyticsEntryIds } } });
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: analyticsEntryIds } },
+        });
       }
       if (filterEntryIds.length) {
-        await prisma.ledgerEntry.deleteMany({ where: { id: { in: filterEntryIds } } });
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: filterEntryIds } },
+        });
       }
       if (createdEntryId) {
         await prisma.auditLog.deleteMany({
@@ -515,13 +653,19 @@ describe('Ledger endpoints (e2e)', () => {
         await prisma.entryGroup.delete({ where: { id: createdGroupId } });
       }
       if (analyticsCategoryIds.length) {
-        await prisma.category.deleteMany({ where: { id: { in: analyticsCategoryIds } } });
+        await prisma.category.deleteMany({
+          where: { id: { in: analyticsCategoryIds } },
+        });
       }
-      if (filterAccountId) await prisma.account.delete({ where: { id: filterAccountId } });
-      if (filterCategoryId) await prisma.category.delete({ where: { id: filterCategoryId } });
+      if (filterAccountId)
+        await prisma.account.delete({ where: { id: filterAccountId } });
+      if (filterCategoryId)
+        await prisma.category.delete({ where: { id: filterCategoryId } });
       if (accountId) await prisma.account.delete({ where: { id: accountId } });
-      if (categoryId) await prisma.category.delete({ where: { id: categoryId } });
-      if (unownedUserId) await prisma.user.delete({ where: { id: unownedUserId } });
+      if (categoryId)
+        await prisma.category.delete({ where: { id: categoryId } });
+      if (unownedUserId)
+        await prisma.user.delete({ where: { id: unownedUserId } });
       await prisma.$disconnect();
     }
     await app?.close();
