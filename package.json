@@ -19,7 +19,9 @@
     "db:studio": "pnpm --filter @finance/database db:studio",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
-    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f"
+    "infra:logs": "docker compose -f infra/docker-compose.yml logs -f",
+    "db:deploy": "pnpm --filter @finance/database db:deploy",
+    "dev:seed": "pnpm db:generate && pnpm --filter @finance/database build && node scripts/dev-seed.mjs"
   },
   "devDependencies": {
     "@types/pg": "^8.20.0",
@@ -29,7 +31,7 @@
     "typescript": "latest"
   },
   "engines": {
-    "node": ">=22"
+    "node": ">=22 <23"
   },
   "packageManager": "pnpm@10.26.1",
   "dependencies": {
