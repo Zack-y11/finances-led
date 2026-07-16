@@ -13,6 +13,12 @@ export const inputMethodSchema = z.enum([
     "receipt",
 ])
 
+export const entryGroupTypeSchema = z.enum([
+    "income",
+    "expense",
+    "mixed",
+])
+
 export const createLedgerEntrySchema = z.object({
     type: transactionTypeSchema,
     amount: z.number().positive(),
@@ -25,5 +31,16 @@ export const createLedgerEntrySchema = z.object({
     inputMethod: inputMethodSchema.default("manual"),
 })
 
+export const createEntryGroupSchema = z.object({
+    name: z.string().trim().min(1).max(120),
+    type: entryGroupTypeSchema,
+    description: z.string().trim().max(500).optional(),
+})
+
+export const appendEntryToGroupSchema = createLedgerEntrySchema
+
 export type TransactionType = z.infer<typeof transactionTypeSchema>
+export type EntryGroupType = z.infer<typeof entryGroupTypeSchema>
 export type CreateLedgerEntry = z.infer<typeof createLedgerEntrySchema>
+export type CreateEntryGroup = z.infer<typeof createEntryGroupSchema>
+export type AppendEntryToGroup = z.infer<typeof appendEntryToGroupSchema>
