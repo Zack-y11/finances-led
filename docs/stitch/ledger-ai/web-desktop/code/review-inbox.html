@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Ledger AI - Review Inbox</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom ambient shadow for cards */
+        .ambient-shadow {
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#bdc7d9",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#001a42",
+                        "surface-tint": "#555f6f",
+                        "surface-dim": "#d9dadb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-container": "#fefcff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "background": "#f8f9fa",
+                        "outline": "#75777c",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-primary-fixed": "#121c2a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "on-tertiary-fixed": "#002113",
+                        "on-primary-fixed-variant": "#3d4756",
+                        "outline-variant": "#c5c6cc",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#00a371",
+                        "on-primary-container": "#8690a1",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-fixed-variant": "#004395",
+                        "primary-fixed": "#d9e3f6",
+                        "primary": "#0a1422",
+                        "primary-container": "#1f2937",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "tertiary": "#00180d",
+                        "tertiary-container": "#002f1e",
+                        "inverse-primary": "#bdc7d9",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#44474c",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "surface-bright": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "secondary-container": "#2170e4",
+                        "tertiary-fixed": "#6ffbbe",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "secondary": "#0058be",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "xl": "32px",
+                        "base": "4px",
+                        "margin-desktop": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "20px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md h-screen overflow-hidden flex selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- JSON Component: SideNavBar -->
+<aside class="hidden md:flex flex-col h-full w-[280px] bg-surface border-r py-lg px-md z-20 shrink-0 backdrop-blur-md bg-surface/70 border-white/20">
+<div class="mb-xl px-md">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Ledger AI</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-xs">Privacy Secured</p>
+</div>
+<nav class="flex-1 flex flex-col gap-xs overflow-y-auto">
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">dashboard</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Overview</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">receipt_long</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Transactions</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">bolt</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Quick Capture</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">groups</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Groups</span>
+</a>
+<!-- ACTIVE NAVIGATION: Review Inbox -->
+<a class="flex items-center gap-md px-md py-sm bg-surface-container-low rounded-lg text-secondary font-bold border-r-2 border-secondary cursor-pointer active:scale-95 relative" href="#">
+<span class="material-symbols-outlined text-[20px] filled">inbox</span>
+<span class="font-label-md text-label-md flex-1">Review Inbox</span>
+<span class="bg-secondary text-on-secondary font-label-sm text-label-sm px-2 py-0.5 rounded-full">4</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group mt-sm" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">rule</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Rules</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">account_balance</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Accounts</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">category</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Categories</span>
+</a>
+<!-- Inactive -->
+<a class="flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95 group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">settings</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-lg border-t border-outline-variant">
+<button class="flex items-center gap-md px-md py-sm w-full rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-[20px] group-hover:text-on-surface transition-colors">keyboard_double_arrow_left</span>
+<span class="font-label-md text-label-md group-hover:text-on-surface transition-colors">Collapse</span>
+</button>
+<div class="flex items-center gap-md px-md py-sm mt-sm rounded-lg text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px] text-tertiary-fixed-dim">verified_user</span>
+<span class="font-label-md text-label-md">Privacy Status</span>
+</div>
+<div class="flex items-center gap-md px-md mt-md">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a person in a well-lit modern office environment, cool neutral tones, high resolution, minimalist aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6XYrneQaor3gqxHSaQfb1r9bkSX6GCZ8-O0WYZwWu-Moc8-ysN0cCVvAhlGwQCHlTLrLE5Tw9wn4eFZ93CCFKyG3utXTvURrc-ADJZgbi1JcWtD9sGjIWogejOkuYCbtr65prGXrhDcuVsUrVIMVpaBkuq8hOtUcXXbCE3CZC9YKhj7rToBtT6X7n5nJr4JyusXAd_ZMDy0UotxNNH1UcVr2vcPRd5PwqGCi_6CQ6862aueZU0NxM">
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0 h-full relative">
+<!-- JSON Component: TopNavBar -->
+<header class="hidden md:flex justify-between items-center w-full px-margin-desktop h-16 bg-surface border-b z-10 shrink-0 backdrop-blur-md bg-surface/70 border-white/20">
+<div class="flex items-center gap-xl">
+<!-- Search (Search Bar: on_left) -->
+<div class="relative flex items-center focus-within:ring-2 focus-within:ring-secondary rounded-lg">
+<span class="material-symbols-outlined absolute left-3 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-lg font-body-md text-body-md w-[240px] focus:outline-none focus:ring-0 text-on-surface placeholder:text-on-surface-variant" placeholder="Search" type="text">
+</div>
+</div>
+<!-- Navigation Links (Contextual Center/Right) -->
+<nav class="flex items-center gap-lg h-full">
+<!-- Inactive -->
+<a class="h-full flex items-center px-2 text-on-surface-variant hover:text-secondary transition-all font-label-md text-label-md" href="#">Overview</a>
+<!-- Inactive -->
+<a class="h-full flex items-center px-2 text-on-surface-variant hover:text-secondary transition-all font-label-md text-label-md" href="#">Transactions</a>
+</nav>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px]">history</span>
+</button>
+<button class="ml-sm bg-primary text-on-primary font-label-md text-label-md px-md py-2 rounded-lg hover:bg-primary-container transition-colors shadow-sm">
+                    Add transaction
+                </button>
+</div>
+</header>
+<!-- Scrollable Main Canvas -->
+<main class="flex-1 overflow-y-auto bg-background px-margin-mobile md:px-margin-desktop py-lg">
+<!-- Page Header -->
+<div class="max-w-[1280px] mx-auto w-full">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-lg">
+<div>
+<h2 class="font-display text-display text-primary">Review Inbox</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">
+                            Resolve transactions that could not be interpreted with enough confidence.
+                        </p>
+</div>
+</div>
+<!-- Tabs -->
+<div class="flex items-center gap-lg border-b border-outline-variant mb-lg overflow-x-auto pb-[1px]">
+<button class="py-sm px-2 border-b-2 border-primary text-primary font-label-md text-label-md whitespace-nowrap">
+                        Needs review <span class="ml-1 bg-primary text-on-primary rounded-full px-1.5 py-0.5 text-[10px]">4</span>
+</button>
+<button class="py-sm px-2 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md whitespace-nowrap">
+                        Corrected
+                    </button>
+<button class="py-sm px-2 border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors font-label-md text-label-md whitespace-nowrap">
+                        Ignored
+                    </button>
+</div>
+<!-- Bento Grid / Split Layout for Review Detail -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter items-start">
+<!-- LEFT COLUMN: Context & Issue Explanation -->
+<div class="md:col-span-4 flex flex-col gap-md">
+<!-- Queue Navigation Header -->
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm px-1">
+<span class="">Item 1 of 4</span>
+<div class="flex gap-2">
+<button class="hover:text-primary transition-colors disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[16px]">arrow_upward</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined text-[16px]">arrow_downward</span></button>
+</div>
+</div>
+<!-- Original Input Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md ambient-shadow">
+<div class="flex items-center gap-2 mb-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">keyboard</span>
+<h3 class="font-label-md text-label-md uppercase tracking-wider">Original Command</h3>
+</div>
+<div class="bg-surface-container-low p-sm rounded-lg border border-surface-container-highest font-body-md text-body-md text-primary font-mono text-[13px] leading-relaxed break-words">
+                                "Spent 45 at Starbucks on BAC"
+                            </div>
+<div class="flex items-center justify-between mt-md pt-md border-t border-surface-container-highest">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Confidence: 65%</span>
+</div>
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-container py-1 px-2 rounded-md">Text Input</span>
+</div>
+</div>
+<!-- Issue Explanation Alert -->
+<div class="bg-error-container/20 border border-error/30 rounded-xl p-md ambient-shadow flex gap-md items-start">
+<span class="material-symbols-outlined text-error mt-0.5">warning</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Ambiguous Account</h4>
+<p class="font-body-md text-body-md text-on-surface-variant text-[13px]">
+                                    Two accounts match the abbreviation 'BAC'. Please specify which account was used for this transaction.
+                                </p>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Resolution Form -->
+<div class="md:col-span-8 bg-surface-container-lowest border border-outline-variant rounded-xl ambient-shadow flex flex-col">
+<div class="p-lg border-b border-outline-variant flex justify-between items-center">
+<div>
+<h3 class="font-headline-md text-headline-md text-primary">Suggested Transaction</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-[13px] mt-1">Review and correct the parsed fields below.</p>
+</div>
+<button class="text-on-surface-variant hover:text-error transition-colors flex items-center gap-1 font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+                                Ignore
+                            </button>
+</div>
+<div class="p-lg flex-1">
+<form class="grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-lg">
+<!-- Field: Date -->
+<div class="col-span-1 flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Date</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">calendar_today</span>
+<input class="w-full pl-10 pr-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors" type="date" value="2023-10-27">
+</div>
+</div>
+<!-- Field: Amount -->
+<div class="col-span-1 flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Amount</label>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant font-body-md text-body-md">$</span>
+<input class="w-full pl-8 pr-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors" type="text" value="45.00">
+</div>
+</div>
+<!-- Field: Merchant -->
+<div class="col-span-1 md:col-span-2 flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Merchant / Description</label>
+<input class="w-full px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors" type="text" value="Starbucks">
+</div>
+<!-- Field: Category (Suggested) -->
+<div class="col-span-1 flex flex-col gap-1">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-on-surface-variant">Category</label>
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">auto_awesome</span> Auto-detected</span>
+</div>
+<select class="w-full px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors appearance-none">
+<option selected="" value="dining">Dining &amp; Drinks</option>
+<option value="groceries">Groceries</option>
+<option value="entertainment">Entertainment</option>
+</select>
+</div>
+<!-- Field: Account (UNRESOLVED HIGHLIGHT) -->
+<div class="col-span-1 flex flex-col gap-1 relative">
+<div class="flex justify-between items-center">
+<label class="font-label-md text-label-md text-error font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">error</span>
+                                            Account
+                                        </label>
+<span class="font-label-sm text-label-sm text-error">Action required</span>
+</div>
+<select class="w-full px-3 py-2 bg-surface border-2 border-error rounded-lg font-body-md text-body-md text-on-surface focus:outline-none focus:border-error focus:ring-2 focus:ring-error/20 transition-all appearance-none shadow-[0_0_0_4px_rgba(186,26,26,0.05)]">
+<option disabled="" selected="" value="">Select an account...</option>
+<option value="bac_checking">Bank of America - Checking (...1234)</option>
+<option value="bac_credit">Bank of America - Credit (...5678)</option>
+</select>
+<div class="absolute right-3 top-[34px] pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">expand_more</span>
+</div>
+</div>
+</form>
+</div>
+<!-- Rules & Actions Footer -->
+<div class="p-lg bg-surface-container-lowest rounded-b-xl border-t border-outline-variant">
+<label class="flex items-center gap-3 cursor-pointer group mb-lg w-fit">
+<div class="relative flex items-center justify-center w-5 h-5 border border-outline-variant rounded bg-surface group-hover:border-secondary transition-colors">
+<input class="opacity-0 absolute inset-0 cursor-pointer peer" type="checkbox">
+<span class="material-symbols-outlined text-[16px] text-on-primary opacity-0 peer-checked:opacity-100 peer-checked:bg-secondary absolute inset-0 flex items-center justify-center rounded transition-all">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface select-none group-hover:text-primary transition-colors">
+                                    Save correction as a rule
+                                </span>
+</label>
+<div class="flex justify-end gap-md">
+<button class="px-xl py-2 rounded-lg font-label-md text-label-md text-on-surface border border-outline-variant hover:bg-surface-container-low transition-colors bg-surface shadow-sm">
+                                    Skip
+                                </button>
+<button class="px-xl py-2 rounded-lg font-label-md text-label-md text-on-primary bg-primary hover:bg-primary-container transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                    Confirm &amp; Next
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- JSON Component: BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm bg-surface-container-lowest shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-t-xl">
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90 rounded-lg group w-16" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-secondary transition-colors">home</span>
+<span class="font-label-sm text-label-sm-mobile mt-1 group-hover:text-secondary transition-colors">Home</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90 rounded-lg group w-16" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-secondary transition-colors">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile mt-1 group-hover:text-secondary transition-colors">Transactions</span>
+</a>
+<!-- FAB-style Center Action -->
+<a class="flex flex-col items-center justify-center -mt-6" href="#">
+<div class="bg-primary text-on-primary rounded-full p-3 shadow-lg hover:scale-105 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[28px]">add_circle</span>
+</div>
+<span class="font-label-sm text-label-sm-mobile mt-1 text-primary font-bold">Capture</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90 rounded-lg group w-16" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-secondary transition-colors">groups</span>
+<span class="font-label-sm text-label-sm-mobile mt-1 group-hover:text-secondary transition-colors">Groups</span>
+</a>
+<!-- Inactive -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90 rounded-lg group w-16" href="#">
+<span class="material-symbols-outlined text-[24px] group-hover:text-secondary transition-colors">settings</span>
+<span class="font-label-sm text-label-sm-mobile mt-1 group-hover:text-secondary transition-colors">Settings</span>
+</a>
+</nav>
+
+
+</body></html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ledger AI | Review Inbox</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#d9dadb",
+                    "outline-variant": "#c5c6cc",
+                    "surface-container": "#edeeef",
+                    "outline": "#75777c",
+                    "on-tertiary-container": "#00a371",
+                    "on-secondary-fixed": "#001a42",
+                    "background": "#f8f9fa",
+                    "on-primary-fixed": "#121c2a",
+                    "tertiary-container": "#002f1e",
+                    "surface-container-high": "#e7e8e9",
+                    "on-primary-container": "#8690a1",
+                    "surface-tint": "#555f6f",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-secondary-container": "#fefcff",
+                    "primary-fixed-dim": "#bdc7d9",
+                    "inverse-primary": "#bdc7d9",
+                    "surface-variant": "#e1e3e4",
+                    "primary": "#0a1422",
+                    "surface-container-highest": "#e1e3e4",
+                    "primary-fixed": "#d9e3f6",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#2170e4",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary": "#0058be",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "margin-desktop": "40px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "gutter": "20px",
+                    "xl": "32px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #f8f9fa;
+            color: #191c1d;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bento-card {
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+            transition: all 0.2s ease;
+        }
+        .bento-card:active {
+            transform: scale(0.98);
+        }
+        .scroll-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scroll-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="antialiased scroll-hide">
+<!-- Header Section (TopAppBar Identity) -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface dark:bg-surface-container h-16 flex items-center justify-between px-margin-mobile border-b border-outline-variant dark:border-outline bg-opacity-90 backdrop-blur-md">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary font-bold">inbox</span>
+<h1 class="font-headline-md-mobile text-headline-md-mobile font-black text-primary">Review Inbox</h1>
+</div>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a user with a clean, minimalist background, soft high-key lighting, in a modern corporate style. The image uses a palette of neutral whites and soft grays, matching a financial app's aesthetic of trust and precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAYYhlBKrM-P3rzzdV0fL7JMZAKRwxWhPYQYGDmsr88OWZ44A2WPVyD3B4m6njJ0sjZeE4EkD9D_fjFUFPuaYte4Gf6_J_gyYXpRSKRQQLLW1PRYqT7vysvJGORwsihyAhUq-JKKSxSKSi1c8EOQ1HYO-PlEEVaI7VV74ZWAxUW5LEsdf7sNmDo2t-RRlyXqnVac3VayB7IV9FY0xY0IEOe1-6VVav-2RzfoX-wktQDTOl-a8Nob5K5"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="mt-16 pb-32 px-margin-mobile">
+<!-- Tab Navigation -->
+<nav class="flex space-x-md py-lg overflow-x-auto scroll-hide">
+<button class="flex-none px-md py-sm rounded-full bg-primary text-on-primary font-label-md text-label-md">
+                Needs review
+            </button>
+<button class="flex-none px-md py-sm rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+                Corrected
+            </button>
+<button class="flex-none px-md py-sm rounded-full bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+                Ignored
+            </button>
+</nav>
+<!-- Stats Overview (Asymmetric Layout) -->
+<section class="grid grid-cols-2 gap-sm mb-lg">
+<div class="bento-card p-md bg-secondary-fixed">
+<p class="font-label-md text-label-md text-on-secondary-fixed mb-xs">Pending</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-secondary-fixed">12</h3>
+</div>
+<div class="bento-card p-md">
+<p class="font-label-md text-label-md text-outline mb-xs">Accuracy</p>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-on-tertiary-container">98.4%</h3>
+</div>
+</section>
+<!-- Review Cards List -->
+<div class="space-y-md">
+<!-- Transaction Item 1 -->
+<div class="bento-card p-md">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">bolt</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-outline">Quick Capture</p>
+<h4 class="font-body-lg text-body-lg font-bold">"Dinner at Gusto's"</h4>
+</div>
+</div>
+<span class="text-on-error-container bg-error-container px-sm py-xs rounded text-[10px] font-bold uppercase tracking-wider">High Confidence</span>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-sm border border-outline-variant mb-md">
+<p class="font-label-md text-label-md text-outline italic mb-xs">Original command:</p>
+<p class="font-body-md text-body-md text-on-surface">"I spent 85.50 on dinner at Gusto's yesterday with Mark."</p>
+</div>
+<div class="grid grid-cols-2 gap-sm mb-md">
+<div class="p-sm bg-background rounded-lg border border-outline-variant">
+<label class="font-label-sm text-label-sm text-outline block mb-xs">Amount</label>
+<p class="font-body-md text-body-md font-bold">$85.50</p>
+</div>
+<div class="p-sm bg-background rounded-lg border border-outline-variant">
+<label class="font-label-sm text-label-sm text-outline block mb-xs">Category</label>
+<p class="font-body-md text-body-md font-bold text-secondary flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px]">restaurant</span> Dining
+                        </p>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-sm rounded-lg active:scale-95 transition-transform">
+                        Confirm
+                    </button>
+<button class="px-md bg-surface-container-high text-on-surface-variant font-label-md text-label-md py-sm rounded-lg active:scale-95 transition-transform">
+                        Edit
+                    </button>
+</div>
+</div>
+<!-- Transaction Item 2 -->
+<div class="bento-card p-md">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-outline">Scan Result</p>
+<h4 class="font-body-lg text-body-lg font-bold">Unidentified Merchant</h4>
+</div>
+</div>
+<span class="text-on-surface-variant bg-surface-container-high px-sm py-xs rounded text-[10px] font-bold uppercase tracking-wider">Low Confidence</span>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-sm border border-outline-variant mb-md">
+<p class="font-label-md text-label-md text-outline italic mb-xs">Partial OCR Data:</p>
+<p class="font-body-md text-body-md text-on-surface truncate">...TOTAL: $12.00 | DATE: 12/10/23 | ADDR: 123 Main St...</p>
+</div>
+<div class="grid grid-cols-2 gap-sm mb-md">
+<div class="p-sm bg-background rounded-lg border border-outline-variant">
+<label class="font-label-sm text-label-sm text-outline block mb-xs">Amount</label>
+<p class="font-body-md text-body-md font-bold text-error">$12.00</p>
+</div>
+<div class="p-sm bg-background rounded-lg border border-outline-variant">
+<label class="font-label-sm text-label-sm text-outline block mb-xs">Suggested</label>
+<p class="font-body-md text-body-md font-bold text-outline-variant italic">Uncategorized</p>
+</div>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 bg-primary text-on-primary font-label-md text-label-md py-sm rounded-lg active:scale-95 transition-transform">
+                        Resolve
+                    </button>
+<button class="px-md bg-surface-container-high text-on-surface-variant font-label-md text-label-md py-sm rounded-lg active:scale-95 transition-transform">
+                        Ignore
+                    </button>
+</div>
+</div>
+<!-- Promotion / Tips Card -->
+<div class="relative overflow-hidden bento-card p-lg bg-primary text-on-primary">
+
+<div class="relative z-10">
+<h5 class="font-headline-md-mobile text-headline-md-mobile mb-xs">Boost Accuracy</h5>
+<p class="font-body-md text-body-md opacity-80 mb-md">Connect your bank account to automatically match manual entries with real-time statements.</p>
+<button class="bg-secondary-fixed text-on-secondary-fixed px-md py-sm rounded-full font-label-md text-label-md">Link Bank Account</button>
+</div>
+</div>
+<!-- Transaction Item 3 -->
+<div class="bento-card p-md opacity-60">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<div>
+<p class="font-label-md text-label-md text-outline">Group Expense</p>
+<h4 class="font-body-lg text-body-lg font-bold">Shared Uber</h4>
+</div>
+</div>
+</div>
+<div class="flex justify-between items-center bg-surface-container-lowest rounded-lg p-sm border border-outline-variant">
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border border-white bg-secondary-fixed flex items-center justify-center text-[10px] font-bold">JS</div>
+<div class="w-6 h-6 rounded-full border border-white bg-primary-fixed flex items-center justify-center text-[10px] font-bold">AM</div>
+</div>
+<p class="font-label-md text-label-md text-outline">Split Pending...</p>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (The Anchor) -->
+<!-- Applying style_bg_color, style_primary_color, style_typography, style_component_shape, style_separation_logic, style_shadows_and_elevation, style_shell_layout from JSON -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest dark:bg-surface-container-highest px-margin-mobile py-sm rounded-t-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shadow-lg">
+<!-- Home -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed">home</span>
+<span class="font-label-sm text-label-sm-mobile">Home</span>
+</a>
+<!-- Transactions -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile">Transactions</span>
+</a>
+<!-- Capture -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile">Capture</span>
+</a>
+<!-- Groups -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-secondary dark:text-secondary-fixed">groups</span>
+<span class="font-label-sm text-label-sm-mobile">Groups</span>
+</a>
+<!-- Settings - Using Review Inbox as active proxy for this focus -->
+<!-- Note: JSON doesn't have Review Inbox in BottomNav, so we map to the closest intent or keep defaults. Assuming user is navigating to Settings/Inbox -->
+<a class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-sm text-label-sm-mobile">Settings</span>
+</a>
+</nav>
+<!-- FAB Suppression Rule: Not rendering FAB on this task-focused review screen -->
+<script>
+        // Micro-interactions for tab switching
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('bg-primary', 'text-on-primary');
+                    t.classList.add('bg-surface-container-high', 'text-on-surface-variant');
+                });
+                tab.classList.remove('bg-surface-container-high', 'text-on-surface-variant');
+                tab.classList.add('bg-primary', 'text-on-primary');
+            });
+        });
+
+        // Simple haptic-like scale effect on card buttons
+        const actionButtons = document.querySelectorAll('.bento-card button');
+        actionButtons.forEach(btn => {
+            btn.addEventListener('touchstart', () => btn.classList.add('scale-95'));
+            btn.addEventListener('touchend', () => btn.classList.remove('scale-95'));
+        });
+    </script>
+</body></html>

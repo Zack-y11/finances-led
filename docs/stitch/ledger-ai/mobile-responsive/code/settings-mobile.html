@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings | Ledger AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#d9dadb",
+                    "outline-variant": "#c5c6cc",
+                    "surface-container": "#edeeef",
+                    "outline": "#75777c",
+                    "on-tertiary-container": "#00a371",
+                    "on-secondary-fixed": "#001a42",
+                    "background": "#f8f9fa",
+                    "on-primary-fixed": "#121c2a",
+                    "tertiary-container": "#002f1e",
+                    "surface-container-high": "#e7e8e9",
+                    "on-primary-container": "#8690a1",
+                    "surface-tint": "#555f6f",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-secondary-container": "#fefcff",
+                    "primary-fixed-dim": "#bdc7d9",
+                    "inverse-primary": "#bdc7d9",
+                    "surface-variant": "#e1e3e4",
+                    "primary": "#0a1422",
+                    "surface-container-highest": "#e1e3e4",
+                    "primary-fixed": "#d9e3f6",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#2170e4",
+                    "on-tertiary": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "secondary": "#0058be",
+                    "surface-container-lowest": "#ffffff",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-secondary": "#ffffff",
+                    "on-error": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "margin-desktop": "40px",
+                    "xs": "4px",
+                    "md": "16px",
+                    "gutter": "20px",
+                    "xl": "32px",
+                    "margin-mobile": "16px",
+                    "base": "4px",
+                    "lg": "24px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #F9FAFB;
+            color: #191C1D;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid #E5E7EB;
+        }
+        .ambient-shadow {
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen pb-32">
+<!-- Top Navigation Anchor -->
+<header class="sticky top-0 z-40 bg-surface/80 backdrop-blur-md px-margin-mobile h-16 flex items-center justify-between">
+<h1 class="font-headline-md text-headline-md-mobile font-black text-primary">Settings</h1>
+<div class="flex gap-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a young entrepreneur with a clean, modern aesthetic. The lighting is soft and high-key, set against a neutral grey studio background. The subject wears a charcoal minimalist sweater, reflecting the brand's sophisticated and dependable financial identity. High resolution photography with sharp focus on the eyes." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAixwUXCJIUpD4z9tmRHJXkTfqjyys9fCH533o31dOZp8pfbXFTwfH6erqUP-p0RBOEmSFPFJvU-pdcKY9CkidKMj6gJELfXmfnx4p9LQsAFqYGHpsDDCj87FswJmqYJu6fF98WSMfHRWxS9ETFu_V_E8wpMS7IokEgzz0laUc9Xyud7HfLUCZ-4tC07kakq-g5bcuKrhKM4TGsa9X-Wx1WK8Fv4T1rA0TI6u20xAH-mBCTExPO9KC5"/>
+</div>
+</div>
+</header>
+<main class="px-margin-mobile space-y-lg mt-md">
+<!-- Profile Section -->
+<section class="space-y-sm">
+<h2 class="font-label-md text-label-md text-on-surface-variant px-xs">PROFILE</h2>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 ambient-shadow p-md flex items-center gap-md">
+<div class="relative">
+<div class="w-16 h-16 rounded-full overflow-hidden border-2 border-secondary-fixed">
+<img class="w-full h-full object-cover" data-alt="A high-quality close-up portrait of a professional individual against a bright, airy architectural background. The scene is illuminated with natural morning light, creating a sense of calm control and institutional trust. The overall color palette is dominated by whites, soft greys, and a touch of professional blue, matching a premium financial app aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBeK4HQbq0PL2NHaXknHANCaM1lE_Dt7XwTQL28ybxBIWzoslQwNcU9FlD8CwIBdSvxJ78RMRBFAJVLFAclRJBfuWU5Hyz9jUlZeDoQi9FTai4-fbVmj18PoPM4h_g-dq3Qyxp5c281fATyrfyRUuvBplBXvci9tLFHOjQeq3VkSz4NON_IPtEL2pseKt2tfUIO3urfuhH2sBGI2fyP1aeH2mU3vMglZ4Dp327cd1TqK5WJAEYIpy5o"/>
+</div>
+<div class="absolute bottom-0 right-0 bg-secondary text-white rounded-full p-xs border-2 border-surface">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</div>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md-mobile text-primary">Alex Sterling</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">alex.sterling@ledger.ai</p>
+</div>
+</div>
+</section>
+<!-- Privacy & Media Section -->
+<section class="space-y-sm">
+<h2 class="font-label-md text-label-md text-on-surface-variant px-xs">PRIVACY &amp; DATA</h2>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 ambient-shadow overflow-hidden">
+<div class="p-md flex items-center justify-between border-b border-surface-variant/50">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-tertiary-fixed/20 flex items-center justify-center text-on-tertiary-container">
+<span class="material-symbols-outlined">auto_delete</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-primary">Media Auto-Deletion</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Deletes receipt scans after 30 days</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<div class="p-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-primary-fixed/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">security</span>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-primary">Privacy Shield</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Active • Vault encrypted</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Integrations Section (Notion) -->
+<section class="space-y-sm">
+<h2 class="font-label-md text-label-md text-on-surface-variant px-xs">INTEGRATIONS</h2>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 ambient-shadow p-md flex items-center justify-between">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 rounded-lg bg-surface flex items-center justify-center border border-outline-variant/30">
+<img class="w-6 h-6" data-alt="A minimalist black and white icon of the Notion logo, centered on a clean white square background with soft rounded corners. The lighting is flat and modern, evoking a clean, productive workspace feel. High-end fintech UI asset quality." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdUCPd2Xi3evKlLW7wVDwnSkBsFJDW2XKE41gH0EY7h3LeSfDwiZiLQtjOxOyLmbmdiMp2C_SrES3BmtLBjtcofOmYhCjhwoWOVev9Jk2u2AKPZwDMouUE6ZcuZtFr658MEKapmibmElVTI6rGBmI8ffS7M1Z7wt4zg1YnXBhGAj1DvmmIPHde9rNRIn1sEKOKn-ZDZ6hLf9-rWEjej_iLRDFKSwrwRWMZ-2sZqlF-OhTSWTJgr6h8"/>
+</div>
+<div>
+<p class="font-body-lg text-body-lg text-primary">Notion Workspace</p>
+<p class="font-label-sm text-label-sm text-on-tertiary-container flex items-center gap-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-on-tertiary-container"></span>
+                            Connected to "Finance 2024"
+                        </p>
+</div>
+</div>
+<button class="px-md py-sm bg-surface-container-low border border-outline-variant/50 text-primary rounded-lg font-label-md text-label-md transition-all active:scale-95">
+                    Manage
+                </button>
+</div>
+</section>
+<!-- AI Preferences Section -->
+<section class="space-y-sm">
+<h2 class="font-label-md text-label-md text-on-surface-variant px-xs">AI PREFERENCES</h2>
+<div class="grid grid-cols-2 gap-md">
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 ambient-shadow p-md space-y-sm active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<p class="font-body-md text-body-md font-bold text-primary">High Precision</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Deep scanning for complex receipts</p>
+<div class="w-full bg-secondary-fixed h-1 rounded-full mt-xs">
+<div class="bg-secondary h-full w-full rounded-full"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant/30 ambient-shadow p-md space-y-sm opacity-60 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined text-outline">speed</span>
+<p class="font-body-md text-body-md font-bold text-primary">Quick Sync</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Faster processing, basic data</p>
+<div class="w-full bg-surface-variant h-1 rounded-full mt-xs"></div>
+</div>
+</div>
+<div class="bg-primary p-md rounded-xl flex items-center justify-between text-white mt-sm">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-tertiary-fixed">psychology</span>
+<div>
+<p class="font-body-md text-body-md font-bold">Predictive Categorization</p>
+<p class="font-label-sm text-label-sm text-primary-fixed-dim">AI learns your spending habits</p>
+</div>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-white/20 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-primary after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-white after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-tertiary-fixed"></div>
+</label>
+</div>
+</section>
+<!-- Danger Zone -->
+<section class="pt-lg pb-md">
+<button class="w-full py-md border border-error/30 text-error font-body-lg text-body-lg rounded-xl transition-colors hover:bg-error/5 flex items-center justify-center gap-sm">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </button>
+<p class="text-center font-label-sm text-label-sm text-outline mt-lg">Ledger AI v2.4.1 (Privacy Secured)</p>
+</section>
+</main>
+<!-- Bottom Navigation Bar (Mandatory Shell) -->
+<!-- Applying style_shell_layout, style_bg_color, style_component_shape, style_separation_logic from JSON -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm bg-surface-container-lowest rounded-t-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shadow-lg md:hidden">
+<!-- Home -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm-mobile">Home</span>
+</div>
+<!-- Transactions -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile">Transactions</span>
+</div>
+<!-- Capture -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-secondary" data-icon="add_circle" style="font-size: 32px;">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile">Capture</span>
+</div>
+<!-- Groups -->
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm-mobile">Groups</span>
+</div>
+<!-- Settings (ACTIVE) -->
+<!-- Applying style_active_navigation from JSON -->
+<div class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-sm text-label-sm-mobile">Settings</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction: Ripple effect simulation on buttons
+        document.querySelectorAll('button, .cursor-pointer').forEach(button => {
+            button.addEventListener('click', function(e) {
+                this.classList.add('active:scale-95');
+                setTimeout(() => this.classList.remove('active:scale-95'), 150);
+            });
+        });
+
+        // Simple tab switching visual logic for demo
+        const navItems = document.querySelectorAll('nav > div');
+        navItems.forEach(item => {
+            item.addEventListener('click', function() {
+                navItems.forEach(i => {
+                    i.className = "flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer";
+                    const spanIcon = i.querySelector('.material-symbols-outlined');
+                    if(spanIcon) spanIcon.style.fontVariationSettings = "'FILL' 0";
+                });
+                this.className = "flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform cursor-pointer";
+                const activeIcon = this.querySelector('.material-symbols-outlined');
+                if(activeIcon) activeIcon.style.fontVariationSettings = "'FILL' 1";
+            });
+        });
+    </script>
+</body></html>

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+
+<html class="h-full" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ledger AI - Quick Capture</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#bdc7d9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-tint": "#555f6f",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#fefcff",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "background": "#f8f9fa",
+                    "outline": "#75777c",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-primary-fixed": "#121c2a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary-fixed": "#002113",
+                    "on-primary-fixed-variant": "#3d4756",
+                    "outline-variant": "#c5c6cc",
+                    "surface-container-high": "#e7e8e9",
+                    "on-background": "#191c1d",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#00a371",
+                    "on-primary-container": "#8690a1",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e3e4",
+                    "on-secondary-fixed-variant": "#004395",
+                    "primary-fixed": "#d9e3f6",
+                    "primary": "#0a1422",
+                    "primary-container": "#1f2937",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary": "#00180d",
+                    "tertiary-container": "#002f1e",
+                    "inverse-primary": "#bdc7d9",
+                    "surface-container": "#edeeef",
+                    "on-surface-variant": "#44474c",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "surface-bright": "#f8f9fa",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#2170e4",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "secondary": "#0058be",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xl": "32px",
+                    "base": "4px",
+                    "margin-desktop": "40px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": [
+                            "Inter"
+                    ],
+                    "label-sm": [
+                            "Inter"
+                    ],
+                    "body-md": [
+                            "Inter"
+                    ],
+                    "headline-md": [
+                            "Inter"
+                    ],
+                    "display": [
+                            "Inter"
+                    ],
+                    "label-md": [
+                            "Inter"
+                    ],
+                    "headline-lg": [
+                            "Inter"
+                    ],
+                    "headline-lg-mobile": [
+                            "Inter"
+                    ]
+            },
+            "fontSize": {
+                    "body-lg": [
+                            "16px",
+                            {
+                                    "lineHeight": "24px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "label-sm": [
+                            "11px",
+                            {
+                                    "lineHeight": "14px",
+                                    "fontWeight": "500"
+                            }
+                    ],
+                    "body-md": [
+                            "14px",
+                            {
+                                    "lineHeight": "20px",
+                                    "fontWeight": "400"
+                            }
+                    ],
+                    "headline-md": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "display": [
+                            "36px",
+                            {
+                                    "lineHeight": "44px",
+                                    "letterSpacing": "-0.02em",
+                                    "fontWeight": "700"
+                            }
+                    ],
+                    "label-md": [
+                            "12px",
+                            {
+                                    "lineHeight": "16px",
+                                    "letterSpacing": "0.02em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg": [
+                            "24px",
+                            {
+                                    "lineHeight": "32px",
+                                    "letterSpacing": "-0.01em",
+                                    "fontWeight": "600"
+                            }
+                    ],
+                    "headline-lg-mobile": [
+                            "20px",
+                            {
+                                    "lineHeight": "28px",
+                                    "fontWeight": "600"
+                            }
+                    ]
+            }
+    },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings:
+          'FILL' 0,
+          'wght' 400,
+          'GRAD' 0,
+          'opsz' 24
+        }
+        
+        .nav-item { transition: all 0.2s ease-in-out; }
+    </style>
+</head>
+<body class="bg-background text-on-background h-full flex overflow-hidden">
+<!-- SideNavBar (Desktop) -->
+<nav class="hidden md:flex flex-col h-full py-lg px-md bg-surface border-r border-outline-variant w-[280px] shrink-0 z-10 relative">
+<div class="flex items-center gap-sm mb-xl px-sm">
+<span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+<span class="font-headline-lg text-headline-lg font-bold text-primary">Ledger AI</span>
+</div>
+<div class="px-sm mb-lg">
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                Privacy Secured
+            </p>
+</div>
+<ul class="flex flex-col gap-sm flex-grow overflow-y-auto">
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span>Transactions</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-secondary font-bold border-r-2 border-secondary bg-surface-container-low nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span>Quick Capture</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Groups</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">inbox</span>
+<span>Review Inbox</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">rule</span>
+<span>Rules</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span>Accounts</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">category</span>
+<span>Categories</span>
+</a>
+</li>
+<li>
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors nav-item cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</li>
+</ul>
+<div class="mt-auto pt-lg border-t border-outline-variant">
+<a class="flex items-center gap-md px-md py-sm rounded-lg font-body-md text-body-md text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined text-tertiary-fixed-dim">verified_user</span>
+<span>Privacy Status</span>
+</a>
+<button class="mt-md w-full flex items-center justify-center gap-xs font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors py-sm">
+<span class="material-symbols-outlined text-[16px]">keyboard_double_arrow_left</span>
+                Collapse
+            </button>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-grow flex flex-col h-full overflow-hidden bg-background relative z-0">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center w-full px-margin-desktop h-16 bg-surface shadow-[0px_1px_3px_rgba(0,0,0,0.05)] border-b border-outline-variant shrink-0 z-10 relative">
+<div class="flex items-center gap-xl h-full">
+<div class="relative focus-within:ring-2 focus-within:ring-secondary rounded-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full font-body-md text-body-md focus:outline-none focus:ring-0 w-64 text-on-surface transition-all" placeholder="Search..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:text-secondary hover:bg-surface-container-low transition-all relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="bg-[#3B82F6] hover:bg-secondary text-white font-label-md text-label-md px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ml-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Add transaction
+                </button>
+<div class="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant cursor-pointer ml-sm">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a person, neutral background, modern corporate style, soft lighting, 100 words" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAvMgsJ9KeXo_Pyi5S8EdjmCAX0-f_G6QrQDFs41f3ZlxIZ188SDO42vEqkBHLwTOH4gUJLH2icvil3iqKdMPQVMWtom13nFyL0HtwsGiQvydAMV9SehFaq9DFZtMVGVL175x8h-HcYP4AoJORTciIZfs5RgXdVUO2wG4aJKlNKBTzCFMwRVyN_i1f4EVJtNY2lKi7pvqZycKuaqVShtM-nJweZfhRU3bMjlUHz_ssvh0pKOcHCJbKX"/>
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-grow overflow-y-auto p-margin-desktop">
+<div class="max-w-[1000px] mx-auto">
+<header class="mb-xl">
+<h1 class="font-display text-display text-primary mb-sm">Quick Capture</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Record a transaction using text, voice, a receipt, or a manual form.</p>
+</header>
+<!-- Input Methods Tabs -->
+<div class="flex gap-md mb-lg">
+<button class="flex items-center gap-2 px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-secondary shadow-sm ring-1 ring-secondary">
+<span class="material-symbols-outlined text-[18px]">text_fields</span>
+                        Text command
+                    </button>
+<button class="flex items-center gap-2 px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">mic</span>
+                        Voice
+                    </button>
+<button class="flex items-center gap-2 px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+                        Receipt
+                    </button>
+<button class="flex items-center gap-2 px-md py-sm bg-surface-container-lowest border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[18px]">edit_document</span>
+                        Manual
+                    </button>
+</div>
+<!-- Text Command Panel -->
+<div class="bg-surface-container-lowest border border-[#E5E7EB] rounded-xl p-lg shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)] mb-xl">
+<div class="relative">
+<textarea class="w-full h-32 bg-surface-container-low border border-[#D1D5DB] rounded-lg p-md font-body-lg text-body-lg text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-[#3B82F6] focus:ring-2 focus:ring-[#3B82F6]/20 transition-all resize-none" placeholder="e.g., I spent $24.50 on food with cash..."></textarea>
+<div class="absolute bottom-4 right-4 flex items-center gap-sm">
+<button class="bg-[#3B82F6] hover:bg-secondary text-white font-label-md text-label-md px-6 py-2.5 rounded-lg flex items-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+                                Interpret command
+                            </button>
+</div>
+</div>
+<div class="mt-md flex items-start gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant text-[16px] mt-0.5">info</span>
+<div class="font-body-md text-body-md text-on-surface-variant">
+<p class="font-medium mb-1">Try examples like:</p>
+<ul class="flex flex-wrap gap-2">
+<li><button class="px-2 py-1 bg-surface-container-low rounded text-xs hover:bg-surface-container-high transition-colors">"I received $382.16 from Uber..."</button></li>
+<li><button class="px-2 py-1 bg-surface-container-low rounded text-xs hover:bg-surface-container-high transition-colors">"I spent $5 on the bus..."</button></li>
+<li><button class="px-2 py-1 bg-surface-container-low rounded text-xs hover:bg-surface-container-high transition-colors">"Transfer $100 from Checking to Savings"</button></li>
+</ul>
+</div>
+</div>
+</div>
+<!-- Parsed Preview State (Simulated inline) -->
+<div class="bg-surface-container-lowest border border-[#E5E7EB] rounded-xl overflow-hidden shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)] relative">
+<!-- Loading/Scanning Overlay (Hidden by default, shown for structure) -->
+<div class="hidden absolute inset-0 bg-surface/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+<span class="material-symbols-outlined animate-spin text-secondary text-display mb-sm">progress_activity</span>
+<p class="font-label-md text-label-md text-on-surface">Parsing securely on device...</p>
+</div>
+<div class="p-md border-b border-[#F3F4F6] flex justify-between items-center bg-surface-bright">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary">fact_check</span>
+<h2 class="font-headline-md text-headline-md text-primary">Review transaction</h2>
+</div>
+<div class="flex items-center gap-2 bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="font-label-sm text-label-sm">Confidence: 92%</span>
+</div>
+</div>
+<div class="p-lg grid grid-cols-1 md:grid-cols-2 gap-x-gutter gap-y-md">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Action</label>
+<div class="flex items-center gap-2 bg-surface-container-low p-2 rounded border border-transparent">
+<span class="material-symbols-outlined text-[18px] text-error">remove</span>
+<span class="font-body-md text-body-md">Expense</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Amount</label>
+<div class="flex items-center gap-2 bg-surface-container-low p-2 rounded border border-transparent font-headline-md text-headline-md">
+                                $24.50
+                            </div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant flex items-center gap-1">
+                                Merchant
+                                <span class="material-symbols-outlined text-[14px] text-error">error</span>
+</label>
+<div class="flex items-center gap-2 bg-surface-container-lowest p-2 rounded border border-error ring-1 ring-error/20">
+<input class="bg-transparent border-none p-0 w-full font-body-md text-body-md focus:outline-none focus:ring-0 text-on-surface" placeholder="Not detected" type="text"/>
+</div>
+<span class="font-label-sm text-label-sm text-error">Please specify merchant</span>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Account</label>
+<div class="flex items-center justify-between bg-surface-container-lowest p-2 rounded border border-[#D1D5DB] cursor-pointer hover:border-[#3B82F6] transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">account_balance_wallet</span>
+<span class="font-body-md text-body-md">Cash</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Category</label>
+<div class="flex items-center justify-between bg-surface-container-lowest p-2 rounded border border-[#D1D5DB] cursor-pointer hover:border-[#3B82F6] transition-colors">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">restaurant</span>
+<span class="font-body-md text-body-md">Food</span>
+</div>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Group (Optional)</label>
+<div class="flex items-center justify-between bg-surface-container-lowest p-2 rounded border border-[#D1D5DB] cursor-pointer hover:border-[#3B82F6] transition-colors text-on-surface-variant">
+<span>Select group...</span>
+<span class="material-symbols-outlined text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="p-md border-t border-[#F3F4F6] bg-surface-bright flex items-center justify-between">
+<button class="font-label-md text-label-md text-on-surface-variant hover:text-on-surface px-4 py-2 transition-colors">
+                            Cancel
+                        </button>
+<div class="flex gap-sm">
+<button class="bg-surface-container-lowest border border-[#E5E7EB] hover:bg-surface-container-low text-[#1F2937] font-label-md text-label-md px-4 py-2 rounded-lg transition-colors">
+                                Edit details
+                            </button>
+<button class="bg-[#3B82F6] hover:bg-secondary text-white font-label-md text-label-md px-6 py-2 rounded-lg transition-colors flex items-center gap-2">
+                                Confirm and save
+                            </button>
+</div>
+</div>
+</div>
+<div class="mt-xl text-center">
+<p class="font-label-sm text-label-sm text-on-surface-variant flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+                        All inputs are processed securely. Ledger AI does not share your raw data.
+                    </p>
+</div>
+</div>
+</main>
+</div>
+</body></html>

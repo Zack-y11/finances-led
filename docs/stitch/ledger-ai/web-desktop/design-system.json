@@ -1,0 +1,141 @@
+{
+  "projectId": "5357126974574577163",
+  "assetId": "assets/9a8c3491c8e6422b8f0b3452d94e17f6",
+  "version": "1",
+  "designSystem": {
+    "displayName": "Ledger AI",
+    "styleGuidelines": "## Brand & Style\nThe design system is anchored in the principles of financial clarity, institutional trust, and absolute privacy. It avoids the volatile aesthetics of \"fintech-neon\" or crypto-centric patterns in favor of a **Modern Corporate** style that feels stable and dependable. \n\nThe visual narrative is built on a \"Paper & Ink\" philosophy: high-readability dark charcoal text set against a soft, light neutral environment. The UI evokes a sense of calm control through generous whitespace, high-contrast typography, and a deliberate lack of decorative clutter. It is designed for users who value precision over performance art, prioritizing the rapid comprehension of complex financial data.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with strict 8px-based spacing increments. \n\n- **Desktop:** A 12-column grid with a 20px gutter. Content is centered with a max-width of 1280px. Sidebars are fixed at 280px.\n- **Mobile:** A 4-column grid with 16px side margins. Cards should span the full width of the grid minus margins.\n- **Rhythm:** Use 16px (md) for internal card padding and 24px (lg) for vertical section spacing. This creates a \"spacious\" feeling that reduces the anxiety often associated with personal finance management.\n\n## Elevation & Depth\nThis design system uses **Tonal Layers** combined with **Low-Contrast Outlines** to create depth.\n\n- **Level 0 (Canvas):** #F9FAFB. Used for the background.\n- **Level 1 (Cards):** Pure White (#FFFFFF) with a 1px solid border in #E5E7EB. \n- **Shadows:** Use a single, very subtle \"Ambient Shadow\" for Level 1 elements: `0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02)`. Shadows should never be dark or heavy.\n- **Interactions:** When a card is hovered or pressed, the shadow may slightly increase in diffusion, but the primary indicator of focus should be a subtle border color shift to the secondary blue.\n\n## Components\n- **Buttons:** Primary buttons use a solid #3B82F6 fill with white text. Secondary buttons use a white fill with a #E5E7EB border and #1F2937 text.\n- **Inputs:** Fields should have a 1px border (#D1D5DB). On focus, the border transitions to #3B82F6 with a soft 2px blue glow. Labels are always positioned above the field using 'label-md'.\n- **Cards:** The central component. Must have white backgrounds, 16px rounded corners, and a 1px #E5E7EB border. Internal padding is strictly 16px or 24px.\n- **Chips:** Used for transaction categories. Small, 12px font size, pill-shaped, with a very light tinted background (e.g., 10% opacity of the category color).\n- **Icons:** Use Lucide-style 2px stroke width icons. Icons should be sized at 20x20px for most UI actions and 24x24px for navigation.\n- **Charts:** Use thin, clean lines for line charts. Use a single color (Primary Blue) for neutral data and Semantic Colors only when the chart represents positive/negative performance. Avoid heavy gradients or 3D effects.\n- **Lists:** Transaction lists should use a 1px bottom border separator (#F3F4F6) with 12px of vertical padding per item.",
+    "theme": {
+      "bodyFont": "INTER",
+      "bodyFontFamily": "Inter",
+      "colorMode": "LIGHT",
+      "colorVariant": "FIDELITY",
+      "customColor": "#1f2937",
+      "designMd": "---\nname: Ledger AI\ncolors:\n  surface: '#f8f9fa'\n  surface-dim: '#d9dadb'\n  surface-bright: '#f8f9fa'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f3f4f5'\n  surface-container: '#edeeef'\n  surface-container-high: '#e7e8e9'\n  surface-container-highest: '#e1e3e4'\n  on-surface: '#191c1d'\n  on-surface-variant: '#44474c'\n  inverse-surface: '#2e3132'\n  inverse-on-surface: '#f0f1f2'\n  outline: '#75777c'\n  outline-variant: '#c5c6cc'\n  surface-tint: '#555f6f'\n  primary: '#0a1422'\n  on-primary: '#ffffff'\n  primary-container: '#1f2937'\n  on-primary-container: '#8690a1'\n  inverse-primary: '#bdc7d9'\n  secondary: '#0058be'\n  on-secondary: '#ffffff'\n  secondary-container: '#2170e4'\n  on-secondary-container: '#fefcff'\n  tertiary: '#00180d'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#002f1e'\n  on-tertiary-container: '#00a371'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#d9e3f6'\n  primary-fixed-dim: '#bdc7d9'\n  on-primary-fixed: '#121c2a'\n  on-primary-fixed-variant: '#3d4756'\n  secondary-fixed: '#d8e2ff'\n  secondary-fixed-dim: '#adc6ff'\n  on-secondary-fixed: '#001a42'\n  on-secondary-fixed-variant: '#004395'\n  tertiary-fixed: '#6ffbbe'\n  tertiary-fixed-dim: '#4edea3'\n  on-tertiary-fixed: '#002113'\n  on-tertiary-fixed-variant: '#005236'\n  background: '#f8f9fa'\n  on-background: '#191c1d'\n  surface-variant: '#e1e3e4'\ntypography:\n  display:\n    fontFamily: Inter\n    fontSize: 36px\n    fontWeight: '700'\n    lineHeight: 44px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Inter\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  headline-md:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.02em\n  label-sm:\n    fontFamily: Inter\n    fontSize: 11px\n    fontWeight: '500'\n    lineHeight: 14px\n  headline-lg-mobile:\n    fontFamily: Inter\n    fontSize: 20px\n    fontWeight: '600'\n    lineHeight: 28px\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 4px\n  xs: 4px\n  sm: 8px\n  md: 16px\n  lg: 24px\n  xl: 32px\n  gutter: 20px\n  margin-mobile: 16px\n  margin-desktop: 40px\n---\n\n## Brand & Style\nThe design system is anchored in the principles of financial clarity, institutional trust, and absolute privacy. It avoids the volatile aesthetics of \"fintech-neon\" or crypto-centric patterns in favor of a **Modern Corporate** style that feels stable and dependable. \n\nThe visual narrative is built on a \"Paper & Ink\" philosophy: high-readability dark charcoal text set against a soft, light neutral environment. The UI evokes a sense of calm control through generous whitespace, high-contrast typography, and a deliberate lack of decorative clutter. It is designed for users who value precision over performance art, prioritizing the rapid comprehension of complex financial data.\n\n## Colors\nThe palette is governed by functional utility rather than brand expression. The primary color is a deep charcoal, used for maximum text legibility and structural elements.\n\n- **Backgrounds:** Use a very light neutral gray (#F9FAFB) for the base canvas to reduce eye strain, while using pure white (#FFFFFF) for elevated cards to create clear separation.\n- **Semantic Logic:** Color is used strictly for data status. Emerald Green signals growth and income; Coral Red identifies outgoings and budget overages; Amber is reserved for \"Review Required\" or pending states.\n- **Accents:** Muted Blue is utilized for interactive elements like buttons, accounts, and neutral navigation links to provide a clear \"tappable\" affordance without being visually aggressive.\n\n## Typography\nThe design system utilizes **Inter** exclusively to lean into its systematic, utilitarian strengths. \n\n- **Weights:** Use Semi-Bold (600) for all headings to ensure a strong information hierarchy. Regular (400) is used for all body text to maintain a lightweight, airy feel.\n- **Data Display:** For currency and balance amounts, use the 'display' or 'headline-lg' tokens. These should never use the semantic colors unless they represent a specific change in value (delta).\n- **Legibility:** Maintain generous line heights (typically 1.4x to 1.5x the font size) to ensure that dense financial lists remain scannable.\n\n## Layout & Spacing\nThe layout follows a **Fluid Grid** model with strict 8px-based spacing increments. \n\n- **Desktop:** A 12-column grid with a 20px gutter. Content is centered with a max-width of 1280px. Sidebars are fixed at 280px.\n- **Mobile:** A 4-column grid with 16px side margins. Cards should span the full width of the grid minus margins.\n- **Rhythm:** Use 16px (md) for internal card padding and 24px (lg) for vertical section spacing. This creates a \"spacious\" feeling that reduces the anxiety often associated with personal finance management.\n\n## Elevation & Depth\nThis design system uses **Tonal Layers** combined with **Low-Contrast Outlines** to create depth.\n\n- **Level 0 (Canvas):** #F9FAFB. Used for the background.\n- **Level 1 (Cards):** Pure White (#FFFFFF) with a 1px solid border in #E5E7EB. \n- **Shadows:** Use a single, very subtle \"Ambient Shadow\" for Level 1 elements: `0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02)`. Shadows should never be dark or heavy.\n- **Interactions:** When a card is hovered or pressed, the shadow may slightly increase in diffusion, but the primary indicator of focus should be a subtle border color shift to the secondary blue.\n\n## Shapes\nThe shape language is \"Rounded,\" striking a balance between modern friendliness and professional structure.\n\n- **Main UI Elements:** Buttons, inputs, and small widgets use a 0.5rem (8px) radius.\n- **Containers:** Content cards and modals use `rounded-lg` (16px) to create a soft, contained look for financial data.\n- **Selection Indicators:** Use pill-shapes (full rounding) for tags and status chips to distinguish them from actionable buttons.\n\n## Components\n- **Buttons:** Primary buttons use a solid #3B82F6 fill with white text. Secondary buttons use a white fill with a #E5E7EB border and #1F2937 text.\n- **Inputs:** Fields should have a 1px border (#D1D5DB). On focus, the border transitions to #3B82F6 with a soft 2px blue glow. Labels are always positioned above the field using 'label-md'.\n- **Cards:** The central component. Must have white backgrounds, 16px rounded corners, and a 1px #E5E7EB border. Internal padding is strictly 16px or 24px.\n- **Chips:** Used for transaction categories. Small, 12px font size, pill-shaped, with a very light tinted background (e.g., 10% opacity of the category color).\n- **Icons:** Use Lucide-style 2px stroke width icons. Icons should be sized at 20x20px for most UI actions and 24x24px for navigation.\n- **Charts:** Use thin, clean lines for line charts. Use a single color (Primary Blue) for neutral data and Semantic Colors only when the chart represents positive/negative performance. Avoid heavy gradients or 3D effects.\n- **Lists:** Transaction lists should use a 1px bottom border separator (#F3F4F6) with 12px of vertical padding per item.",
+      "font": "INTER",
+      "headlineFont": "INTER",
+      "headlineFontFamily": "Inter",
+      "labelFont": "INTER",
+      "labelFontFamily": "Inter",
+      "namedColors": {
+        "background": "#f8f9fa",
+        "error": "#ba1a1a",
+        "error_container": "#ffdad6",
+        "inverse_on_surface": "#f0f1f2",
+        "inverse_primary": "#bdc7d9",
+        "inverse_surface": "#2e3132",
+        "on_background": "#191c1d",
+        "on_error": "#ffffff",
+        "on_error_container": "#93000a",
+        "on_primary": "#ffffff",
+        "on_primary_container": "#8690a1",
+        "on_primary_fixed": "#121c2a",
+        "on_primary_fixed_variant": "#3d4756",
+        "on_secondary": "#ffffff",
+        "on_secondary_container": "#fefcff",
+        "on_secondary_fixed": "#001a42",
+        "on_secondary_fixed_variant": "#004395",
+        "on_surface": "#191c1d",
+        "on_surface_variant": "#44474c",
+        "on_tertiary": "#ffffff",
+        "on_tertiary_container": "#00a371",
+        "on_tertiary_fixed": "#002113",
+        "on_tertiary_fixed_variant": "#005236",
+        "outline": "#75777c",
+        "outline_variant": "#c5c6cc",
+        "primary": "#0a1422",
+        "primary_container": "#1f2937",
+        "primary_fixed": "#d9e3f6",
+        "primary_fixed_dim": "#bdc7d9",
+        "secondary": "#0058be",
+        "secondary_container": "#2170e4",
+        "secondary_fixed": "#d8e2ff",
+        "secondary_fixed_dim": "#adc6ff",
+        "surface": "#f8f9fa",
+        "surface_bright": "#f8f9fa",
+        "surface_container": "#edeeef",
+        "surface_container_high": "#e7e8e9",
+        "surface_container_highest": "#e1e3e4",
+        "surface_container_low": "#f3f4f5",
+        "surface_container_lowest": "#ffffff",
+        "surface_dim": "#d9dadb",
+        "surface_tint": "#555f6f",
+        "surface_variant": "#e1e3e4",
+        "tertiary": "#00180d",
+        "tertiary_container": "#002f1e",
+        "tertiary_fixed": "#6ffbbe",
+        "tertiary_fixed_dim": "#4edea3"
+      },
+      "overrideNeutralColor": "#f9fafb",
+      "overridePrimaryColor": "#1f2937",
+      "overrideSecondaryColor": "#3b82f6",
+      "overrideTertiaryColor": "#10b981",
+      "roundness": "ROUND_EIGHT",
+      "spacing": {
+        "base": "4px",
+        "gutter": "20px",
+        "lg": "24px",
+        "margin-desktop": "40px",
+        "margin-mobile": "16px",
+        "md": "16px",
+        "sm": "8px",
+        "xl": "32px",
+        "xs": "4px"
+      },
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px"
+        },
+        "body-md": {
+          "fontFamily": "Inter",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px"
+        },
+        "display": {
+          "fontFamily": "Inter",
+          "fontSize": "36px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.02em",
+          "lineHeight": "44px"
+        },
+        "headline-lg": {
+          "fontFamily": "Inter",
+          "fontSize": "24px",
+          "fontWeight": "600",
+          "letterSpacing": "-0.01em",
+          "lineHeight": "32px"
+        },
+        "headline-lg-mobile": {
+          "fontFamily": "Inter",
+          "fontSize": "20px",
+          "fontWeight": "600",
+          "lineHeight": "28px"
+        },
+        "headline-md": {
+          "fontFamily": "Inter",
+          "fontSize": "20px",
+          "fontWeight": "600",
+          "lineHeight": "28px"
+        },
+        "label-md": {
+          "fontFamily": "Inter",
+          "fontSize": "12px",
+          "fontWeight": "600",
+          "letterSpacing": "0.02em",
+          "lineHeight": "16px"
+        },
+        "label-sm": {
+          "fontFamily": "Inter",
+          "fontSize": "11px",
+          "fontWeight": "500",
+          "lineHeight": "14px"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Voice Capture - Ledger AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#bdc7d9",
+                        "error": "#ba1a1a",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-secondary-fixed": "#001a42",
+                        "surface-tint": "#555f6f",
+                        "surface-dim": "#d9dadb",
+                        "surface-container-highest": "#e1e3e4",
+                        "on-secondary-container": "#fefcff",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "background": "#f8f9fa",
+                        "outline": "#75777c",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-primary-fixed": "#121c2a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f3f4f5",
+                        "on-tertiary-fixed": "#002113",
+                        "on-primary-fixed-variant": "#3d4756",
+                        "outline-variant": "#c5c6cc",
+                        "surface-container-high": "#e7e8e9",
+                        "on-background": "#191c1d",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#00a371",
+                        "on-primary-container": "#8690a1",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e1e3e4",
+                        "on-secondary-fixed-variant": "#004395",
+                        "primary-fixed": "#d9e3f6",
+                        "primary": "#0a1422",
+                        "primary-container": "#1f2937",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "tertiary": "#00180d",
+                        "tertiary-container": "#002f1e",
+                        "inverse-primary": "#bdc7d9",
+                        "surface-container": "#edeeef",
+                        "on-surface-variant": "#44474c",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9fa",
+                        "surface-bright": "#f8f9fa",
+                        "on-surface": "#191c1d",
+                        "secondary-container": "#2170e4",
+                        "tertiary-fixed": "#6ffbbe",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "secondary": "#0058be",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "xl": "32px",
+                        "base": "4px",
+                        "margin-desktop": "40px",
+                        "lg": "24px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "20px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #F9FAFB;
+        }
+        
+        .waveform-bar {
+            width: 4px;
+            background-color: #0058be;
+            border-radius: 2px;
+            margin: 0 2px;
+            animation: pulse 1s infinite alternate;
+        }
+
+        .waveform-bar:nth-child(even) {
+            animation-delay: 0.2s;
+        }
+        
+        .waveform-bar:nth-child(3n) {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { height: 8px; }
+            100% { height: 32px; }
+        }
+
+        /* Hide elements by default for state management */
+        #state-recording, #state-processing, #state-review {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-on-surface antialiased pb-24 h-screen flex flex-col">
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col px-margin-mobile pt-xl max-w-[600px] mx-auto w-full relative">
+<header class="mb-lg text-center">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Voice Capture</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-sm">Dictate your transaction details securely.</p>
+</header>
+<!-- Initial State -->
+<div class="flex-1 flex flex-col items-center justify-center animate-fade-in" id="state-initial">
+<button class="w-32 h-32 rounded-full bg-surface-container-lowest border border-outline-variant shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_4px_6px_rgba(0,0,0,0.02)] flex items-center justify-center hover:border-secondary transition-colors mb-lg group" onclick="startRecording()">
+<span class="material-symbols-outlined text-4xl text-primary group-hover:text-secondary transition-colors" data-icon="mic" data-weight="fill" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+<p class="font-headline-md text-headline-md text-primary mb-xs">Start recording</p>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mb-xl">Tap the microphone to begin.</p>
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg p-md mt-auto mb-lg w-full">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-on-surface-variant mt-xs" data-icon="shield_lock">shield_lock</span>
+<div>
+<p class="font-label-md text-label-md text-primary mb-xs">Privacy Assured</p>
+<p class="font-body-md text-body-md text-on-surface-variant">Audio is temporary. Your recording is used only to interpret the transaction details and is deleted immediately after processing.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Recording State -->
+<div class="flex-1 flex flex-col items-center justify-center animate-fade-in" id="state-recording">
+<div class="mb-xl flex items-center h-12">
+<div class="waveform-bar h-4"></div>
+<div class="waveform-bar h-8"></div>
+<div class="waveform-bar h-6"></div>
+<div class="waveform-bar h-3"></div>
+<div class="waveform-bar h-7"></div>
+<div class="waveform-bar h-5"></div>
+<div class="waveform-bar h-8"></div>
+<div class="waveform-bar h-4"></div>
+<div class="waveform-bar h-6"></div>
+<div class="waveform-bar h-5"></div>
+</div>
+<p class="font-headline-lg-mobile text-headline-lg-mobile text-primary mb-xl" id="recording-time">00:04</p>
+<div class="flex gap-lg">
+<button class="w-16 h-16 rounded-full bg-surface-container border border-outline-variant flex items-center justify-center text-on-surface hover:bg-surface-variant transition-colors" onclick="cancelRecording()">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+<button class="w-20 h-20 rounded-full bg-primary-container flex items-center justify-center text-on-primary shadow-md hover:bg-primary transition-colors" onclick="stopRecording()">
+<span class="material-symbols-outlined text-3xl" data-icon="stop" data-weight="fill" style="font-variation-settings: 'FILL' 1;">stop</span>
+</button>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mt-lg">Recording...</p>
+</div>
+<!-- Processing State -->
+<div class="flex-1 flex flex-col items-center justify-center animate-fade-in w-full max-w-sm mx-auto" id="state-processing">
+<div class="w-16 h-16 rounded-full border-4 border-surface-container border-t-secondary animate-spin mb-lg"></div>
+<div class="w-full space-y-md">
+<div class="flex items-center gap-sm text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-body-md text-body-md">Uploading securely...</span>
+</div>
+<div class="flex items-center gap-sm text-primary font-medium">
+<div class="w-6 h-6 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-secondary animate-ping"></div>
+</div>
+<span class="font-body-md text-body-md">Transcribing &amp; Interpreting...</span>
+</div>
+<div class="flex items-center gap-sm text-on-surface-variant opacity-50">
+<span class="material-symbols-outlined" data-icon="delete">delete</span>
+<span class="font-body-md text-body-md">Audio deleted</span>
+</div>
+</div>
+</div>
+<!-- Review State (Parsed Preview) -->
+<div class="flex-1 flex flex-col animate-fade-in w-full" id="state-review">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_4px_6px_rgba(0,0,0,0.02)] mb-lg">
+<div class="flex justify-between items-start mb-md pb-md border-b border-outline-variant">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Detected Merchant</p>
+<h3 class="font-headline-md text-headline-md text-primary">Blue Bottle Coffee</h3>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Amount</p>
+<h3 class="font-headline-md text-headline-md text-primary">$14.50</h3>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-md mb-md">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Category</p>
+<div class="inline-flex items-center gap-xs px-2 py-1 rounded-full bg-secondary-fixed-dim bg-opacity-20 border border-secondary-fixed">
+<span class="material-symbols-outlined text-[14px] text-secondary" data-icon="local_cafe">local_cafe</span>
+<span class="font-label-md text-label-md text-secondary">Dining</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Date</p>
+<p class="font-body-md text-body-md text-primary">Today, 9:42 AM</p>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-xs">Note</p>
+<p class="font-body-md text-body-md text-primary">Morning coffee meeting with client.</p>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-center mb-lg">Transaction ready for review.</p>
+<div class="mt-auto flex flex-col gap-sm">
+<button class="w-full bg-secondary text-on-secondary font-headline-md text-headline-md py-3 rounded-lg shadow-sm hover:bg-opacity-90 transition-colors">
+                    Confirm &amp; Save
+                </button>
+<button class="w-full bg-surface-container-lowest text-primary font-headline-md text-headline-md py-3 rounded-lg border border-outline-variant hover:bg-surface-variant transition-colors" onclick="resetCapture()">
+                    Discard
+                </button>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (from JSON) -->
+<nav class="bg-surface-container-lowest dark:bg-surface-container-highest shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] shadow-lg fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Transactions</span>
+</a>
+<!-- Active State: Capture -->
+<a class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform shadow-sm border border-secondary-fixed-dim" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile font-semibold mt-1">Capture</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Groups</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm-mobile mt-1">Settings</span>
+</a>
+</nav>
+<script>
+        // Simple state management for demonstration
+        const states = {
+            INITIAL: 'state-initial',
+            RECORDING: 'state-recording',
+            PROCESSING: 'state-processing',
+            REVIEW: 'state-review'
+        };
+
+        let timerInterval;
+        let seconds = 0;
+
+        function showState(stateId) {
+            Object.values(states).forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            document.getElementById(stateId).style.display = 'flex';
+        }
+
+        function updateTimer() {
+            seconds++;
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            document.getElementById('recording-time').innerText = `${mins}:${secs}`;
+        }
+
+        function startRecording() {
+            seconds = 0;
+            document.getElementById('recording-time').innerText = '00:00';
+            showState(states.RECORDING);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopRecording() {
+            clearInterval(timerInterval);
+            showState(states.PROCESSING);
+            
+            // Simulate processing time
+            setTimeout(() => {
+                showState(states.REVIEW);
+            }, 3000);
+        }
+
+        function cancelRecording() {
+            clearInterval(timerInterval);
+            showState(states.INITIAL);
+        }
+
+        function resetCapture() {
+            showState(states.INITIAL);
+        }
+
+        // Initialize
+        showState(states.INITIAL);
+    </script>
+</body></html>

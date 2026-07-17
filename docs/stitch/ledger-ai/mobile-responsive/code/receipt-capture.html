@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Receipt Capture - Ledger AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#bdc7d9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-tint": "#555f6f",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#fefcff",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "background": "#f8f9fa",
+                    "outline": "#75777c",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-primary-fixed": "#121c2a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary-fixed": "#002113",
+                    "on-primary-fixed-variant": "#3d4756",
+                    "outline-variant": "#c5c6cc",
+                    "surface-container-high": "#e7e8e9",
+                    "on-background": "#191c1d",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#00a371",
+                    "on-primary-container": "#8690a1",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e3e4",
+                    "on-secondary-fixed-variant": "#004395",
+                    "primary-fixed": "#d9e3f6",
+                    "primary": "#0a1422",
+                    "primary-container": "#1f2937",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary": "#00180d",
+                    "tertiary-container": "#002f1e",
+                    "inverse-primary": "#bdc7d9",
+                    "surface-container": "#edeeef",
+                    "on-surface-variant": "#44474c",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "surface-bright": "#f8f9fa",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#2170e4",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "secondary": "#0058be",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xl": "32px",
+                    "base": "4px",
+                    "margin-desktop": "40px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        /* Hide scrollbar for a cleaner mobile app look if viewed on desktop */
+        ::-webkit-scrollbar { display: none; }
+        
+        /* Simple animations for state transitions */
+        .fade-in { animation: fadeIn 0.3s ease-in forwards; }
+        .fade-out { animation: fadeOut 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Scanner line animation */
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: theme('colors.secondary');
+            box-shadow: 0 0 8px theme('colors.secondary');
+            animation: scan 2s infinite linear;
+        }
+        @keyframes scan {
+            0% { top: 0; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased md:flex md:justify-center md:items-center min-h-screen md:bg-surface-container">
+<!-- Mobile Device Simulator Container (for desktop viewing context) -->
+<main class="w-full h-[884px] md:h-[844px] md:w-[390px] bg-surface relative overflow-hidden md:rounded-[40px] md:shadow-2xl md:border-8 border-surface-container-highest flex flex-col">
+<!-- ==================== STATE 1: CAMERA ==================== -->
+<section class="absolute inset-0 z-10 bg-inverse-surface flex flex-col transition-opacity duration-300" id="state-camera">
+<!-- Simulated Camera Feed Background -->
+<div class="absolute inset-0 z-0 bg-cover bg-center opacity-80" data-alt="A slightly blurred, top-down perspective of a wrinkled white paper receipt resting on a dark wooden table in a dimly lit cafe. The lighting is slightly warm, creating soft shadows. The visual aesthetic is a realistic smartphone camera preview seeking focus." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCR4wJHRX3xAvJV_I_TIdGBIiB0yYsWrdF7aMUJ5T4-1Exne5pO7xIzxusgWoMUDCdMFje0FiyfrnFiIdN-Y_nR31LN91Qo9XzziHvcsyoZCstAWS7Yk7LH2GRyhj9s0RFLOeuyu9-VnUG8pdB1gRj6MoqAzHirzhXlnzeO9nD0eMLVTsTv2WLvl0FutpAHPKTiS6P0q__zVzaU5PeQ_q3ie7n6AGUqnmF1D0s7M6se9qAi8eTkyKJi')">
+</div>
+<!-- Top Controls -->
+<header class="relative z-20 flex justify-between items-center p-margin-mobile pt-[60px] md:pt-margin-mobile">
+<button aria-label="Toggle Flash" class="w-10 h-10 rounded-full bg-surface-container-highest/20 backdrop-blur-md flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">flash_off</span>
+</button>
+<div class="px-md py-sm rounded-full bg-surface-container-highest/20 backdrop-blur-md text-on-primary font-label-md text-label-md flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-tertiary-fixed-dim animate-pulse"></span>
+                    Auto-Capture
+                </div>
+<button aria-label="Upload from Gallery" class="w-10 h-10 rounded-full bg-surface-container-highest/20 backdrop-blur-md flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">photo_library</span>
+</button>
+</header>
+<!-- Viewfinder Area -->
+<div class="relative z-20 flex-1 flex flex-col items-center justify-center px-margin-mobile pb-xl">
+<p class="text-on-primary font-body-md text-body-md mb-lg text-center bg-inverse-surface/50 px-4 py-2 rounded-lg backdrop-blur-sm">
+                    Place the full receipt inside the frame.
+                </p>
+<!-- Frame Guide -->
+<div class="w-full aspect-[3/4] max-w-[300px] border border-outline/30 relative">
+<!-- Corner Brackets -->
+<div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-on-primary rounded-tl-lg"></div>
+<div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-on-primary rounded-tr-lg"></div>
+<div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-on-primary rounded-bl-lg"></div>
+<div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-on-primary rounded-br-lg"></div>
+</div>
+</div>
+<!-- Capture Bottom Area -->
+<div class="relative z-20 h-[140px] bg-gradient-to-t from-inverse-surface to-transparent flex items-center justify-center pb-[80px]"> <!-- pb offsets for bottom nav space -->
+<button aria-label="Capture Receipt" class="w-20 h-20 rounded-full border-4 border-surface-container-highest flex items-center justify-center bg-transparent active:scale-95 transition-transform" id="btn-capture">
+<div class="w-[68px] h-[68px] rounded-full bg-surface-container-lowest"></div>
+</button>
+</div>
+</section>
+<!-- ==================== STATE 2: PREVIEW ==================== -->
+<section class="absolute inset-0 z-20 bg-surface flex flex-col hidden opacity-0 transition-opacity duration-300" id="state-preview">
+<header class="flex-none pt-[60px] md:pt-margin-mobile px-margin-mobile pb-md flex justify-between items-center bg-surface z-10">
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Preview</h1>
+</header>
+<div class="flex-1 overflow-hidden relative bg-surface-container flex items-center justify-center px-margin-mobile py-md">
+<div class="w-full max-w-[300px] aspect-[3/4] bg-cover bg-center rounded-xl shadow-lg border border-outline-variant" data-alt="A clear, perfectly framed photo of a white store receipt showing various line items and a total amount, resting on a dark surface. The image is crisp and well-lit, typical of a scanned document." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCJjxT1DrnYBKxeKtbmxw54LYxPpx7Dpli42hCW9ADCLlhttUTsBpycWEmEOMc-4eBsbGVoUs4ri9pIgA6M42YaGaMZWZvlkLpbJZRIMh1bGkyUwIFLNS5UiIbBhr4rF4H7SiFnb1yH_Uid3YJ48cgGJLFw3rG6UmgyF50HaSc3MBzXdGaZ8d0iBgj_aDv634yYFSMPTnYDXrgP3LcPnRmYhejXtgbquSZ7zvMyrHPUP5RIGfdWDIrI')">
+</div>
+</div>
+<div class="flex-none h-[140px] bg-surface flex items-center justify-between px-margin-mobile pb-[80px]">
+<button class="px-lg py-3 rounded-lg border border-outline-variant text-on-surface-variant font-label-md text-label-md bg-surface-container-lowest active:scale-95 transition-transform" id="btn-retake">
+                    Retake
+                </button>
+<button class="px-lg py-3 rounded-lg bg-primary text-on-primary font-label-md text-label-md active:scale-95 transition-transform flex items-center gap-2" id="btn-use">
+                    Use photo
+                    <span class="material-symbols-outlined text-[18px]">check</span>
+</button>
+</div>
+</section>
+<!-- ==================== STATE 3: PROCESSING ==================== -->
+<section class="absolute inset-0 z-30 bg-surface flex flex-col items-center justify-center hidden opacity-0 transition-opacity duration-300 px-margin-mobile" id="state-processing">
+<!-- Animated Placeholder for Processing Visual -->
+<div class="w-48 h-48 relative mb-xl rounded-2xl overflow-hidden border border-outline-variant bg-surface-container-highest">
+<div class="absolute inset-0 bg-cover bg-center opacity-50 grayscale" data-alt="A faded, grayscale image of a receipt, acting as a background layer while processing occurs." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbJQ0F7OiGfkD5VgvETnNKygA_EO71TJS2Qh4lsHOy1MGuqHlbqcuWM1mBYbMbQvVk5Ji_CUi-J44BZyILKw4H-Y_QSP3hikdEQrTfLKWZKDRKMitwy0-wBJJ6QXf3tMiankV4JSfxJhKONopdZczTpukYAlZhZl-oGx0L4Fn15FJ3Fsrp6unQic4_EqI20M0ofH2GYt07dfn-yCoRTM2VKJVZInFwt4SRVOxhBpVZyEAxlGHncrYU')"></div>
+<div class="scan-line"></div>
+</div>
+<h2 class="font-headline-lg text-headline-lg-mobile text-on-surface mb-md">Analyzing Receipt</h2>
+<div class="w-full max-w-[280px] space-y-sm">
+<div class="flex items-center gap-3 text-secondary font-label-md text-label-md" id="proc-step-1">
+<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span>
+                    Reading text...
+                </div>
+<div class="flex items-center gap-3 text-on-surface-variant font-label-md text-label-md opacity-50" id="proc-step-2">
+<span class="material-symbols-outlined text-[20px]">radio_button_unchecked</span>
+                    Detecting amounts...
+                </div>
+<div class="flex items-center gap-3 text-on-surface-variant font-label-md text-label-md opacity-50" id="proc-step-3">
+<span class="material-symbols-outlined text-[20px]">radio_button_unchecked</span>
+                    Securely deleting image...
+                </div>
+</div>
+</section>
+<!-- ==================== STATE 4: DRAFT RESULT ==================== -->
+<section class="absolute inset-0 z-40 bg-background flex flex-col hidden opacity-0 transition-opacity duration-300" id="state-draft">
+<!-- Top App Bar -->
+<header class="flex-none pt-[60px] md:pt-margin-mobile px-margin-mobile pb-md flex items-center gap-4 bg-surface border-b border-outline-variant">
+<button aria-label="Back" class="w-10 h-10 flex items-center justify-center text-on-surface hover:bg-surface-container rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface font-bold">Review Capture</h1>
+</header>
+<div class="flex-1 overflow-y-auto px-margin-mobile py-lg pb-[100px]">
+<!-- Privacy Confirmation Anchor -->
+<div class="mb-lg bg-surface-container-low border border-surface-container-highest rounded-xl p-md flex gap-4 items-start shadow-sm">
+<span class="material-symbols-outlined text-on-tertiary-container mt-1" style="font-variation-settings: 'FILL' 1;">security</span>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Privacy Secured</h3>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">
+                            The original receipt image has been permanently deleted from your device and our servers. Only the extracted data below will be saved.
+                        </p>
+</div>
+</div>
+<!-- Data Form Card -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl shadow-[0px_1px_3px_rgba(0,0,0,0.05),_0px_4px_6px_rgba(0,0,0,0.02)] p-lg space-y-lg relative overflow-hidden">
+<!-- Confidence Indicator -->
+<div class="absolute top-0 right-0 bg-tertiary-fixed-dim text-on-tertiary-fixed font-label-sm text-label-sm px-3 py-1 rounded-bl-lg flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">verified</span>
+                        98% Match
+                    </div>
+<!-- Fields -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Merchant</label>
+<div class="font-headline-lg text-headline-lg-mobile text-on-surface border-b border-outline-variant pb-xs">
+                            Blue Bottle Coffee
+                        </div>
+</div>
+<div class="flex gap-md">
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Total Amount</label>
+<div class="font-headline-lg text-headline-lg-mobile text-on-surface border-b border-outline-variant pb-xs">
+                                $14.50
+                            </div>
+</div>
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Date</label>
+<div class="font-body-lg text-body-lg text-on-surface border-b border-outline-variant pb-xs h-[33px] flex items-end">
+                                Oct 24, 2023
+                            </div>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm">Suggested Category</label>
+<div class="flex flex-wrap gap-2">
+<button class="bg-primary-fixed text-on-primary-fixed border border-primary-fixed-dim rounded-full px-4 py-2 font-label-md text-label-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">restaurant</span>
+                                Dining &amp; Drinks
+                            </button>
+<button class="bg-surface text-on-surface-variant border border-outline-variant rounded-full px-4 py-2 font-label-md text-label-md">
+                                Office Supplies
+                            </button>
+</div>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-sm">Account</label>
+<div class="bg-surface flex items-center justify-between p-sm rounded-lg border border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-secondary-container text-on-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">credit_card</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface">Chase Sapphire ··4412</span>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Final Action -->
+<div class="mt-xl">
+<button class="w-full bg-primary text-on-primary rounded-xl py-4 font-label-md text-label-md shadow-md active:scale-[0.98] transition-transform" id="btn-save">
+                        Confirm &amp; Save Transaction
+                    </button>
+<button class="w-full mt-sm bg-transparent text-on-surface-variant py-3 font-label-md text-label-md">
+                        Discard
+                    </button>
+</div>
+</div>
+</section>
+<!-- ==================== SHARED COMPONENT: BottomNavBar ==================== -->
+<!-- Logic applied: Shell Visibility (visible on main tab), Contextual State (Capture highlighted) -->
+<nav class="fixed md:absolute bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm bg-surface-container-lowest dark:bg-surface-container-highest shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform font-label-sm text-label-sm w-16">
+<span class="material-symbols-outlined mb-1">home</span>
+                Home
+            </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform font-label-sm text-label-sm w-16">
+<span class="material-symbols-outlined mb-1">receipt_long</span>
+                Transactions
+            </button>
+<!-- ACTIVE TAB -->
+<button class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform font-label-sm text-label-sm w-16 shadow-sm">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+                Capture
+            </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform font-label-sm text-label-sm w-16">
+<span class="material-symbols-outlined mb-1">groups</span>
+                Groups
+            </button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform font-label-sm text-label-sm w-16">
+<span class="material-symbols-outlined mb-1">settings</span>
+                Settings
+            </button>
+</nav>
+</main>
+<!-- Simple JS to simulate the flow for demonstration -->
+<script>
+        const stateCamera = document.getElementById('state-camera');
+        const statePreview = document.getElementById('state-preview');
+        const stateProcessing = document.getElementById('state-processing');
+        const stateDraft = document.getElementById('state-draft');
+
+        const btnCapture = document.getElementById('btn-capture');
+        const btnRetake = document.getElementById('btn-retake');
+        const btnUse = document.getElementById('btn-use');
+        const btnSave = document.getElementById('btn-save');
+
+        function switchState(hideEl, showEl) {
+            hideEl.classList.remove('opacity-100');
+            hideEl.classList.add('opacity-0');
+            setTimeout(() => {
+                hideEl.classList.add('hidden');
+                showEl.classList.remove('hidden');
+                // small delay to allow display:block to apply before fading in
+                setTimeout(() => {
+                    showEl.classList.remove('opacity-0');
+                    showEl.classList.add('opacity-100');
+                }, 50);
+            }, 300);
+        }
+
+        btnCapture.addEventListener('click', () => {
+            switchState(stateCamera, statePreview);
+        });
+
+        btnRetake.addEventListener('click', () => {
+            switchState(statePreview, stateCamera);
+        });
+
+        btnUse.addEventListener('click', () => {
+            switchState(statePreview, stateProcessing);
+            simulateProcessing();
+        });
+
+        btnSave.addEventListener('click', () => {
+            // Reset to beginning for demo purposes
+            switchState(stateDraft, stateCamera);
+        });
+
+        function simulateProcessing() {
+            const s1 = document.getElementById('proc-step-1');
+            const s2 = document.getElementById('proc-step-2');
+            const s3 = document.getElementById('proc-step-3');
+
+            // Reset steps
+            s1.className = "flex items-center gap-3 text-secondary font-label-md text-label-md";
+            s1.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Reading text...`;
+            s2.className = "flex items-center gap-3 text-on-surface-variant font-label-md text-label-md opacity-50";
+            s2.innerHTML = `<span class="material-symbols-outlined text-[20px]">radio_button_unchecked</span> Detecting amounts...`;
+            s3.className = "flex items-center gap-3 text-on-surface-variant font-label-md text-label-md opacity-50";
+            s3.innerHTML = `<span class="material-symbols-outlined text-[20px]">radio_button_unchecked</span> Securely deleting image...`;
+
+            setTimeout(() => {
+                s1.className = "flex items-center gap-3 text-on-surface-variant font-label-md text-label-md";
+                s1.innerHTML = `<span class="material-symbols-outlined text-[20px]">check_circle</span> Reading text...`;
+                
+                s2.className = "flex items-center gap-3 text-secondary font-label-md text-label-md";
+                s2.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Detecting amounts...`;
+            }, 1000);
+
+            setTimeout(() => {
+                s2.className = "flex items-center gap-3 text-on-surface-variant font-label-md text-label-md";
+                s2.innerHTML = `<span class="material-symbols-outlined text-[20px]">check_circle</span> Detecting amounts...`;
+                
+                s3.className = "flex items-center gap-3 text-error font-label-md text-label-md";
+                s3.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-pulse">delete_forever</span> Securely deleting image...`;
+            }, 2000);
+
+            setTimeout(() => {
+                switchState(stateProcessing, stateDraft);
+            }, 3000);
+        }
+    </script>
+</body></html>

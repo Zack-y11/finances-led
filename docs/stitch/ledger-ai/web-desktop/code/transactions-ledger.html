@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ledger AI - Transactions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#bdc7d9",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-secondary-fixed": "#001a42",
+                      "surface-tint": "#555f6f",
+                      "surface-dim": "#d9dadb",
+                      "surface-container-highest": "#e1e3e4",
+                      "on-secondary-container": "#fefcff",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "background": "#f8f9fa",
+                      "outline": "#75777c",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-primary-fixed": "#121c2a",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-low": "#f3f4f5",
+                      "on-tertiary-fixed": "#002113",
+                      "on-primary-fixed-variant": "#3d4756",
+                      "outline-variant": "#c5c6cc",
+                      "surface-container-high": "#e7e8e9",
+                      "on-background": "#191c1d",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-container": "#00a371",
+                      "on-primary-container": "#8690a1",
+                      "error-container": "#ffdad6",
+                      "surface-variant": "#e1e3e4",
+                      "on-secondary-fixed-variant": "#004395",
+                      "primary-fixed": "#d9e3f6",
+                      "primary": "#0a1422",
+                      "primary-container": "#1f2937",
+                      "on-primary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "tertiary": "#00180d",
+                      "tertiary-container": "#002f1e",
+                      "inverse-primary": "#bdc7d9",
+                      "surface-container": "#edeeef",
+                      "on-surface-variant": "#44474c",
+                      "inverse-surface": "#2e3132",
+                      "on-tertiary": "#ffffff",
+                      "surface": "#f8f9fa",
+                      "surface-bright": "#f8f9fa",
+                      "on-surface": "#191c1d",
+                      "secondary-container": "#2170e4",
+                      "tertiary-fixed": "#6ffbbe",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "secondary": "#0058be",
+                      "on-secondary": "#ffffff",
+                      "inverse-on-surface": "#f0f1f2"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "xl": "32px",
+                      "base": "4px",
+                      "margin-desktop": "40px",
+                      "lg": "24px",
+                      "md": "16px",
+                      "xs": "4px",
+                      "margin-mobile": "16px",
+                      "gutter": "20px"
+              },
+              "fontFamily": {
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display": [
+                              "Inter"
+                      ],
+                      "label-md": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-md": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display": [
+                              "36px",
+                              {
+                                      "lineHeight": "44px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F9FAFB; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .icon-fill { font-variation-settings: 'FILL' 1; }
+        
+        /* Ambient Shadow for Level 1 Cards */
+        .ambient-shadow { box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02); }
+        
+        /* Table Styles */
+        .table-row-hover:hover { background-color: #f3f4f5; }
+        
+        /* Hide scrollbar for clean look in drawer */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background text-on-background flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col bg-surface fixed left-0 top-0 h-full w-[280px] border-r border-outline-variant py-lg px-md z-40">
+<div class="flex items-center gap-sm mb-xl px-sm">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="A minimalist, modern geometric logo for a finance app, featuring intersecting abstract shapes in deep charcoal grey and muted blue on a crisp white background. The design feels stable, precise, and institutional. High resolution, flat lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJifAZcHdjXKmfT-KJtC8oyA584DtNwls0jrimbXdSeD84s2a4lI7JuQNSlBkNwmX_-EuenkuxBsyp9yxvFze3qM-6_tnoAUJW0y1kw_Ibx1dyrJcjuuLF6roHzlFW4EvwOJVUiSGMN59ltyWtRzBycw0X5L2a2aFn4mWb6tGxvrZy0Kr481P3pN6sUCNHslHcsBpS9rZAZqikdXTgvBgz2ahq9n4CQ4qm8H0XWPrOWdf0GLF1HjYO"/>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Ledger AI</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Privacy Secured</p>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-sm overflow-y-auto no-scrollbar">
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span>Overview</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-secondary font-bold border-r-2 border-secondary font-body-md text-body-md cursor-pointer active:scale-95 bg-surface-container-low" href="#">
+<span class="material-symbols-outlined icon-fill">receipt_long</span>
+<span>Transactions</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">bolt</span>
+<span>Quick Capture</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>Groups</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">inbox</span>
+<span>Review Inbox</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">rule</span>
+<span>Rules</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span>Accounts</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">category</span>
+<span>Categories</span>
+</a>
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto pt-lg border-t border-outline-variant">
+<a class="flex items-center gap-md px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-body-md text-body-md cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">verified_user</span>
+<span>Privacy Status</span>
+</a>
+<button class="w-full mt-sm flex items-center justify-center gap-sm px-sm py-sm rounded-lg hover:bg-surface-container-low transition-colors text-on-surface-variant font-label-md text-label-md cursor-pointer active:scale-95 border border-outline-variant">
+<span class="material-symbols-outlined text-[18px]">keyboard_double_arrow_left</span>
+<span>Collapse</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col ml-0 md:ml-[280px] transition-all duration-300 relative mr-[360px]">
+<!-- TopNavBar -->
+<header class="hidden md:flex bg-surface w-full h-16 border-b border-outline-variant justify-between items-center px-margin-desktop z-30 sticky top-0 shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-xl">
+<!-- Nav links not rendered as side nav is primary on desktop per design intent, but matching JSON structure -->
+<span class="font-headline-lg text-headline-lg font-black text-primary">Transactions</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-on-surface-variant hover:text-secondary transition-all p-2 rounded-full hover:bg-surface-container-low focus-within:ring-2 focus-within:ring-secondary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-all p-2 rounded-full hover:bg-surface-container-low focus-within:ring-2 focus-within:ring-secondary">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-4 py-2 rounded-lg hover:bg-primary-container transition-colors shadow-sm flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Add transaction
+                </button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant cursor-pointer ml-2" data-alt="A professional headshot of a business person, softly lit against a neutral grey background. The styling is minimal and corporate. High resolution." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlFXJjlVxle0Lj_pq8O2wboNv-doqFXbeAkopO2LQUlZh4oIhbr0u_lGGlzeevwhCinFkPvhdV6gljXV4ZBGBJasdO8udv6QAxTisLFxNP-wdVU6HFVTnm7w0vt-O12CekP74Je3YicNVtvBfyTCK_polR9CQjQYg4V-eIFQOWWRPqEaW_ENOpmCMnyKw94kc336aqSzmaA101BI1-Dwcg12_pvlzwR7n3EVJ6TpQW4mQ8w3Zp96FF"/>
+</div>
+</header>
+<!-- Page Content -->
+<div class="flex-1 overflow-y-auto p-margin-desktop no-scrollbar flex flex-col gap-lg">
+<!-- Header Section -->
+<section class="flex flex-col gap-sm">
+<h2 class="font-display text-display text-primary">Transactions</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Every financial movement recorded in your ledger.</p>
+</section>
+<!-- Toolbar -->
+<section class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant ambient-shadow flex flex-wrap gap-md items-center justify-between">
+<div class="flex flex-wrap gap-md items-center flex-1">
+<!-- Search -->
+<div class="relative flex-1 min-w-[200px] max-w-[320px]">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full pl-10 pr-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md focus:outline-none focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" placeholder="Search transactions..." type="text"/>
+</div>
+<!-- Date Selector -->
+<div class="relative">
+<button class="flex items-center gap-2 px-3 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant">calendar_today</span>
+                            This Month
+                            <span class="material-symbols-outlined text-[20px] text-on-surface-variant">arrow_drop_down</span>
+</button>
+</div>
+<!-- Filters -->
+<div class="flex items-center gap-2 border-l border-outline-variant pl-4">
+<button class="px-3 py-1.5 bg-surface-container-low border border-outline-variant rounded-full font-label-md text-label-md text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-1">
+                            Type: All <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+<button class="px-3 py-1.5 bg-surface border border-outline-variant rounded-full font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+                            Account <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+<button class="px-3 py-1.5 bg-surface border border-outline-variant rounded-full font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-1">
+                            Category <span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center bg-surface border border-outline-variant rounded-full hover:bg-surface-container-low transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="flex items-center gap-2 px-3 py-2 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md hover:bg-surface-container-low transition-colors text-on-surface">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Export
+                    </button>
+</div>
+</section>
+<!-- Ledger Table (Bento/Card style wrapper) -->
+<section class="bg-surface-container-lowest rounded-xl border border-outline-variant ambient-shadow overflow-hidden flex-1 flex flex-col min-h-[500px]">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[1000px]">
+<thead>
+<tr class="border-b border-outline-variant bg-surface">
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Date</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Description</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Category</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Account</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold">Status</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold text-right">Amount</th>
+<th class="py-3 px-4 font-label-md text-label-md text-on-surface-variant font-semibold text-center w-16"></th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md">
+<!-- Row 1: Selected State -->
+<tr class="border-b border-outline-variant table-row-hover bg-secondary-fixed-dim/20 cursor-pointer">
+<td class="py-3 px-4 text-on-surface whitespace-nowrap">Oct 24, 2023</td>
+<td class="py-3 px-4 text-on-surface font-medium truncate max-w-[200px]">Whole Foods Market #1029</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0369A1] font-label-sm text-label-sm border border-[#BAE6FD]">Groceries</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Chase Sapphire</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 text-on-tertiary-container text-[12px]"><span class="material-symbols-outlined text-[14px]">check_circle</span> Posted</span>
+</td>
+<td class="py-3 px-4 text-right font-semibold text-error">-$142.50</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="border-b border-outline-variant table-row-hover cursor-pointer">
+<td class="py-3 px-4 text-on-surface whitespace-nowrap">Oct 23, 2023</td>
+<td class="py-3 px-4 text-on-surface font-medium truncate max-w-[200px]">Acme Corp Payroll</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#15803D] font-label-sm text-label-sm border border-[#BBF7D0]">Income</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">BoA Checking</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 text-on-tertiary-container text-[12px]"><span class="material-symbols-outlined text-[14px]">check_circle</span> Posted</span>
+</td>
+<td class="py-3 px-4 text-right font-semibold text-on-tertiary-container">+$3,250.00</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3: Needs Review -->
+<tr class="border-b border-outline-variant table-row-hover cursor-pointer">
+<td class="py-3 px-4 text-on-surface whitespace-nowrap">Oct 22, 2023</td>
+<td class="py-3 px-4 text-on-surface font-medium truncate max-w-[200px]">AMZN Mktp US*TO3</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm border border-outline-variant">Uncategorized</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Amex Gold</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 text-[#B45309] text-[12px] bg-[#FEF3C7] px-2 py-0.5 rounded-full"><span class="material-symbols-outlined text-[14px]">warning</span> Needs review</span>
+</td>
+<td class="py-3 px-4 text-right font-semibold text-error">-$45.99</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="border-b border-outline-variant table-row-hover cursor-pointer">
+<td class="py-3 px-4 text-on-surface whitespace-nowrap">Oct 20, 2023</td>
+<td class="py-3 px-4 text-on-surface font-medium truncate max-w-[200px]">Shell Station #882</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#F3E8FF] text-[#7E22CE] font-label-sm text-label-sm border border-[#E9D5FF]">Transport</span>
+</td>
+<td class="py-3 px-4 text-on-surface-variant">Chase Sapphire</td>
+<td class="py-3 px-4">
+<span class="inline-flex items-center gap-1 text-on-tertiary-container text-[12px]"><span class="material-symbols-outlined text-[14px]">check_circle</span> Posted</span>
+</td>
+<td class="py-3 px-4 text-right font-semibold text-error">-$38.20</td>
+<td class="py-3 px-4 text-center">
+<button class="text-on-surface-variant hover:text-primary"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- Details Drawer (Open) -->
+<aside class="fixed right-0 top-0 h-full w-[360px] bg-surface-container-lowest border-l border-outline-variant shadow-[-4px_0_15px_rgba(0,0,0,0.05)] z-50 flex flex-col transform transition-transform duration-300 translate-x-0">
+<!-- Drawer Header -->
+<div class="px-md py-4 border-b border-outline-variant flex items-center justify-between bg-surface">
+<h3 class="font-headline-md text-headline-md text-primary">Transaction Details</h3>
+<button class="p-1 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Drawer Content -->
+<div class="flex-1 overflow-y-auto p-md no-scrollbar flex flex-col gap-lg">
+<!-- Hero Data -->
+<div class="flex flex-col items-center justify-center py-sm border-b border-outline-variant pb-md">
+<div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center mb-2">
+<span class="material-symbols-outlined text-[24px] text-on-surface-variant">shopping_cart</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-primary text-center">Whole Foods Market #1029</h2>
+<p class="font-display text-display text-error mt-2 font-bold">-$142.50</p>
+<div class="flex gap-2 mt-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-[#E0F2FE] text-[#0369A1] font-label-sm text-label-sm border border-[#BAE6FD]">Groceries</span>
+<span class="inline-flex items-center gap-1 text-on-tertiary-container text-[12px] bg-surface px-2 py-0.5 rounded-full border border-outline-variant"><span class="material-symbols-outlined text-[14px]">check_circle</span> Posted</span>
+</div>
+</div>
+<!-- Meta Data Grid -->
+<div class="grid grid-cols-2 gap-y-4 gap-x-2">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Date</span>
+<span class="font-body-md text-body-md text-on-surface mt-1">Oct 24, 2023, 14:32</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Account</span>
+<span class="font-body-md text-body-md text-on-surface mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">credit_card</span> Chase Sapphire
+                    </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Type</span>
+<span class="font-body-md text-body-md text-on-surface mt-1">Expense</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Input Method</span>
+<span class="font-body-md text-body-md text-on-surface mt-1">Plaid Sync</span>
+</div>
+</div>
+<!-- AI Confidence Score -->
+<div class="bg-surface p-4 rounded-xl border border-outline-variant">
+<div class="flex justify-between items-center mb-2">
+<span class="font-label-md text-label-md text-on-surface font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">smart_toy</span> AI Categorization
+                    </span>
+<span class="font-label-md text-label-md text-on-tertiary-container">98% Confidence</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-1.5 mt-2">
+<div class="bg-on-tertiary-container h-1.5 rounded-full" style="width: 98%"></div>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-2">Rule matched: "Whole Foods" -&gt; Groceries</p>
+</div>
+<!-- Audit Timeline -->
+<div>
+<h4 class="font-headline-md text-body-lg text-primary mb-4 font-semibold border-b border-outline-variant pb-2">Audit Timeline</h4>
+<div class="relative pl-6 border-l-2 border-surface-container-high space-y-6">
+<div class="relative">
+<div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-surface border-2 border-outline-variant"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Command Received</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Oct 24, 14:32:01 • via Plaid Sync</span>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-surface border-2 border-secondary"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Category Resolved</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Oct 24, 14:32:05 • AI Engine</span>
+<span class="font-body-md text-label-sm bg-surface p-2 mt-1 rounded border border-outline-variant text-on-surface-variant">Matched merchant string 'WHOLEFDS' to Groceries.</span>
+</div>
+</div>
+<div class="relative">
+<div class="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-on-tertiary-container border-2 border-on-tertiary-container"></div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md text-on-surface font-semibold">Ledger Entry Created</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">Oct 24, 14:32:10 • System</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Drawer Actions -->
+<div class="p-md border-t border-outline-variant bg-surface flex flex-wrap gap-2">
+<button class="flex-1 px-4 py-2 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[18px]">edit</span> Edit
+            </button>
+<button class="flex-1 px-4 py-2 bg-surface border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[18px]">content_copy</span> Duplicate
+            </button>
+<button class="w-full px-4 py-2 bg-error/10 border border-error/20 text-error rounded-lg font-label-md text-label-md hover:bg-error/20 transition-colors flex items-center justify-center gap-1 mt-1">
+<span class="material-symbols-outlined text-[18px]">undo</span> Reverse Transaction
+            </button>
+</div>
+</aside>
+</body></html>

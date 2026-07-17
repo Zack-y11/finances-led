@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Ledger AI - Settings</title>
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#bdc7d9",
+                    "error": "#ba1a1a",
+                    "secondary-fixed": "#d8e2ff",
+                    "on-secondary-fixed": "#001a42",
+                    "surface-tint": "#555f6f",
+                    "surface-dim": "#d9dadb",
+                    "surface-container-highest": "#e1e3e4",
+                    "on-secondary-container": "#fefcff",
+                    "secondary-fixed-dim": "#adc6ff",
+                    "background": "#f8f9fa",
+                    "outline": "#75777c",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "on-primary-fixed": "#121c2a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f3f4f5",
+                    "on-tertiary-fixed": "#002113",
+                    "on-primary-fixed-variant": "#3d4756",
+                    "outline-variant": "#c5c6cc",
+                    "surface-container-high": "#e7e8e9",
+                    "on-background": "#191c1d",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-container": "#00a371",
+                    "on-primary-container": "#8690a1",
+                    "error-container": "#ffdad6",
+                    "surface-variant": "#e1e3e4",
+                    "on-secondary-fixed-variant": "#004395",
+                    "primary-fixed": "#d9e3f6",
+                    "primary": "#0a1422",
+                    "primary-container": "#1f2937",
+                    "on-primary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "tertiary": "#00180d",
+                    "tertiary-container": "#002f1e",
+                    "inverse-primary": "#bdc7d9",
+                    "surface-container": "#edeeef",
+                    "on-surface-variant": "#44474c",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary": "#ffffff",
+                    "surface": "#f8f9fa",
+                    "surface-bright": "#f8f9fa",
+                    "on-surface": "#191c1d",
+                    "secondary-container": "#2170e4",
+                    "tertiary-fixed": "#6ffbbe",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "secondary": "#0058be",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f0f1f2"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "xl": "32px",
+                    "base": "4px",
+                    "margin-desktop": "40px",
+                    "lg": "24px",
+                    "md": "16px",
+                    "xs": "4px",
+                    "margin-mobile": "16px",
+                    "gutter": "20px"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "display": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill-icon {
+          font-variation-settings: 'FILL' 1;
+        }
+        /* Custom scrollbar for main content */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #d9dadb;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-lg text-on-surface flex h-screen overflow-hidden selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] bg-surface flex flex-col py-lg px-md z-50 border-r border-outline-variant">
+<!-- Brand Header -->
+<div class="flex items-center gap-3 mb-xl px-2">
+<div class="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-on-secondary shadow-sm">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Ledger AI</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Privacy Secured</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 flex flex-col gap-1 overflow-y-auto">
+<!-- Inactive -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md">Overview</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">receipt_long</span>
+<span class="font-body-md text-body-md">Transactions</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">bolt</span>
+<span class="font-body-md text-body-md">Quick Capture</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md text-body-md">Groups</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">inbox</span>
+<span class="font-body-md text-body-md">Review Inbox</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">rule</span>
+<span class="font-body-md text-body-md">Rules</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">account_balance</span>
+<span class="font-body-md text-body-md">Accounts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors cursor-pointer active:scale-95" href="#">
+<span class="material-symbols-outlined">category</span>
+<span class="font-body-md text-body-md">Categories</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-container-low transition-colors cursor-pointer active:scale-95 text-secondary font-bold border-r-2 border-secondary" href="#">
+<span class="material-symbols-outlined fill-icon">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</nav>
+<!-- Footer Action -->
+<div class="mt-auto pt-lg">
+<button class="w-full flex items-center justify-center gap-2 py-2 text-on-surface-variant hover:text-on-surface transition-colors">
+<span class="material-symbols-outlined text-[20px]">keyboard_double_arrow_left</span>
+<span class="font-label-md text-label-md">Collapse</span>
+</button>
+<div class="mt-4 flex items-center gap-2 px-3 py-2 rounded bg-tertiary-container/10 text-on-tertiary-container">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+<span class="font-label-sm text-label-sm font-semibold">Privacy Status</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="flex-1 ml-[280px] flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface sticky top-0 z-40 w-full flex justify-between items-center px-margin-desktop h-16 shadow-[0px_1px_3px_rgba(0,0,0,0.05)]">
+<!-- Contextual Header Text (Overrides TopNavBar Brand as per strict JSON, wait, TopNavBar JSON specifies brand. I will render brand, but sidebar already has it. I'll render what JSON demands for TopNavBar.) -->
+<div class="flex items-center gap-xl">
+<!-- Using a lighter weight brand anchor on top bar since Sidebar carries main identity -->
+<span class="font-headline-lg text-headline-lg font-black text-primary hidden lg:block opacity-0">Ledger AI</span>
+<!-- Navigation Links from JSON (None are active based on context) -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-headline-md text-headline-md text-on-surface-variant hover:text-secondary transition-all pb-1 focus-within:ring-2 focus-within:ring-secondary" href="#">Overview</a>
+<a class="font-headline-md text-headline-md text-on-surface-variant hover:text-secondary transition-all pb-1 focus-within:ring-2 focus-within:ring-secondary" href="#">Transactions</a>
+</nav>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-secondary transition-all rounded-full p-2 hover:bg-surface-container-low focus-within:ring-2 focus-within:ring-secondary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-secondary transition-all rounded-full p-2 hover:bg-surface-container-low focus-within:ring-2 focus-within:ring-secondary">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded font-label-md hover:opacity-90 transition-opacity shadow-sm">
+                    Add transaction
+                </button>
+<img alt="User Profile" class="w-8 h-8 rounded-full border border-outline-variant object-cover ml-2" data-alt="A small, professional circular profile portrait of a confident user against a neutral grey background, high resolution, soft studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSjtZa0hI3VU7RAn4ReRthddQ4zKholuiLynkTvZXRaZ50xfAgYmdgL4QqPU1prxfLeISwcg7lMZdrts98e8pCYw4PUS0pAOOIuCFRbCK9T0xp4zo5sEtUfv8hkHI8UUrtgIcrp0_XXgY6cYhzKf0bGuoPhDaKBVkr3HKt4DvsmIl442_N1mEF47mTIQwTdsk6UhwRt1QYWzLs25f36BVKdqYC9qzol1eFu4sG_IxntMQi-lvQWpfB"/>
+</div>
+</header>
+<!-- Page Canvas -->
+<main class="flex-1 overflow-y-auto bg-background p-margin-desktop">
+<div class="max-w-[1024px] mx-auto w-full">
+<h1 class="font-display text-display text-on-surface mb-lg">Settings</h1>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Profile Section (Spans 4/12) -->
+<section class="lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">person</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Profile</h2>
+</div>
+<div class="flex flex-col items-center mb-6">
+<div class="relative mb-4">
+<img class="w-20 h-20 rounded-full object-cover border-2 border-surface-container-highest" data-alt="A professional headshot portrait of a user in a modern corporate setting, neutral background, soft flattering lighting, high quality, crisp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBk4Tmm2Zn6bMPnND1SoBHxEUQ9NYY-cQxcniSl3JLJ3jf5DPF1m1HoPhmawdRzWsG6LKq1pIL996gGL1JNoJo-A1jLUYHuAkayRefK7L1EPCsq1teGO8ydUkfEUbkx75IW4C_TDUTjbUwHH9HnwtWfEpHNf1NPs5dRrLVvLOhUBL9xbvwj8z4M12sGVVDIUfXRE0vp7ZI1kJVlukvs1Fg8NZ6zgaMXuvc8m5eBpSaS4yXrpTbZ7hqL"/>
+<button class="absolute bottom-0 right-0 bg-surface border border-outline-variant rounded-full p-1 shadow-sm hover:bg-surface-container-low text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+</div>
+</div>
+<div class="space-y-4 flex-1">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Full Name</label>
+<input class="w-full bg-transparent border-b border-outline-variant pb-1 font-body-md text-on-surface focus:border-secondary focus:outline-none transition-colors" readonly="" type="text" value="Eleanor Vance"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Email Address</label>
+<input class="w-full bg-transparent border-b border-outline-variant pb-1 font-body-md text-on-surface focus:border-secondary focus:outline-none transition-colors" readonly="" type="email" value="eleanor.v@example.com"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface-variant">Base Currency</label>
+<select class="w-full bg-transparent border-b border-outline-variant pb-1 font-body-md text-on-surface focus:border-secondary focus:outline-none transition-colors appearance-none cursor-pointer">
+<option>USD ($) - US Dollar</option>
+<option>EUR (€) - Euro</option>
+<option>GBP (£) - British Pound</option>
+</select>
+</div>
+</div>
+<button class="mt-6 w-full py-2 border border-outline-variant rounded text-on-surface font-label-md hover:bg-surface-container-low transition-colors">
+                            Edit Profile
+                        </button>
+</section>
+<!-- Privacy Status Card (Spans 8/12) -->
+<section class="lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col">
+<!-- Subtle background pattern or tonal shift -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-primary-fixed-dim/20 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+<div class="flex items-center gap-3 mb-6 relative z-10">
+<span class="material-symbols-outlined text-tertiary-container">shield_lock</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Data &amp; Privacy</h2>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md mb-6 border border-outline-variant/50 relative z-10 flex gap-4 items-start">
+<div class="mt-1 w-8 h-8 rounded-full bg-tertiary-container/10 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-tertiary-container text-[20px]">delete_sweep</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-1">Temporary media deletion is active</h3>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                                    To ensure absolute privacy, all audio recordings and raw receipt captures are processed in volatile memory. 
+                                    They are purged immediately after transaction synthesis and never persist in long-term storage. 
+                                    Your financial data remains explicitly yours.
+                                </p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-auto relative z-10">
+<div class="border border-outline-variant rounded-lg p-4 flex flex-col">
+<span class="material-symbols-outlined text-on-surface-variant mb-2">download</span>
+<h4 class="font-label-md text-label-md text-on-surface mb-1">Export Ledger</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4 flex-1">Download a complete CSV archive of all historical transactions and categorization rules.</p>
+<button class="self-start text-secondary font-label-md hover:underline">Request Export</button>
+</div>
+<div class="border border-error-container rounded-lg p-4 flex flex-col bg-error-container/10">
+<span class="material-symbols-outlined text-error mb-2">person_remove</span>
+<h4 class="font-label-md text-label-md text-error mb-1">Account Deletion</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4 flex-1">Permanently remove all data, histories, and configurations. This action cannot be reversed.</p>
+<button class="self-start text-error font-label-md hover:underline">Delete Account</button>
+</div>
+</div>
+</section>
+<!-- AI Preferences (Spans 7/12) -->
+<section class="lg:col-span-7 bg-surface-container-lowest rounded-xl border border-outline-variant p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)]">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">memory</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">AI Processing Preferences</h2>
+</div>
+<div class="space-y-6">
+<!-- Toggle Item -->
+<div class="flex items-center justify-between">
+<div class="pr-4">
+<h4 class="font-label-md text-label-md text-on-surface">Require Confirmation</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Prompt for manual review before categorizing transactions from quick captures.</p>
+</div>
+<!-- Toggle UI -->
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<hr class="border-outline-variant/50"/>
+<!-- Slider Item -->
+<div>
+<div class="flex justify-between items-center mb-2">
+<h4 class="font-label-md text-label-md text-on-surface">Confidence Threshold</h4>
+<span class="font-label-md text-label-md text-secondary">85%</span>
+</div>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-4">Minimum AI certainty required to automatically apply categorization rules without review.</p>
+<input class="w-full h-1 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-secondary" max="100" min="50" type="range" value="85"/>
+<div class="flex justify-between text-on-surface-variant font-label-sm mt-1">
+<span>Relaxed (50%)</span>
+<span>Strict (100%)</span>
+</div>
+</div>
+<hr class="border-outline-variant/50"/>
+<!-- Toggle Item -->
+<div class="flex items-center justify-between">
+<div class="pr-4">
+<h4 class="font-label-md text-label-md text-on-surface">Rule Automation Learning</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">Allow the system to autonomously suggest new categorization rules based on recurring manual corrections.</p>
+</div>
+<label class="relative inline-flex items-center cursor-pointer shrink-0">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Integrations (Spans 5/12) -->
+<section class="lg:col-span-5 bg-surface-container-lowest rounded-xl border border-outline-variant p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05),0px_4px_6px_rgba(0,0,0,0.02)] flex flex-col">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">extension</span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Integrations</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-6">
+                            Connect external services to seamlessly sync your ledger data and enhance your workflow.
+                        </p>
+<div class="border border-outline-variant rounded-lg p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-surface border border-outline-variant rounded flex items-center justify-center shadow-sm">
+<!-- Simplified geometric representation of external logo -->
+<div class="w-4 h-4 border-2 border-on-surface rounded-sm"></div>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface group-hover:text-secondary transition-colors">Notion Database</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Not connected</p>
+</div>
+</div>
+<button class="px-3 py-1 border border-outline-variant rounded text-on-surface font-label-sm hover:bg-surface-container-highest transition-colors">
+                                Connect
+                            </button>
+</div>
+<div class="mt-auto pt-6">
+<button class="w-full flex items-center justify-center gap-2 py-2 text-secondary font-label-md hover:bg-surface-container-low rounded transition-colors">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                                Explore more integrations
+                            </button>
+</div>
+</section>
+</div>
+<!-- Bottom padding for scroll -->
+<div class="h-xl"></div>
+</div>
+</main>
+</div>
+</body></html>

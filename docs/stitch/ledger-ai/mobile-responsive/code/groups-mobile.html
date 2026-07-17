@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#d9dadb",
+                      "outline-variant": "#c5c6cc",
+                      "surface-container": "#edeeef",
+                      "outline": "#75777c",
+                      "on-tertiary-container": "#00a371",
+                      "on-secondary-fixed": "#001a42",
+                      "background": "#f8f9fa",
+                      "on-primary-fixed": "#121c2a",
+                      "tertiary-container": "#002f1e",
+                      "surface-container-high": "#e7e8e9",
+                      "on-primary-container": "#8690a1",
+                      "surface-tint": "#555f6f",
+                      "secondary-fixed": "#d8e2ff",
+                      "on-tertiary-fixed-variant": "#005236",
+                      "on-secondary-container": "#fefcff",
+                      "primary-fixed-dim": "#bdc7d9",
+                      "inverse-primary": "#bdc7d9",
+                      "surface-variant": "#e1e3e4",
+                      "primary": "#0a1422",
+                      "surface-container-highest": "#e1e3e4",
+                      "primary-container": "#1f2937",
+                      "on-tertiary-fixed": "#002113",
+                      "surface": "#f8f9fa",
+                      "inverse-surface": "#2e3132",
+                      "surface-bright": "#f8f9fa",
+                      "on-secondary-fixed-variant": "#004395",
+                      "surface-container-low": "#f3f4f5",
+                      "secondary-fixed-dim": "#adc6ff",
+                      "on-surface-variant": "#44474c",
+                      "error": "#ba1a1a",
+                      "inverse-on-surface": "#f0f1f2",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed-variant": "#3d4756",
+                      "tertiary-fixed": "#6ffbbe",
+                      "tertiary": "#00180d",
+                      "on-background": "#191c1d",
+                      "primary-fixed": "#d9e3f6",
+                      "on-surface": "#191c1d",
+                      "secondary-container": "#2170e4",
+                      "on-tertiary": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "secondary": "#0058be",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed-dim": "#4edea3",
+                      "on-secondary": "#ffffff",
+                      "on-error": "#ffffff"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sm": "8px",
+                      "margin-desktop": "40px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "gutter": "20px",
+                      "xl": "32px",
+                      "margin-mobile": "16px",
+                      "base": "4px",
+                      "lg": "24px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "body-md": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "display": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- Top AppBar (Identity Anchor) -->
+<header class="sticky top-0 z-40 bg-surface dark:bg-surface-container border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin-mobile h-16">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-black text-primary dark:text-primary-fixed">Ledger AI</h1>
+<div class="flex gap-md">
+<button class="material-symbols-outlined text-on-surface-variant focus-within:ring-2 focus-within:ring-secondary p-1">notifications</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A clean, professional close-up headshot of a person in high-key lighting, representing a modern financial user profile. The background is a soft, out-of-focus office environment with light grays and whites, maintaining a minimalist corporate aesthetic. The overall mood is trustworthy and calm." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXsl-nMSGNgN8pUE2dVJNgy0ukg65cM8KCdcJMN46fvt1nGBJm0sw57k2L4fSBCEcEXpeEhVlIbyGidBi3K--bHEPD-8pBo7Roizeg2GYqQNuSHM-shwQRGd0-94J_3Y5aj8p5Vboe-TjDfnXh0_BuCpU1YnD7jVuSSRCg6t5ViJSVHhtr8sDtjsdwSOvOWxPyp14cvcxx9OHEcBDZtUYky37uXdWeERZGfHsVWz_BdqsVle3HM8fy"/>
+</div>
+</div>
+</header>
+<main class="px-margin-mobile pt-lg space-y-lg">
+<!-- Page Header & Action -->
+<section class="flex justify-between items-end">
+<div>
+<p class="font-label-md text-label-md text-secondary uppercase tracking-widest">Collaborative</p>
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Groups</h2>
+</div>
+<button class="bg-secondary-container text-on-secondary-container px-md py-sm rounded-lg font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Create group
+            </button>
+</section>
+<!-- Search / Filter (Contextual) -->
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-xl pr-md py-sm bg-surface-container-low border border-outline-variant rounded-xl font-body-md text-body-md focus:ring-2 focus:ring-secondary focus:border-secondary transition-all" placeholder="Search groups..." type="text"/>
+</div>
+<!-- Groups Bento/Grid -->
+<div class="grid grid-cols-1 gap-md">
+<!-- Group Card: Weekly Expenses -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-md">
+<div class="w-12 h-12 bg-secondary-fixed rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed">receipt_long</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A studio portrait of a smiling woman with a modern, minimalist background, perfect for a professional user avatar in a finance application. Soft directional lighting highlights facial details while maintaining a clean, high-readability look aligned with the corporate design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_JUiBd77nSX6Isehx4bNUyh1_2rTPqo4bEZybV_V4auelLIuzzXCu6mfKzWLDTMtwq7ZG7yGyvXO3yLz6DtqCYHHi18hzxLX-PPnQz0YlSTv5grtspDXq4Ps0V30sOLnHMAeRI1-ZocbjzuHJHUx82Jm6rPAor1EwoCHxgCb9W3y3p-gAm3fpXzp4sobrOJjnOeMiLdx4Z_M1j__W4XXnjVwAHmAI3H3zGUZWWpxf6jIAIhfzVL8b"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A studio portrait of a man with a professional and friendly expression, set against a neutral, light gray background. The lighting is bright and even, typical of high-end corporate photography, ensuring the profile image fits seamlessly into a modern, minimalist UI." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqNlzndIyCNZoUpUXafhIcsQ2a-sulhUShL-BINXt-7Mi1-7PJFNKiDhUqQGGBRWj_Ej2Uwoqsx1wixLvX6xxy9e1iiC6YjqpZ-9LCHenM4WbIJFmnFbg0bAhB-PXS-lWy482jzM-wljMsEyHXN7QHk_ho_xWfB6ScnAnPeLcwt3slXQRV5KVje2-zOzZu84qr8yTOc7Z7mAscT-2ETtiM1oodfTO_PFUovxpdk26AAf8n6obafRnA"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant">+3</div>
+</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-xs">Weekly Expenses</h3>
+<div class="flex items-center gap-xs mb-lg">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Household • Active</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Total Spent</p>
+<p class="font-headline-lg text-headline-lg text-primary">$1,240.50</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-tertiary-container">Your share</p>
+<p class="font-body-md text-body-md font-bold text-on-tertiary-container">$310.12</p>
+</div>
+</div>
+</div>
+<!-- Group Card: Hackathon -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform overflow-hidden relative">
+<!-- Background Pattern Trace -->
+<div class="absolute top-0 right-0 w-32 h-32 opacity-5 translate-x-10 -translate-y-10">
+<span class="material-symbols-outlined text-[120px]">bolt</span>
+</div>
+<div class="flex justify-between items-start mb-md">
+<div class="w-12 h-12 bg-tertiary-fixed rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-tertiary-fixed">bolt</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A portrait of a young tech professional with glasses, representing a collaborative team member. The background is a clean, bright white, and the lighting is crisp and modern, matching the institutional trust and minimalist paper-and-ink philosophy of the design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCl7rqBJtEe7NWOlW95GHSvoLlzgeaayPqvXTYt3pr-vKQMyT2izcTGmeylwaOJxkFlsZufOGj3-fnwFJCC60UwO0wajb2T6Ys_40w3xEvXcAEil1NvxD7uh1MMq2JS5G95Zr2OyW0KSGSIq4jJfHrb15U_NK1dBNapRQ9_NFVhzGWbmcWfmerOZdRX0odMhxKrEKzVqjYdvM6mOWtRnX4ohHRTPuRhMlAZgbfMf7BHPEQmJbEt39Rv"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container flex items-center justify-center font-label-sm text-label-sm text-on-surface-variant">+1</div>
+</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-xs">Hackathon</h3>
+<div class="flex items-center gap-xs mb-lg">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Project • Settling soon</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Total Budget</p>
+<p class="font-headline-lg text-headline-lg text-primary">$450.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-error">Owed to you</p>
+<p class="font-body-md text-body-md font-bold text-error">$85.00</p>
+</div>
+</div>
+</div>
+<!-- Group Card: Road Trip -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md shadow-[0px_1px_3px_rgba(0,0,0,0.05)] active:scale-[0.98] transition-transform">
+<div class="flex justify-between items-start mb-md">
+<div class="w-12 h-12 bg-primary-fixed rounded-xl flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary-fixed">directions_car</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-8 h-8 rounded-full border-2 border-white overflow-hidden bg-surface-dim">
+<img class="w-full h-full object-cover" data-alt="A professional woman's profile picture with a soft, warm lighting setup. The style is modern corporate, focusing on clarity and approachability. The image uses a light-mode color palette of creams and soft grays, fitting perfectly with the ledger application's aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4jqBJJA_QSt3zRk4ZHGgzzVk09XVRnQfyoGLuaZfcxRRO2cEKh9EFta_cK09SuVlaiRlcdh-JwUHBo1-koWJMsQ8UDeI_Ji60GmVn_sQ0PDCRaZub10cC0PGFTjvhjyE-ksUaGvHymL-myW6hlBc0ltj--JeGXeyEWqt67wHuBbMhorttO-6gxubi9x2zM1e-HcM-M_m8VZY2gKiIeh7naXEA6hYM_gLShtbmlHJSw84fgcsJv4Pv"/>
+</div>
+</div>
+</div>
+<h3 class="font-headline-md text-headline-md text-primary mb-xs">Road Trip</h3>
+<div class="flex items-center gap-xs mb-lg">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span class="font-label-md text-label-md text-on-surface-variant">Travel • Archived</span>
+</div>
+<div class="flex justify-between items-end">
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Final Total</p>
+<p class="font-headline-lg text-headline-lg text-primary">$2,890.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant">Settled</p>
+<p class="font-body-md text-body-md font-bold text-on-surface-variant">$0.00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Suggestion Card (Bento Style) -->
+<section class="mt-xl">
+<div class="bg-primary text-on-primary p-lg rounded-2xl relative overflow-hidden">
+<div class="z-10 relative">
+<h3 class="font-headline-md text-headline-md mb-xs">Invite your partner</h3>
+<p class="font-body-md text-body-md opacity-80 mb-md max-w-[240px]">Sync household expenses automatically with shared categories.</p>
+<button class="bg-white text-primary px-md py-sm rounded-lg font-label-md text-label-md hover:bg-surface-variant transition-colors">Send Invite</button>
+</div>
+<div class="absolute -right-4 -bottom-4 opacity-20">
+<span class="material-symbols-outlined text-[120px]">groups</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar (The Anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm bg-surface-container-lowest dark:bg-surface-container-highest shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm-mobile">Home</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile">Transactions</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile">Capture</span>
+</div>
+<!-- Active Tab: Groups -->
+<div class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="groups" style="font-variation-settings: 'FILL' 1;">groups</span>
+<span class="font-label-sm text-label-sm-mobile">Groups</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high active:scale-90 transition-transform cursor-pointer">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-label-sm text-label-sm-mobile">Settings</span>
+</div>
+</nav>
+<!-- Micro-interactions Script -->
+<script>
+        document.querySelectorAll('.active\\:scale-95').forEach(button => {
+            button.addEventListener('touchstart', () => button.classList.add('scale-95'));
+            button.addEventListener('touchend', () => button.classList.remove('scale-95'));
+        });
+
+        // Simple scroll behavior for top bar shadow
+        window.addEventListener('scroll', () => {
+            const header = document.querySelector('header');
+            if (window.scrollY > 10) {
+                header.classList.add('shadow-sm');
+            } else {
+                header.classList.remove('shadow-sm');
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Automation Rules | Ledger AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#d9dadb",
+                        "outline-variant": "#c5c6cc",
+                        "surface-container": "#edeeef",
+                        "outline": "#75777c",
+                        "on-tertiary-container": "#00a371",
+                        "on-secondary-fixed": "#001a42",
+                        "background": "#f8f9fa",
+                        "on-primary-fixed": "#121c2a",
+                        "tertiary-container": "#002f1e",
+                        "surface-container-high": "#e7e8e9",
+                        "on-primary-container": "#8690a1",
+                        "surface-tint": "#555f6f",
+                        "secondary-fixed": "#d8e2ff",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "on-secondary-container": "#fefcff",
+                        "primary-fixed-dim": "#bdc7d9",
+                        "inverse-primary": "#bdc7d9",
+                        "surface-variant": "#e1e3e4",
+                        "primary": "#0a1422",
+                        "surface-container-highest": "#e1e3e4",
+                        "primary-container": "#1f2937",
+                        "on-tertiary-fixed": "#002113",
+                        "surface": "#f8f9fa",
+                        "inverse-surface": "#2e3132",
+                        "surface-bright": "#f8f9fa",
+                        "on-secondary-fixed-variant": "#004395",
+                        "surface-container-low": "#f3f4f5",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-surface-variant": "#44474c",
+                        "error": "#ba1a1a",
+                        "inverse-on-surface": "#f0f1f2",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#3d4756",
+                        "tertiary-fixed": "#6ffbbe",
+                        "tertiary": "#00180d",
+                        "on-background": "#191c1d",
+                        "primary-fixed": "#d9e3f6",
+                        "on-surface": "#191c1d",
+                        "secondary-container": "#2170e4",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "secondary": "#0058be",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "on-secondary": "#ffffff",
+                        "on-error": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sm": "8px",
+                        "margin-desktop": "40px",
+                        "xs": "4px",
+                        "md": "16px",
+                        "gutter": "20px",
+                        "xl": "32px",
+                        "margin-mobile": "16px",
+                        "base": "4px",
+                        "lg": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "display": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #F9FAFB;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .rule-card-shadow {
+            box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05), 0px 4px 6px rgba(0, 0, 0, 0.02);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-surface mb-24">
+<!-- Top Navigation Anchor -->
+<header class="sticky top-0 z-40 bg-surface dark:bg-surface-container border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin-mobile h-16">
+<h1 class="font-headline-md text-headline-md-mobile font-black text-primary dark:text-primary-fixed">Ledger AI</h1>
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">notifications</span>
+<div class="w-8 h-8 rounded-full overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a user with a clean, minimalist background, captured in soft, natural morning light. The aesthetic is modern corporate with a focus on approachable professionalism. The lighting is high-key and bright, maintaining the light-mode UI consistency of Ledger AI's banking platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbKOBQUAqL2-IrsWX6MrWQyrrvtUgn_IBTWeWO_fiRWwZcZyagxKXj0ihYGn5lga3DfJRXxLhcBZEsTk3hqzJvKWMIEMBeWlqtzOlYizEoMTNxe_FWXJcpvL4NuL-pZ8f5SIHYvr0A5c5TkjDq7O7jvPhvEGI3FCm4j5-h_ejNtc35tCfQdrAA64_u9jcb3Z29vd_vnxmG-yo_otL7dkrw1CJjZf6sQZeBIqRmhqh0npf1jqajpkSe"/>
+</div>
+</div>
+</header>
+<main class="px-margin-mobile pt-lg pb-xl">
+<!-- Page Header & Action -->
+<div class="flex flex-col gap-sm mb-lg">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile text-primary">Automation Rules</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage your privacy and categorization logic.</p>
+</div>
+<button class="bg-secondary text-on-secondary px-md py-sm rounded-xl font-label-md text-label-md flex items-center gap-xs active:scale-95 transition-transform shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Create Rule
+                </button>
+</div>
+</div>
+<!-- Automation Rules Bento-style List -->
+<div class="flex flex-col gap-md">
+<!-- Rule Card 1: Active -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md rule-card-shadow transition-all hover:border-secondary active:scale-[0.98]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed" style="font-variation-settings: 'FILL' 1;">rule</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md-mobile text-primary">Starbucks Masking</h3>
+<span class="font-label-sm text-label-sm px-sm py-[2px] bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full">Active</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_vert</span>
+</div>
+<div class="space-y-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">search</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Condition</p>
+<p class="font-body-md text-body-md text-on-surface">Merchant contains "Starbucks"</p>
+</div>
+</div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">bolt</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Action</p>
+<p class="font-body-md text-body-md text-on-surface">Rename to "Morning Coffee" &amp; Assign Category "Dining"</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rule Card 2: Active -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md rule-card-shadow transition-all hover:border-secondary active:scale-[0.98]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-secondary-fixed flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-fixed" style="font-variation-settings: 'FILL' 1;">shield</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md-mobile text-primary">High Value Alert</h3>
+<span class="font-label-sm text-label-sm px-sm py-[2px] bg-tertiary-fixed text-on-tertiary-fixed-variant rounded-full">Active</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_vert</span>
+</div>
+<div class="space-y-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">payments</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Condition</p>
+<p class="font-body-md text-body-md text-on-surface">Transaction Amount &gt; $500.00</p>
+</div>
+</div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">notifications_active</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Action</p>
+<p class="font-body-md text-body-md text-on-surface">Send Immediate Push &amp; Lock Review Inbox</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Rule Card 3: Paused -->
+<div class="bg-surface-container-low border border-outline-variant rounded-xl p-md rule-card-shadow opacity-75 grayscale-[0.5] transition-all hover:border-outline active:scale-[0.98]">
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-sm">
+<div class="w-10 h-10 rounded-lg bg-surface-variant flex items-center justify-center">
+<span class="material-symbols-outlined text-on-surface-variant">pause_circle</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md-mobile text-primary">Uber Auto-Tag</h3>
+<span class="font-label-sm text-label-sm px-sm py-[2px] bg-surface-dim text-on-surface-variant rounded-full">Paused</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline cursor-pointer">more_vert</span>
+</div>
+<div class="space-y-sm">
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">commute</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Condition</p>
+<p class="font-body-md text-body-md text-on-surface">Merchant contains "Uber" or "Lyft"</p>
+</div>
+</div>
+<div class="flex items-start gap-sm">
+<span class="material-symbols-outlined text-outline text-[18px] mt-1">category</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Action</p>
+<p class="font-body-md text-body-md text-on-surface">Categorize as "Transport" &amp; Add Tag "Commute"</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State / Suggestion -->
+<div class="mt-lg p-xl border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center text-center gap-md">
+<div class="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-outline text-display">lightbulb</span>
+</div>
+<div>
+<h4 class="font-headline-md text-headline-md text-primary">AI Suggestion</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">We noticed 12 recurring transactions from "Amazon". Create a rule to auto-categorize them?</p>
+</div>
+<button class="text-secondary font-label-md text-label-md hover:underline">View Suggestion</button>
+</div>
+</div>
+</main>
+<!-- Visual Polish: Background Shader Element -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-20">
+
+</div>
+<!-- Bottom Navigation Bar - Implementation of Shared Component JSON -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-margin-mobile py-sm bg-surface-container-lowest dark:bg-surface-container-highest shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm-mobile">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-label-sm text-label-sm-mobile">Transactions</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+<span class="font-label-sm text-label-sm-mobile">Capture</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 hover:bg-surface-container-high transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="font-label-sm text-label-sm-mobile">Groups</span>
+</a>
+<!-- ACTIVE TAB: Settings (Closest match for Rules/Admin tasks) -->
+<a class="flex flex-col items-center justify-center bg-secondary-fixed text-on-secondary-fixed rounded-xl p-2 transition-transform active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="settings" style="font-variation-settings: 'FILL' 1;">settings</span>
+<span class="font-label-sm text-label-sm-mobile">Settings</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction for cards
+        document.querySelectorAll('.rule-card-shadow').forEach(card => {
+            card.addEventListener('click', () => {
+                console.log('Rule selected');
+            });
+        });
+    </script>
+</body></html>
