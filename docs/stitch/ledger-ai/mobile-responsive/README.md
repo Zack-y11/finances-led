@@ -4,6 +4,13 @@ Project: `5357126974574577163`
 
 These are the mobile-app and responsive-web exports. The shared design-system configuration remains with the desktop export at `../web-desktop/design-system.json`.
 
+Implementation notes for Expo, safe areas, mobile navigation, native glass and
+fallback behavior, capture privacy, platform compatibility, and reusable native
+modules are maintained in the shared
+[`../IMPLEMENTATION.md`](../IMPLEMENTATION.md#mobile-implementation-context)
+guide. Treat the HTML as a visual/interaction reference rather than production
+source.
+
 | Screen | Code | Image |
 | --- | --- | --- |
 | Ledger AI - Transactions Ledger (Mobile) | `code/transactions-ledger-mobile.html` | `images/transactions-ledger-mobile.jpg` |
