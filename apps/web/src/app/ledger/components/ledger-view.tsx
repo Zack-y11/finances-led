@@ -206,7 +206,7 @@ export function LedgerView() {
                     month: "long",
                     year: "numeric",
                   }).format(new Date(`${month}-01T12:00:00`))}{" "}
-                ÿýý {result.pagination.total} matching entries
+                  ï¿½ï¿½ï¿½ {result.pagination.total} matching entries
                 </p>
               </div>
             </div>
@@ -442,7 +442,7 @@ export function LedgerView() {
               onClick={() => setSelectedId(undefined)}
               type="button"
             >
-            ÿýý
+              ï¿½ï¿½ï¿½
             </button>
           </div>
           {detailError ? (
@@ -511,6 +511,3 @@ function Detail({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-
-

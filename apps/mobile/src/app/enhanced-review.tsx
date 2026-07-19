@@ -1,18 +1,326 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
-import { GlassSurface } from '@/components/ui/glass-surface';
-import { LedgerScreen } from '@/components/ui/ledger-screen';
-import { Colors, Fonts, Spacing } from '@/constants/theme';
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { LedgerScreen } from "@/components/ui/ledger-screen";
+import { Colors, Fonts, Spacing } from "@/constants/theme";
 
 export default function EnhancedReviewScreen() {
-  return <LedgerScreen><View><Text style={styles.eyebrow}>REVIEW INBOX</Text><Text style={styles.title}>Resolve what needs context.</Text><Text style={styles.copy}>Capture proposals are transparent, editable, and private by default.</Text></View><View style={styles.metrics}><Metric label="Pending" value="12" action /><Metric label="Accuracy" value="98.4%" /></View><Text style={styles.privacy}>⌑ Media deleted after processing</Text><GlassSurface><CardHeader source="Quick Capture" title="Dinner at Gusto&apos;s" confidence="High confidence" /><View style={styles.command}><Text style={styles.commandLabel}>ORIGINAL COMMAND</Text><Text style={styles.commandText}>“I spent 85.50 on dinner at Gusto&apos;s yesterday with Mark.”</Text></View><Text style={styles.interpretation}>AI INTERPRETATION</Text><View style={styles.fields}><Field label="Amount" value="$85.50" /><Field label="Category" value="Dining" /></View><Actions primary="Confirm" secondary="Edit" /></GlassSurface><GlassSurface><CardHeader source="Scan Result" title="Unidentified merchant" confidence="Low confidence" /><View style={styles.command}><Text style={styles.commandLabel}>PARTIAL OCR DATA</Text><Text style={styles.commandText}>TOTAL: $12.00 · DATE: 12/10/23 · 123 Main St</Text></View><View style={styles.fields}><Field label="Amount" value="$12.00" /><Field label="Suggested" value="Uncategorized" /></View><Actions primary="Resolve" secondary="Ignore" /></GlassSurface><View style={styles.promotion}><Text style={styles.promotionTitle}>Boost accuracy</Text><Text style={styles.promotionCopy}>Connect an account to match captures with statements.</Text><Pressable style={styles.promotionButton}><Text style={styles.promotionButtonText}>Link bank account</Text></Pressable></View></LedgerScreen>;
+  return (
+    <LedgerScreen>
+      <View>
+        <Text style={styles.eyebrow}>REVIEW INBOX</Text>
+        <Text style={styles.title}>Resolve what needs context.</Text>
+        <Text style={styles.copy}>
+          Capture proposals are transparent, editable, and private by default.
+        </Text>
+      </View>
+      <View style={styles.metrics}>
+        <Metric label="Pending" value="12" action />
+        <Metric label="Accuracy" value="98.4%" />
+      </View>
+      <Text style={styles.privacy}>⌑ Media deleted after processing</Text>
+      <GlassSurface>
+        <CardHeader
+          source="Quick Capture"
+          title="Dinner at Gusto's"
+          confidence="High confidence"
+        />
+        <View style={styles.command}>
+          <Text style={styles.commandLabel}>ORIGINAL COMMAND</Text>
+          <Text style={styles.commandText}>
+            “I spent 85.50 on dinner at Gusto&apos;s yesterday with Mark.”
+          </Text>
+        </View>
+        <Text style={styles.interpretation}>AI INTERPRETATION</Text>
+        <View style={styles.fields}>
+          <Field label="Amount" value="$85.50" />
+          <Field label="Category" value="Dining" />
+        </View>
+        <Actions primary="Confirm" secondary="Edit" />
+      </GlassSurface>
+      <GlassSurface>
+        <CardHeader
+          source="Scan Result"
+          title="Unidentified merchant"
+          confidence="Low confidence"
+        />
+        <View style={styles.command}>
+          <Text style={styles.commandLabel}>PARTIAL OCR DATA</Text>
+          <Text style={styles.commandText}>
+            TOTAL: $12.00 · DATE: 12/10/23 · 123 Main St
+          </Text>
+        </View>
+        <View style={styles.fields}>
+          <Field label="Amount" value="$12.00" />
+          <Field label="Suggested" value="Uncategorized" />
+        </View>
+        <Actions primary="Resolve" secondary="Ignore" />
+      </GlassSurface>
+      <View style={styles.promotion}>
+        <Text style={styles.promotionTitle}>Boost accuracy</Text>
+        <Text style={styles.promotionCopy}>
+          Connect an account to match captures with statements.
+        </Text>
+        <Pressable style={styles.promotionButton}>
+          <Text style={styles.promotionButtonText}>Link bank account</Text>
+        </Pressable>
+      </View>
+    </LedgerScreen>
+  );
 }
 
-function Metric({ label, value, action }: { label: string; value: string; action?: boolean }) { return <View style={[styles.metric, action && styles.metricAction]}><Text style={[styles.metricLabel, action && styles.metricLabelAction]}>{label}</Text><Text style={[styles.metricValue, action && styles.metricValueAction]}>{value}</Text></View>; }
-function CardHeader({ source, title, confidence }: { source: string; title: string; confidence: string }) { return <View style={styles.cardHeader}><View><Text style={styles.source}>{source}</Text><Text style={styles.cardTitle}>{title}</Text></View><Text style={[styles.confidence, confidence.startsWith('High') ? styles.confidenceHigh : styles.confidenceLow]}>{confidence}</Text></View>; }
-function Field({ label, value }: { label: string; value: string }) { return <View style={styles.field}><Text style={styles.fieldLabel}>{label}</Text><Text style={styles.fieldValue}>{value}</Text></View>; }
-function Actions({ primary, secondary }: { primary: string; secondary: string }) { return <View style={styles.actions}><Pressable style={styles.primary}><Text style={styles.primaryText}>{primary}</Text></Pressable><Pressable style={styles.secondary}><Text style={styles.secondaryText}>{secondary}</Text></Pressable></View>; }
+function Metric({
+  label,
+  value,
+  action,
+}: {
+  label: string;
+  value: string;
+  action?: boolean;
+}) {
+  return (
+    <View style={[styles.metric, action && styles.metricAction]}>
+      <Text style={[styles.metricLabel, action && styles.metricLabelAction]}>
+        {label}
+      </Text>
+      <Text style={[styles.metricValue, action && styles.metricValueAction]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+function CardHeader({
+  source,
+  title,
+  confidence,
+}: {
+  source: string;
+  title: string;
+  confidence: string;
+}) {
+  return (
+    <View style={styles.cardHeader}>
+      <View>
+        <Text style={styles.source}>{source}</Text>
+        <Text style={styles.cardTitle}>{title}</Text>
+      </View>
+      <Text
+        style={[
+          styles.confidence,
+          confidence.startsWith("High")
+            ? styles.confidenceHigh
+            : styles.confidenceLow,
+        ]}
+      >
+        {confidence}
+      </Text>
+    </View>
+  );
+}
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldValue}>{value}</Text>
+    </View>
+  );
+}
+function Actions({
+  primary,
+  secondary,
+}: {
+  primary: string;
+  secondary: string;
+}) {
+  return (
+    <View style={styles.actions}>
+      <Pressable style={styles.primary}>
+        <Text style={styles.primaryText}>{primary}</Text>
+      </Pressable>
+      <Pressable style={styles.secondary}>
+        <Text style={styles.secondaryText}>{secondary}</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  eyebrow: { color: Colors.light.action, fontFamily: Fonts.sans, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }, title: { color: Colors.light.text, fontSize: 28, fontWeight: '700', lineHeight: 34, marginTop: 4 }, copy: { color: Colors.light.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 8 }, metrics: { flexDirection: 'row', gap: Spacing.two }, metric: { backgroundColor: Colors.light.backgroundElement, borderColor: Colors.light.border, borderRadius: 16, borderWidth: 1, flex: 1, padding: Spacing.three }, metricAction: { backgroundColor: Colors.light.actionSoft, borderColor: Colors.light.action }, metricLabel: { color: Colors.light.textSecondary, fontSize: 12, fontWeight: '700' }, metricLabelAction: { color: Colors.light.action }, metricValue: { color: Colors.light.success, fontSize: 22, fontWeight: '700', marginTop: 8 }, metricValueAction: { color: Colors.light.text }, privacy: { color: Colors.light.textSecondary, fontSize: 12, textAlign: 'center' }, cardHeader: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' }, source: { color: Colors.light.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }, cardTitle: { color: Colors.light.text, fontSize: 16, fontWeight: '700', marginTop: 4 }, confidence: { borderRadius: 4, fontSize: 10, fontWeight: '700', overflow: 'hidden', paddingHorizontal: 8, paddingVertical: 5, textTransform: 'uppercase' }, confidenceHigh: { backgroundColor: Colors.light.successSoft, color: Colors.light.success }, confidenceLow: { backgroundColor: Colors.light.background, color: Colors.light.textSecondary }, command: { backgroundColor: Colors.light.background, borderColor: Colors.light.border, borderRadius: 8, borderWidth: 1, marginTop: 14, padding: 10 }, commandLabel: { color: Colors.light.textSecondary, fontSize: 10, fontWeight: '700', letterSpacing: 0.5 }, commandText: { color: Colors.light.text, fontSize: 13, lineHeight: 19, marginTop: 5 }, interpretation: { color: Colors.light.action, fontSize: 11, fontWeight: '700', letterSpacing: 0.7, marginTop: 14 }, fields: { flexDirection: 'row', gap: 8, marginTop: 8 }, field: { backgroundColor: Colors.light.background, borderColor: Colors.light.border, borderRadius: 8, borderWidth: 1, flex: 1, padding: 10 }, fieldLabel: { color: Colors.light.textSecondary, fontSize: 10, fontWeight: '700' }, fieldValue: { color: Colors.light.text, fontSize: 14, fontWeight: '700', marginTop: 5 }, actions: { flexDirection: 'row', gap: 8, marginTop: 14 }, primary: { alignItems: 'center', backgroundColor: Colors.light.text, borderRadius: 8, flex: 1, paddingVertical: 11 }, primaryText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' }, secondary: { alignItems: 'center', backgroundColor: Colors.light.background, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 11 }, secondaryText: { color: Colors.light.textSecondary, fontSize: 13, fontWeight: '700' }, promotion: { backgroundColor: Colors.light.text, borderRadius: 16, padding: Spacing.four }, promotionTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '700' }, promotionCopy: { color: '#D1D5DB', fontSize: 13, lineHeight: 19, marginTop: 6 }, promotionButton: { alignSelf: 'flex-start', backgroundColor: Colors.light.actionSoft, borderRadius: 999, marginTop: 16, paddingHorizontal: 14, paddingVertical: 10 }, promotionButtonText: { color: Colors.light.action, fontSize: 12, fontWeight: '700' },
+  eyebrow: {
+    color: Colors.light.action,
+    fontFamily: Fonts.sans,
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+  },
+  title: {
+    color: Colors.light.text,
+    fontSize: 28,
+    fontWeight: "700",
+    lineHeight: 34,
+    marginTop: 4,
+  },
+  copy: {
+    color: Colors.light.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 8,
+  },
+  metrics: { flexDirection: "row", gap: Spacing.two },
+  metric: {
+    backgroundColor: Colors.light.backgroundElement,
+    borderColor: Colors.light.border,
+    borderRadius: 16,
+    borderWidth: 1,
+    flex: 1,
+    padding: Spacing.three,
+  },
+  metricAction: {
+    backgroundColor: Colors.light.actionSoft,
+    borderColor: Colors.light.action,
+  },
+  metricLabel: {
+    color: Colors.light.textSecondary,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  metricLabelAction: { color: Colors.light.action },
+  metricValue: {
+    color: Colors.light.success,
+    fontSize: 22,
+    fontWeight: "700",
+    marginTop: 8,
+  },
+  metricValueAction: { color: Colors.light.text },
+  privacy: {
+    color: Colors.light.textSecondary,
+    fontSize: 12,
+    textAlign: "center",
+  },
+  cardHeader: {
+    alignItems: "flex-start",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  source: {
+    color: Colors.light.textSecondary,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  cardTitle: {
+    color: Colors.light.text,
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  confidence: {
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: "700",
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    textTransform: "uppercase",
+  },
+  confidenceHigh: {
+    backgroundColor: Colors.light.successSoft,
+    color: Colors.light.success,
+  },
+  confidenceLow: {
+    backgroundColor: Colors.light.background,
+    color: Colors.light.textSecondary,
+  },
+  command: {
+    backgroundColor: Colors.light.background,
+    borderColor: Colors.light.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 14,
+    padding: 10,
+  },
+  commandLabel: {
+    color: Colors.light.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  commandText: {
+    color: Colors.light.text,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 5,
+  },
+  interpretation: {
+    color: Colors.light.action,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.7,
+    marginTop: 14,
+  },
+  fields: { flexDirection: "row", gap: 8, marginTop: 8 },
+  field: {
+    backgroundColor: Colors.light.background,
+    borderColor: Colors.light.border,
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    padding: 10,
+  },
+  fieldLabel: {
+    color: Colors.light.textSecondary,
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  fieldValue: {
+    color: Colors.light.text,
+    fontSize: 14,
+    fontWeight: "700",
+    marginTop: 5,
+  },
+  actions: { flexDirection: "row", gap: 8, marginTop: 14 },
+  primary: {
+    alignItems: "center",
+    backgroundColor: Colors.light.text,
+    borderRadius: 8,
+    flex: 1,
+    paddingVertical: 11,
+  },
+  primaryText: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
+  secondary: {
+    alignItems: "center",
+    backgroundColor: Colors.light.background,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
+  secondaryText: {
+    color: Colors.light.textSecondary,
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  promotion: {
+    backgroundColor: Colors.light.text,
+    borderRadius: 16,
+    padding: Spacing.four,
+  },
+  promotionTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
+  promotionCopy: {
+    color: "#D1D5DB",
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 6,
+  },
+  promotionButton: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.light.actionSoft,
+    borderRadius: 999,
+    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  promotionButtonText: {
+    color: Colors.light.action,
+    fontSize: 12,
+    fontWeight: "700",
+  },
 });
