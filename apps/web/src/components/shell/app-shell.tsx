@@ -6,7 +6,7 @@ import { Icon } from "@/components/ui/icon";
 
 function Brand() {
   return (
-    <Link href="/" className="flex items-center gap-3 rounded-lg">
+    <Link href="/dashboard" className="flex items-center gap-3 rounded-lg">
       <span className="flex size-10 items-center justify-center rounded-xl bg-action-soft text-action">
         <Icon name="wallet" />
       </span>

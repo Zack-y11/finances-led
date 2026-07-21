@@ -1,24 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 import { Icon, type IconName } from "@/components/ui/icon";
 
 const items: { href: string; label: string; icon: IconName }[] = [
-  { href: "/", label: "Overview", icon: "chart" },
+  { href: "/dashboard", label: "Overview", icon: "chart" },
   { href: "/ledger", label: "Transactions", icon: "ledger" },
   { href: "/capture", label: "Quick Capture", icon: "sparkles" },
   { href: "/groups", label: "Groups", icon: "groups" },
   { href: "/review", label: "Review Inbox", icon: "inbox" },
   { href: "/rules", label: "Rules", icon: "rule" },
   {
-    href: "/settings/entities?tab=accounts",
+    href: "/settings/accounts",
     label: "Accounts",
     icon: "wallet",
   },
   {
-    href: "/settings/entities?tab=categories",
+    href: "/settings/categories",
     label: "Categories",
     icon: "tag",
   },
@@ -27,15 +27,11 @@ const items: { href: string; label: string; icon: IconName }[] = [
 
 export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   function isActive(href: string) {
-    const [itemPath, query] = href.split("?");
-    const expectedTab = query ? new URLSearchParams(query).get("tab") : null;
-    return itemPath === "/"
-      ? pathname === "/"
-      : pathname === itemPath &&
-          (!expectedTab || searchParams.get("tab") === expectedTab);
+    if (href === "/groups")
+      return pathname === "/groups" || pathname.startsWith("/groups/");
+    return pathname === href;
   }
 
   function navigationLink(
