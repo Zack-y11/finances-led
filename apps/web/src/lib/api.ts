@@ -1,6 +1,13 @@
 "use client";
 
-import type { CreateEntryGroup, CreateLedgerEntry } from "@finance/contracts";
+import type {
+  CreateAccount,
+  CreateCategory,
+  CreateEntryGroup,
+  CreateLedgerEntry,
+  UpdateAccount,
+  UpdateCategory,
+} from "@finance/contracts";
 
 const baseUrl = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
@@ -17,6 +24,20 @@ export class ApiError extends Error {
 }
 
 type ApiRelated = { id: string; name: string };
+
+export type Account = {
+  id: string;
+  name: string;
+  type: "bank" | "cash" | "wallet" | "credit_card";
+  currency: string;
+  isActive: boolean;
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  kind: "income" | "expense" | "both";
+};
 
 export type LedgerEntry = {
   id: string;
@@ -66,11 +87,35 @@ export type AnalyticsSummary = {
 };
 export type AnalyticsBreakdown = {
   expenses: Array<{ category: string; amount: number }>;
+  income: Array<{ category: string; amount: number }>;
 };
 
 function numberValue(value: unknown): number {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeAccount(value: Record<string, unknown>): Account {
+  const rawType = String(value.type ?? "cash").toLowerCase();
+  return {
+    id: String(value.id),
+    name: String(value.name),
+    type:
+      rawType === "bank" || rawType === "wallet" || rawType === "credit_card"
+        ? rawType
+        : "cash",
+    currency: String(value.currency ?? "USD").toUpperCase(),
+    isActive: value.isActive !== false,
+  };
+}
+
+function normalizeCategory(value: Record<string, unknown>): Category {
+  const rawKind = String(value.kind ?? "expense").toLowerCase();
+  return {
+    id: String(value.id),
+    name: String(value.name),
+    kind: rawKind === "income" || rawKind === "both" ? rawKind : "expense",
+  };
 }
 
 function normalizeEntry(value: Record<string, unknown>): LedgerEntry {
@@ -170,6 +215,54 @@ export async function createLedgerEntry(
   return normalizeEntry(
     await request<Record<string, unknown>>("/ledger-entries", {
       method: "POST",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function getAccounts(): Promise<Account[]> {
+  return (await request<Record<string, unknown>[]>("/accounts")).map(
+    normalizeAccount,
+  );
+}
+export async function createAccount(input: CreateAccount): Promise<Account> {
+  return normalizeAccount(
+    await request<Record<string, unknown>>("/accounts", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function updateAccount(
+  id: string,
+  input: UpdateAccount,
+): Promise<Account> {
+  return normalizeAccount(
+    await request<Record<string, unknown>>(`/accounts/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function getCategories(): Promise<Category[]> {
+  return (await request<Record<string, unknown>[]>("/categories")).map(
+    normalizeCategory,
+  );
+}
+export async function createCategory(input: CreateCategory): Promise<Category> {
+  return normalizeCategory(
+    await request<Record<string, unknown>>("/categories", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function updateCategory(
+  id: string,
+  input: UpdateCategory,
+): Promise<Category> {
+  return normalizeCategory(
+    await request<Record<string, unknown>>(`/categories/${id}`, {
+      method: "PATCH",
       body: JSON.stringify(input),
     }),
   );
