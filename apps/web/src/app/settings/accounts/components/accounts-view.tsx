@@ -206,6 +206,9 @@ function AccountForm({
           return;
         }
         await createAccount(parsed.data);
+        setName("");
+        setType("bank");
+        setCurrency("USD");
       }
       onSaved(account ? "Account updated." : "Account created.");
     } catch (reason) {

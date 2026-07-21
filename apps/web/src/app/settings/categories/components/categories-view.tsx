@@ -163,6 +163,8 @@ function CategoryForm({
           return;
         }
         await createCategory(parsed.data);
+        setName("");
+        setKind("expense");
       }
       onSaved(category ? "Category updated." : "Category created.");
     } catch (reason) {
