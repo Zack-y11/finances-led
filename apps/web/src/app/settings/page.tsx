@@ -69,12 +69,20 @@ export default function SettingsPage() {
               Connection unavailable
             </button>
           </div>
-          <Link
-            className="mt-4 inline-flex text-sm font-semibold text-action hover:underline"
-            href="/settings/entities"
-          >
-            Manage accounts & categories →
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-4">
+            <Link
+              className="text-sm font-semibold text-action hover:underline"
+              href="/settings/accounts"
+            >
+              Manage accounts →
+            </Link>
+            <Link
+              className="text-sm font-semibold text-action hover:underline"
+              href="/settings/categories"
+            >
+              Manage categories →
+            </Link>
+          </div>
         </SettingsCard>
       </section>
     </div>
