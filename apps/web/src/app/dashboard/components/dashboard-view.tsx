@@ -31,8 +31,27 @@ import {
 } from "@/lib/api";
 
 const month = currentMonth();
-const expenseColors = ["#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"];
-const incomeColors = ["#10b981", "#34d399", "#6ee7b7", "#a7f3d0"];
+const expenseColors = [
+  "#1d4ed8",
+  "#2563eb",
+  "#3b82f6",
+  "#60a5fa",
+  "#93c5fd",
+  "#7c3aed",
+  "#8b5cf6",
+  "#a78bfa",
+];
+const incomeColors = [
+  "#047857",
+  "#059669",
+  "#10b981",
+  "#34d399",
+  "#6ee7b7",
+  "#0f766e",
+  "#14b8a6",
+  "#2dd4bf",
+];
+const maxBreakdownItems = 8;
 
 type BreakdownItem = { category: string; amount: number };
 
@@ -86,9 +105,10 @@ export function DashboardView() {
   );
   const historyData = history.map((item) => ({
     ...item,
-    label: new Intl.DateTimeFormat("en-US", { month: "short" }).format(
-      new Date(`${item.month}-01T12:00:00`),
-    ),
+    label: new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      year: "2-digit",
+    }).format(new Date(`${item.month}-01T12:00:00`)),
   }));
 
   return (
@@ -162,7 +182,7 @@ export function DashboardView() {
                       );
                     }}
                   />
-                  <Bar dataKey="net" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="net">
                     {historyData.map((item) => (
                       <Cell
                         key={item.month}
@@ -270,6 +290,19 @@ function BreakdownChart({
   items: BreakdownItem[];
   title: "Expense breakdown" | "Income breakdown";
 }) {
+  const chartItems =
+    items.length > maxBreakdownItems
+      ? [
+          ...items.slice(0, maxBreakdownItems - 1),
+          {
+            category: "Other",
+            amount: items
+              .slice(maxBreakdownItems - 1)
+              .reduce((sum, item) => sum + item.amount, 0),
+          },
+        ]
+      : items;
+
   return (
     <section className="surface-card p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
@@ -286,7 +319,7 @@ function BreakdownChart({
           View ledger
         </Link>
       </div>
-      {items.length ? (
+      {chartItems.length ? (
         <div className="mt-6 grid gap-6 md:grid-cols-[minmax(0,220px)_1fr] md:items-center">
           <div className="h-56 w-full" aria-hidden="true">
             <ResponsiveContainer width="100%" height="100%">
@@ -308,14 +341,14 @@ function BreakdownChart({
                   }}
                 />
                 <Pie
-                  data={items}
+                  data={chartItems}
                   dataKey="amount"
                   innerRadius="58%"
                   nameKey="category"
                   outerRadius="88%"
                   paddingAngle={2}
                 >
-                  {items.map((item, index) => (
+                  {chartItems.map((item, index) => (
                     <Cell
                       key={item.category}
                       fill={colors[index % colors.length]}
@@ -326,7 +359,7 @@ function BreakdownChart({
             </ResponsiveContainer>
           </div>
           <ul className="grid gap-3" aria-label={title}>
-            {items.map((item, index) => (
+            {chartItems.map((item, index) => (
               <li
                 className="flex items-center justify-between gap-4 text-sm"
                 key={item.category}
