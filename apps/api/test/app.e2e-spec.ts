@@ -21,6 +21,9 @@ describe('Ledger endpoints (e2e)', () => {
   const filterEntryIds: string[] = [];
   const analyticsEntryIds: string[] = [];
   const analyticsCategoryIds: string[] = [];
+  const lifecycleAccountIds: string[] = [];
+  const lifecycleCategoryIds: string[] = [];
+  const lifecycleEntryIds: string[] = [];
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -270,6 +273,233 @@ describe('Ledger endpoints (e2e)', () => {
     );
   });
 
+  it('manages accounts through the configured user boundary', async () => {
+    const name = `Lifecycle account ${fixtureId}`;
+    const createResponse = await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ name, type: 'wallet', currency: 'USD' })
+      .expect(201);
+    lifecycleAccountIds.push(createResponse.body.id);
+
+    expect(createResponse.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        userId: process.env.DEV_USER_ID,
+        name,
+        type: 'WALLET',
+        currency: 'USD',
+        isActive: true,
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .post('/accounts')
+      .send({ name, type: 'wallet', currency: 'USD' })
+      .expect(409)
+      .expect(({ body }) =>
+        expect(body.message).toBe('Account name already exists'),
+      );
+
+    const listResponse = await request(app.getHttpServer())
+      .get('/accounts')
+      .expect(200);
+    expect(listResponse.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: createResponse.body.id, name }),
+      ]),
+    );
+    expect(listResponse.body).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: unownedAccountId }),
+      ]),
+    );
+
+    const updatedName = `${name} updated`;
+    const updateResponse = await request(app.getHttpServer())
+      .patch(`/accounts/${createResponse.body.id}`)
+      .send({ name: updatedName, isActive: false })
+      .expect(200);
+    expect(updateResponse.body).toEqual(
+      expect.objectContaining({
+        id: createResponse.body.id,
+        name: updatedName,
+        isActive: false,
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .patch(`/accounts/${unownedAccountId}`)
+      .send({ name: 'Blocked' })
+      .expect(404)
+      .expect(({ body }) => expect(body.message).toBe('Account not found'));
+
+    const auditLogs = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'Account',
+        entityId: createResponse.body.id,
+        action: { in: ['CREATE', 'UPDATE'] },
+      },
+      orderBy: { action: 'asc' },
+    });
+    expect(auditLogs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'CREATE',
+          metadata: { fields: ['currency', 'name', 'type'] },
+        }),
+        expect.objectContaining({
+          action: 'UPDATE',
+          metadata: { fields: ['isActive', 'name'] },
+        }),
+      ]),
+    );
+  });
+
+  it('manages categories through the configured user boundary', async () => {
+    const name = `Lifecycle category ${fixtureId}`;
+    const createResponse = await request(app.getHttpServer())
+      .post('/categories')
+      .send({ name, kind: 'expense' })
+      .expect(201);
+    lifecycleCategoryIds.push(createResponse.body.id);
+
+    expect(createResponse.body).toEqual(
+      expect.objectContaining({
+        id: expect.any(String),
+        userId: process.env.DEV_USER_ID,
+        name,
+        kind: 'EXPENSE',
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ name, kind: 'expense' })
+      .expect(409)
+      .expect(({ body }) =>
+        expect(body.message).toBe('Category name already exists'),
+      );
+
+    const listResponse = await request(app.getHttpServer())
+      .get('/categories')
+      .expect(200);
+    expect(listResponse.body).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: createResponse.body.id, name }),
+      ]),
+    );
+    expect(listResponse.body).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: unownedCategoryId }),
+      ]),
+    );
+
+    const updatedName = `${name} updated`;
+    const updateResponse = await request(app.getHttpServer())
+      .patch(`/categories/${createResponse.body.id}`)
+      .send({ name: updatedName, kind: 'both' })
+      .expect(200);
+    expect(updateResponse.body).toEqual(
+      expect.objectContaining({
+        id: createResponse.body.id,
+        name: updatedName,
+        kind: 'BOTH',
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .patch(`/categories/${unownedCategoryId}`)
+      .send({ name: 'Blocked' })
+      .expect(404)
+      .expect(({ body }) => expect(body.message).toBe('Category not found'));
+
+    const auditLogs = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'Category',
+        entityId: createResponse.body.id,
+        action: { in: ['CREATE', 'UPDATE'] },
+      },
+      orderBy: { action: 'asc' },
+    });
+    expect(auditLogs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          action: 'CREATE',
+          metadata: { fields: ['kind', 'name'] },
+        }),
+        expect.objectContaining({
+          action: 'UPDATE',
+          metadata: { fields: ['kind', 'name'] },
+        }),
+      ]),
+    );
+  });
+
+  it('deactivates accounts for new ledger writes without deleting history', async () => {
+    const userId = process.env.DEV_USER_ID!;
+    const [historicalAccount, historicalCategory] = await Promise.all([
+      prisma.account.create({
+        data: {
+          userId,
+          name: `Historical account ${fixtureId}`,
+          type: 'CASH',
+        },
+      }),
+      prisma.category.create({
+        data: {
+          userId,
+          name: `Historical category ${fixtureId}`,
+          kind: 'EXPENSE',
+        },
+      }),
+    ]);
+    lifecycleAccountIds.push(historicalAccount.id);
+    lifecycleCategoryIds.push(historicalCategory.id);
+
+    const ledgerResponse = await request(app.getHttpServer())
+      .post('/ledger-entries')
+      .send({
+        ...createInput(),
+        accountId: historicalAccount.id,
+        categoryId: historicalCategory.id,
+      })
+      .expect(201);
+    lifecycleEntryIds.push(ledgerResponse.body.id);
+
+    await request(app.getHttpServer())
+      .patch(`/accounts/${historicalAccount.id}`)
+      .send({ isActive: false })
+      .expect(200);
+
+    const optionsResponse = await request(app.getHttpServer())
+      .get('/ledger-entries/options')
+      .expect(200);
+    expect(optionsResponse.body.accounts).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: historicalAccount.id }),
+      ]),
+    );
+
+    await request(app.getHttpServer())
+      .get(`/ledger-entries/${ledgerResponse.body.id}`)
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.accountId).toBe(historicalAccount.id);
+        expect(body.account.id).toBe(historicalAccount.id);
+      });
+
+    await request(app.getHttpServer())
+      .post('/ledger-entries')
+      .send({
+        ...createInput(),
+        merchant: 'Inactive account write',
+        accountId: historicalAccount.id,
+        categoryId: historicalCategory.id,
+      })
+      .expect(404)
+      .expect(({ body }) => expect(body.message).toBe('Account not found'));
+  });
+
   it('filters ledger entries, searches case-insensitively, and paginates deterministically', async () => {
     const userId = process.env.DEV_USER_ID!;
     const [filterAccount, filterCategory] = await Promise.all([
@@ -483,19 +713,36 @@ describe('Ledger endpoints (e2e)', () => {
     const userId = process.env.DEV_USER_ID!;
     const analyticsMonth = '2199-04';
     const nextMonth = '2199-05';
-    const [foodCategory, transportCategory] = await Promise.all([
-      prisma.category.create({
-        data: { userId, name: `Analytics Food ${fixtureId}`, kind: 'EXPENSE' },
-      }),
-      prisma.category.create({
-        data: {
-          userId,
-          name: `Analytics Transport ${fixtureId}`,
-          kind: 'EXPENSE',
-        },
-      }),
-    ]);
-    analyticsCategoryIds.push(foodCategory.id, transportCategory.id);
+    const [foodCategory, salaryCategory, transportCategory] = await Promise.all(
+      [
+        prisma.category.create({
+          data: {
+            userId,
+            name: `Analytics Food ${fixtureId}`,
+            kind: 'EXPENSE',
+          },
+        }),
+        prisma.category.create({
+          data: {
+            userId,
+            name: `Analytics Salary ${fixtureId}`,
+            kind: 'INCOME',
+          },
+        }),
+        prisma.category.create({
+          data: {
+            userId,
+            name: `Analytics Transport ${fixtureId}`,
+            kind: 'EXPENSE',
+          },
+        }),
+      ],
+    );
+    analyticsCategoryIds.push(
+      foodCategory.id,
+      salaryCategory.id,
+      transportCategory.id,
+    );
 
     async function addAnalyticsEntry(input: {
       id?: string;
@@ -525,6 +772,7 @@ describe('Ledger endpoints (e2e)', () => {
       type: 'INCOME',
       amount: 1200,
       month: analyticsMonth,
+      categoryId: salaryCategory.id,
     });
     await addAnalyticsEntry({
       type: 'EXPENSE',
@@ -584,6 +832,7 @@ describe('Ledger endpoints (e2e)', () => {
         { category: `Analytics Food ${fixtureId}`, amount: 145.32 },
         { category: `Analytics Transport ${fixtureId}`, amount: 87 },
       ],
+      income: [{ category: `Analytics Salary ${fixtureId}`, amount: 1200 }],
     });
 
     const historyResponse = await request(app.getHttpServer())
@@ -620,7 +869,7 @@ describe('Ledger endpoints (e2e)', () => {
     const emptyBreakdownResponse = await request(app.getHttpServer())
       .get('/analytics/monthly-breakdown?month=2199-06')
       .expect(200);
-    expect(emptyBreakdownResponse.body).toEqual({ expenses: [] });
+    expect(emptyBreakdownResponse.body).toEqual({ expenses: [], income: [] });
   });
   afterAll(async () => {
     if (prisma) {
@@ -632,6 +881,33 @@ describe('Ledger endpoints (e2e)', () => {
       if (filterEntryIds.length) {
         await prisma.ledgerEntry.deleteMany({
           where: { id: { in: filterEntryIds } },
+        });
+      }
+      if (lifecycleEntryIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'LedgerEntry',
+            entityId: { in: lifecycleEntryIds },
+          },
+        });
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: lifecycleEntryIds } },
+        });
+      }
+      if (lifecycleAccountIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'Account',
+            entityId: { in: lifecycleAccountIds },
+          },
+        });
+      }
+      if (lifecycleCategoryIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'Category',
+            entityId: { in: lifecycleCategoryIds },
+          },
         });
       }
       if (createdEntryId) {
@@ -655,6 +931,16 @@ describe('Ledger endpoints (e2e)', () => {
       if (analyticsCategoryIds.length) {
         await prisma.category.deleteMany({
           where: { id: { in: analyticsCategoryIds } },
+        });
+      }
+      if (lifecycleAccountIds.length) {
+        await prisma.account.deleteMany({
+          where: { id: { in: lifecycleAccountIds } },
+        });
+      }
+      if (lifecycleCategoryIds.length) {
+        await prisma.category.deleteMany({
+          where: { id: { in: lifecycleCategoryIds } },
         });
       }
       if (filterAccountId)

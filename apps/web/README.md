@@ -13,8 +13,13 @@ Next.js dashboard for Finance Ledger.
 
 ## Current Views
 
-- `/`: placeholder home page
-- `/ledger`: manual ledger list and create form backed by the API
+- `/` redirects to `/dashboard`
+- `/dashboard`: live monthly overview with net history, expense breakdown, income breakdown, and recent transactions
+- `/ledger`: manual ledger list, filters, detail pane, and create form backed by the API
+- `/groups`: entry group list and create form
+- `/groups/[id]`: group detail, computed total, linked entries, and append-entry form
+- `/settings/accounts`: persistent account create/edit and deactivate/reactivate management
+- `/settings/categories`: persistent category create/edit management
 
 ## Development
 
