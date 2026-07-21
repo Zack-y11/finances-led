@@ -169,7 +169,7 @@ export class LedgerService {
   private async assertOwnedReferences(accountId: string, categoryId: string) {
     const [account, category] = await Promise.all([
       this.prisma.db.account.findFirst({
-        where: { id: accountId, userId: this.userId },
+        where: { id: accountId, userId: this.userId, isActive: true },
       }),
       this.prisma.db.category.findFirst({
         where: { id: categoryId, userId: this.userId },
