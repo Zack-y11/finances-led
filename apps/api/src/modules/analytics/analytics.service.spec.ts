@@ -56,14 +56,34 @@ describe('AnalyticsService', () => {
     );
   });
 
-  it('groups monthly expenses by category and sorts by amount', async () => {
+  it('groups monthly income and expenses by category and sorts by amount', async () => {
     groupByResult = [
-      { categoryId: 'transport-id', _sum: { amount: amount('87.00') } },
-      { categoryId: 'food-id', _sum: { amount: amount('145.32') } },
-      { categoryId: null, _sum: { amount: amount('12.00') } },
+      {
+        type: 'EXPENSE',
+        categoryId: 'transport-id',
+        _sum: { amount: amount('87.00') },
+      },
+      {
+        type: 'EXPENSE',
+        categoryId: 'food-id',
+        _sum: { amount: amount('145.32') },
+      },
+      { type: 'EXPENSE', categoryId: null, _sum: { amount: amount('12.00') } },
+      {
+        type: 'INCOME',
+        categoryId: 'salary-id',
+        _sum: { amount: amount('3000.00') },
+      },
+      {
+        type: 'INCOME',
+        categoryId: 'bonus-id',
+        _sum: { amount: amount('500.00') },
+      },
     ];
     categoryResult = [
+      { id: 'bonus-id', name: 'Bonus' },
       { id: 'food-id', name: 'Food' },
+      { id: 'salary-id', name: 'Salary' },
       { id: 'transport-id', name: 'Transport' },
     ];
 
@@ -73,6 +93,27 @@ describe('AnalyticsService', () => {
         { category: 'Transport', amount: 87 },
         { category: 'Uncategorized', amount: 12 },
       ],
+      income: [
+        { category: 'Salary', amount: 3000 },
+        { category: 'Bonus', amount: 500 },
+      ],
+    });
+    expect(lastGroupByInput).toEqual(
+      expect.objectContaining({
+        by: ['type', 'categoryId'],
+        where: expect.objectContaining({
+          userId: 'configured-user-id',
+          monthKey: '2026-07',
+          type: { in: ['INCOME', 'EXPENSE'] },
+        }),
+      }),
+    );
+  });
+
+  it('returns empty arrays for an empty monthly breakdown', async () => {
+    await expect(service.monthlyBreakdown('2026-08')).resolves.toEqual({
+      expenses: [],
+      income: [],
     });
   });
 

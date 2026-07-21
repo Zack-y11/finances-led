@@ -36,11 +36,11 @@ export class AnalyticsService {
 
   async monthlyBreakdown(month: string) {
     const rows = await this.prisma.db.ledgerEntry.groupBy({
-      by: ['categoryId'],
+      by: ['type', 'categoryId'],
       where: {
         userId: this.userId,
         monthKey: month,
-        type: 'EXPENSE',
+        type: { in: ['INCOME', 'EXPENSE'] },
       },
       _sum: { amount: true },
     });
@@ -57,20 +57,38 @@ export class AnalyticsService {
       categories.map((category) => [category.id, category.name]),
     );
 
-    const expenses = rows
-      .map((row) => ({
+    const breakdown = {
+      expenses: [] as Array<{ category: string; amount: number }>,
+      income: [] as Array<{ category: string; amount: number }>,
+    };
+
+    for (const row of rows) {
+      const item = {
         category: row.categoryId
           ? (categoryNames.get(row.categoryId) ?? 'Uncategorized')
           : 'Uncategorized',
         amount: this.cents(row._sum.amount) / 100,
-      }))
-      .sort(
-        (left, right) =>
-          right.amount - left.amount ||
-          left.category.localeCompare(right.category),
-      );
+      };
 
-    return { expenses };
+      if (row.type === 'INCOME') {
+        breakdown.income.push(item);
+      } else {
+        breakdown.expenses.push(item);
+      }
+    }
+
+    breakdown.expenses.sort(
+      (left, right) =>
+        right.amount - left.amount ||
+        left.category.localeCompare(right.category),
+    );
+    breakdown.income.sort(
+      (left, right) =>
+        right.amount - left.amount ||
+        left.category.localeCompare(right.category),
+    );
+
+    return breakdown;
   }
 
   async netHistory() {
