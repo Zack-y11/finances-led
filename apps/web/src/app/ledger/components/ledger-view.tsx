@@ -80,7 +80,6 @@ export function LedgerView() {
     return () => window.clearTimeout(timer);
   }, [pathname, query, router, searchInput, searchParams]);
 
-
   useEffect(() => {
     let active = true;
     setOptionsError(undefined);
@@ -246,7 +245,11 @@ export function LedgerView() {
       {listError ? (
         <StatusMessage tone="error">{listError}</StatusMessage>
       ) : null}
-      <div className="grid min-w-0 items-start gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]">
+      <div
+        className={`grid min-w-0 items-start gap-6 ${
+          selectedId ? "2xl:grid-cols-[minmax(0,1fr)_360px]" : ""
+        }`}
+      >
         <section className="surface-card min-w-0 overflow-hidden">
           <div className="flex flex-col gap-4 border-b border-border p-5 sm:p-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -255,10 +258,17 @@ export function LedgerView() {
                   Recent transactions
                 </h2>
                 <p className="mt-1 text-sm text-muted">
-                  Showing {result.pagination.total} entries · {formatPeriodLabel()}
+                  Showing {result.pagination.total} entries ·{" "}
+                  {formatPeriodLabel()}
                 </p>
               </div>
-              {startDate || endDate || query || type !== "all" || accountId || categoryId || groupId ? (
+              {startDate ||
+              endDate ||
+              query ||
+              type !== "all" ||
+              accountId ||
+              categoryId ||
+              groupId ? (
                 <button
                   className="button-secondary text-xs"
                   onClick={clearAllFilters}
@@ -268,33 +278,43 @@ export function LedgerView() {
                 </button>
               ) : null}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 2xl:grid-cols-12 2xl:items-end">
-              <label className={`order-3 sm:order-none 2xl:col-span-2 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">From date</span>
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-12 2xl:items-end">
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  From
+                </span>
                 <input
                   aria-label="Start date"
                   className="field"
-                  onChange={(event) =>
-                    updateFilter("startDate", event.target.value)
+                  onInput={(event) =>
+                    updateFilter("startDate", event.currentTarget.value)
                   }
                   type="date"
                   value={startDate}
                 />
               </label>
-              <label className={`order-3 sm:order-none 2xl:col-span-2 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">To date</span>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  To
+                </span>
                 <input
                   aria-label="End date"
                   className="field"
-                  onChange={(event) =>
-                    updateFilter("endDate", event.target.value)
+                  onInput={(event) =>
+                    updateFilter("endDate", event.currentTarget.value)
                   }
                   type="date"
                   value={endDate}
                 />
               </label>
-              <label className="order-first sm:col-span-2 md:col-span-1 2xl:col-span-4">
-                <span className="mb-1 block text-xs font-medium text-muted">Search</span>
+              <label className="order-first sm:col-span-2 md:col-span-1 lg:col-span-2 2xl:col-span-6">
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Search
+                </span>
                 <div className="relative">
                   <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-muted">
                     <Icon className="size-5" name="search" />
@@ -317,8 +337,12 @@ export function LedgerView() {
               >
                 {showFilters ? "Hide filters" : "Filters"}
               </button>
-              <label className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">Type</span>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Type
+                </span>
                 <select
                   aria-label="Transaction type"
                   className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
@@ -336,8 +360,12 @@ export function LedgerView() {
                   <option value="adjustment">Adjustments</option>
                 </select>
               </label>
-              <label className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">Account</span>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Account
+                </span>
                 <select
                   aria-label="Account"
                   className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
@@ -354,8 +382,12 @@ export function LedgerView() {
                   ))}
                 </select>
               </label>
-              <label className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">Category</span>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Category
+                </span>
                 <select
                   aria-label="Category"
                   className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
@@ -372,8 +404,12 @@ export function LedgerView() {
                   ))}
                 </select>
               </label>
-              <label className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">Group</span>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
+                  Group
+                </span>
                 <select
                   aria-label="Group"
                   className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
@@ -520,40 +556,40 @@ export function LedgerView() {
             </div>
           </div>
         </section>
-        <aside className="surface-card overflow-hidden 2xl:sticky 2xl:top-24">
-          <div className="flex items-center justify-between border-b border-border bg-surface-muted px-5 py-4">
-            <h2 className="font-semibold text-ink">Transaction details</h2>
-            <button
-              aria-label="Close details"
-              className="text-muted"
-              onClick={() => setSelectedId(undefined)}
-              type="button"
-            >
-              ×
-            </button>
-          </div>
-          {detailError ? (
-            <p className="p-5 text-sm text-danger">{detailError}</p>
-          ) : selected ? (
-            <EntryDetails
-              entry={selected}
-              onDeleted={() => {
-                setSelectedId(undefined);
-                setNotice("Transaction removed from your ledger.");
-                setReload((v) => v + 1);
-              }}
-              onUpdated={() => {
-                setNotice("Transaction updated successfully.");
-                setReload((v) => v + 1);
-              }}
-              options={options}
-            />
-          ) : (
-            <p className="p-5 text-sm text-muted">
-              Select an entry to load its current details.
-            </p>
-          )}
-        </aside>
+        {selectedId ? (
+          <aside className="surface-card overflow-hidden 2xl:sticky 2xl:top-24">
+            <div className="flex items-center justify-between border-b border-border bg-surface-muted px-5 py-4">
+              <h2 className="font-semibold text-ink">Transaction details</h2>
+              <button
+                aria-label="Close details"
+                className="text-muted"
+                onClick={() => setSelectedId(undefined)}
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            {detailError ? (
+              <p className="p-5 text-sm text-danger">{detailError}</p>
+            ) : selected ? (
+              <EntryDetails
+                entry={selected}
+                onDeleted={() => {
+                  setSelectedId(undefined);
+                  setNotice("Transaction removed from your ledger.");
+                  setReload((v) => v + 1);
+                }}
+                onUpdated={() => {
+                  setNotice("Transaction updated successfully.");
+                  setReload((v) => v + 1);
+                }}
+                options={options}
+              />
+            ) : (
+              <p className="p-5 text-sm text-muted">Loading details…</p>
+            )}
+          </aside>
+        ) : null}
       </div>
     </div>
   );
@@ -578,7 +614,9 @@ function EntryStatus({ status }: { status: LedgerEntry["status"] }) {
     .join(" ");
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}>
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
+    >
       <span aria-hidden="true" className={`size-1.5 rounded-full ${dot}`} />
       {label}
     </span>
@@ -665,7 +703,9 @@ function EntryDetails({
   if (editing) {
     return (
       <form className="grid gap-4 p-5 text-sm" onSubmit={handleSave}>
-        {error ? <p className="text-xs font-semibold text-danger">{error}</p> : null}
+        {error ? (
+          <p className="text-xs font-semibold text-danger">{error}</p>
+        ) : null}
         <label className="text-xs font-medium text-muted">
           Type
           <select
@@ -754,7 +794,11 @@ function EntryDetails({
           >
             Cancel
           </button>
-          <button className="button-primary text-xs" disabled={saving} type="submit">
+          <button
+            className="button-primary text-xs"
+            disabled={saving}
+            type="submit"
+          >
             {saving ? "Saving..." : "Save changes"}
           </button>
         </div>
@@ -767,9 +811,13 @@ function EntryDetails({
       <div className="grid gap-4 p-5 text-sm">
         <p className="font-semibold text-danger">Delete Transaction?</p>
         <p className="text-xs text-muted leading-relaxed">
-          Are you sure you want to remove <strong>{entry.merchant}</strong> ({money(entry.amount)}) from your financial records? This action is logged in audit logs.
+          Are you sure you want to remove <strong>{entry.merchant}</strong> (
+          {money(entry.amount)}) from your financial records? This action is
+          logged in audit logs.
         </p>
-        {error ? <p className="text-xs font-semibold text-danger">{error}</p> : null}
+        {error ? (
+          <p className="text-xs font-semibold text-danger">{error}</p>
+        ) : null}
         <div className="flex justify-end gap-2 pt-2">
           <button
             className="button-secondary text-xs"
