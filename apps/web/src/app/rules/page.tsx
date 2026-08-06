@@ -33,10 +33,10 @@ const rules = [
 export default function RulesPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
-        eyebrow="Automation rules"
-        title="Make repeated choices once."
+        eyebrow="Automation"
+        title="Automation rules"
         description="Explicit values always override automation. Rules are applied in priority order and remain explainable."
         action={
           <button
@@ -118,7 +118,40 @@ export default function RulesPage() {
         </section>
       ) : null}
       <section className="surface-card overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-4 md:hidden">
+          {rules.map((rule) => (
+            <article
+              className="rounded-xl border border-border bg-surface p-4"
+              key={rule.condition}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                  Rule {rule.priority}
+                </span>
+                <span
+                  className={
+                    rule.enabled
+                      ? "rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-[#047857]"
+                      : "rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted"
+                  }
+                >
+                  {rule.enabled ? "Active" : "Paused"}
+                </span>
+              </div>
+              <h2 className="mt-3 font-semibold text-ink">{rule.action}</h2>
+              <div className="mt-4 rounded-lg bg-surface-muted p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Condition
+                </p>
+                <p className="mt-1 text-sm text-ink">{rule.condition}</p>
+              </div>
+              <p className="mt-3 text-xs text-muted">
+                Applied {rule.runs} times
+              </p>
+            </article>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[760px] border-collapse text-left text-sm">
             <thead className="bg-surface-muted text-xs uppercase tracking-wide text-muted">
               <tr>

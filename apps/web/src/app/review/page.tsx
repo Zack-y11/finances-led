@@ -26,14 +26,14 @@ const queue = [
 
 export default function ReviewPage() {
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
-        eyebrow="Review inbox"
-        title="Keep automation explainable."
+        eyebrow="AI review"
+        title="Review inbox"
         description="Every proposal is shown with its source, interpretation, confidence, and a clear next action."
       />
       <DemoNotice feature="Review inbox" />
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:gap-4">
         <Metric label="Pending review" value="12" tone="action" />
         <Metric label="High confidence" value="8" tone="success" />
         <Metric label="Needs attention" value="4" tone="review" />
@@ -171,13 +171,13 @@ function Metric({
         ? "bg-review-soft text-review"
         : "bg-action-soft text-action";
   return (
-    <div className="surface-card p-5">
+    <div className="surface-card min-w-[10rem] p-4 sm:min-w-0 sm:p-5">
       <span
         className={"rounded-full px-2 py-1 text-xs font-semibold " + styles}
       >
         {label}
       </span>
-      <p className="mt-5 text-3xl font-bold text-ink">{value}</p>
+      <p className="mt-3 text-2xl font-bold text-ink sm:mt-5 sm:text-3xl">{value}</p>
     </div>
   );
 }
