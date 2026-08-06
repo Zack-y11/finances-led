@@ -39,8 +39,8 @@ describe('Ledger endpoints (e2e)', () => {
     inputMethod: 'manual',
   });
   const fakeTextCommandParser: TextCommandParser = {
-    async parseText(input) {
-      return {
+    parseText(input) {
+      return Promise.resolve({
         intent: 'create_ledger_entry',
         data: {
           type: 'expense',
@@ -52,7 +52,7 @@ describe('Ledger endpoints (e2e)', () => {
           occurredAt: input.referenceDate,
         },
         confidence: 0.94,
-      };
+      });
     },
   };
 

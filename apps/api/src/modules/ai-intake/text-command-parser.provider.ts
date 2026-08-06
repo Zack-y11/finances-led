@@ -10,8 +10,8 @@ export class TextCommandParserNotConfiguredError extends Error {
 }
 
 class DisabledTextCommandParser implements TextCommandParser {
-  async parseText(): Promise<never> {
-    throw new TextCommandParserNotConfiguredError();
+  parseText(): Promise<never> {
+    return Promise.reject(new TextCommandParserNotConfiguredError());
   }
 }
 
