@@ -69,15 +69,20 @@ export class AiIntakeService {
       }
 
       const parsedData = result.data;
-      const evaluated = await this.rulesService.applyRules({
-        merchant: parsedData.data.merchant,
-        amount: parsedData.data.amount,
-        category: parsedData.data.category,
-        account: parsedData.data.account,
-      });
+      try {
+        const evaluated = await this.rulesService.applyRules({
+          merchant: parsedData.data.merchant,
+          amount: parsedData.data.amount,
+          category: parsedData.data.category,
+          account: parsedData.data.account,
+        });
 
-      parsedData.data.category = evaluated.category || parsedData.data.category;
-      parsedData.data.account = evaluated.account || parsedData.data.account;
+        parsedData.data.category =
+          evaluated.category || parsedData.data.category;
+        parsedData.data.account = evaluated.account || parsedData.data.account;
+      } catch {
+        // Rules engine failure should not block AI intake response
+      }
 
       return parsedData;
     } catch (error) {
