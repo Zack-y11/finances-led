@@ -71,7 +71,9 @@ export class RulesService {
           ? { actionValue: input.actionValue }
           : {}),
         ...(input.priority !== undefined ? { priority: input.priority } : {}),
-        ...(input.isEnabled !== undefined ? { isEnabled: input.isEnabled } : {}),
+        ...(input.isEnabled !== undefined
+          ? { isEnabled: input.isEnabled }
+          : {}),
       },
     });
   }

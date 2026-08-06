@@ -104,9 +104,7 @@ export class LedgerService {
               ...(startDate
                 ? { gte: new Date(`${startDate}T00:00:00.000Z`) }
                 : {}),
-              ...(endDate
-                ? { lte: new Date(`${endDate}T23:59:59.999Z`) }
-                : {}),
+              ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
             },
           }
         : month
@@ -116,6 +114,9 @@ export class LedgerService {
     const where: Prisma.LedgerEntryWhereInput = {
       userId: this.userId,
       ...dateFilter,
+      ...(type
+        ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
+        : {}),
       ...(categoryId ? { categoryId } : {}),
       ...(accountId ? { accountId } : {}),
       ...(groupId ? { groupId } : {}),
@@ -208,18 +209,14 @@ export class LedgerService {
           ...(input.type !== undefined
             ? {
                 type: input.type.toUpperCase() as
-                  | 'INCOME'
-                  | 'EXPENSE'
-                  | 'ADJUSTMENT',
+                  'INCOME' | 'EXPENSE' | 'ADJUSTMENT',
               }
             : {}),
           ...(input.amount !== undefined ? { amount: input.amount } : {}),
           ...(input.currency !== undefined
             ? { currency: input.currency.toUpperCase() }
             : {}),
-          ...(input.merchant !== undefined
-            ? { merchant: input.merchant }
-            : {}),
+          ...(input.merchant !== undefined ? { merchant: input.merchant } : {}),
           ...(input.accountId !== undefined
             ? { accountId: input.accountId }
             : {}),
@@ -255,7 +252,7 @@ export class LedgerService {
     await this.findOne(id);
 
     return this.prisma.db.$transaction(async (tx) => {
-      const deleted = await tx.ledgerEntry.delete({
+      await tx.ledgerEntry.delete({
         where: { id },
       });
 

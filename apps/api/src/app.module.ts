@@ -13,7 +13,6 @@ import { AiIntakeModule } from './modules/ai-intake/ai-intake.module.js';
 import { RulesModule } from './modules/rules/rules.module.js';
 import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module.js';
 
-
 @Module({
   imports: [
     ConfigModule.forRoot({
