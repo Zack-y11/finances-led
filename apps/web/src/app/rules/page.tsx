@@ -1,43 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
-import { DemoNotice } from "@/components/ui/demo-notice";
-
-const rules = [
-  {
-    condition: "Merchant equals Starbucks",
-    action: "Set category to Dining",
-    priority: 1,
-    runs: 243,
-    enabled: true,
-  },
-  {
-    condition: "Amount less than $5.00",
-    action: "Set group to Petty cash",
-    priority: 2,
-    runs: 86,
-    enabled: true,
-  },
-  {
-    condition: "Merchant equals Uber",
-    action: "Set category to Transport",
-    priority: 3,
-    runs: 18,
-    enabled: false,
-  },
-];
+import {
+  createAutomationRule,
+  deleteAutomationRule,
+  getAutomationRules,
+  getLedgerOptions,
+  updateAutomationRule,
+  type AutomationRule,
+  type LedgerOptions,
+} from "@/lib/api";
 
 export default function RulesPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
+  const [rules, setRules] = useState<AutomationRule[]>([]);
+  const [options, setOptions] = useState<LedgerOptions | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string>();
+
+  // Rule Form State
+  const [name, setName] = useState("");
+  const [conditionField, setConditionField] = useState<"merchant" | "note" | "amount">("merchant");
+  const [conditionOp, setConditionOp] = useState<"contains" | "equals" | "less_than" | "greater_than">("contains");
+  const [conditionValue, setConditionValue] = useState("");
+  const [actionField, setActionField] = useState<"category" | "account">("category");
+  const [actionValue, setActionValue] = useState("");
+  const [priority, setPriority] = useState("1");
+
+  async function load() {
+    setLoading(true);
+    try {
+      const [rulesData, optsData] = await Promise.all([
+        getAutomationRules(),
+        getLedgerOptions(),
+      ]);
+      setRules(rulesData);
+      setOptions(optsData);
+      if (optsData.categories.length > 0 && !actionValue) {
+        setActionValue(optsData.categories[0].name);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load rules");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const [rulesData, optsData] = await Promise.all([
+          getAutomationRules(),
+          getLedgerOptions(),
+        ]);
+        setRules(rulesData);
+        setOptions(optsData);
+        if (optsData.categories.length > 0) {
+          setActionValue((prev) => (prev ? prev : optsData.categories[0].name));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load rules");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim() || !conditionValue.trim() || !actionValue.trim() || saving) return;
+    setSaving(true);
+    setError(undefined);
+    try {
+      await createAutomationRule({
+        name: name.trim(),
+        conditionField,
+        conditionOp,
+        conditionValue: conditionValue.trim(),
+        actionField,
+        actionValue: actionValue.trim(),
+        priority: Number(priority) || 1,
+        isEnabled: true,
+      });
+      setName("");
+      setConditionValue("");
+      setBuilderOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create rule");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggleRule(rule: AutomationRule) {
+    try {
+      await updateAutomationRule(rule.id, { isEnabled: !rule.isEnabled });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to toggle rule");
+    }
+  }
+
+  async function handleDeleteRule(id: string) {
+    try {
+      await deleteAutomationRule(id);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete rule");
+    }
+  }
+
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
-        eyebrow="Automation rules"
-        title="Make repeated choices once."
-        description="Explicit values always override automation. Rules are applied in priority order and remain explainable."
+        eyebrow="Automation"
+        title="Automation rules"
+        description="Explicit user input always overrides automation. Enabled rules automatically format category and account defaults on incoming AI text commands."
         action={
           <button
             className="button-primary"
@@ -45,123 +128,209 @@ export default function RulesPage() {
             type="button"
           >
             <Icon className="size-4" name="plus" />
-            Preview rule builder
+            {builderOpen ? "Close Rule Builder" : "New Automation Rule"}
           </button>
         }
       />
-      <DemoNotice feature="Rules" />
+
       <section className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
-        <strong className="text-ink">Processing order</strong>
+        <strong className="text-ink">Rule Evaluation Engine</strong>
         <p className="mt-1 leading-6">
-          Automation can suggest an account, category, or group; it must never
-          hide a direct user choice.
+          Rules run in priority order. When an incoming text note matches a condition (e.g. <em>merchant contains Starbucks</em>), the system automatically applies your chosen category or account.
         </p>
       </section>
+
+      {error ? (
+        <p className="p-4 rounded-xl border border-danger/30 bg-danger-soft/20 text-sm text-danger font-medium">
+          {error}
+        </p>
+      ) : null}
+
       {builderOpen ? (
-        <section className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
+        <form className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6" onSubmit={handleCreate}>
           <div className="sm:col-span-2">
             <h2 className="text-lg font-semibold text-ink">
-              Create automation rule
+              Create Automation Rule
             </h2>
             <p className="mt-1 text-sm text-muted">
-              This builder is a static preview until rules CRUD is available.
+              Define matching criteria and automated actions for AI intake processing.
             </p>
           </div>
-          <label>
-            When
-            <select className="field">
-              <option>Merchant equals</option>
-              <option>Amount less than</option>
-              <option>Text contains</option>
-            </select>
+
+          <label className="sm:col-span-2 text-xs font-medium text-muted">
+            Rule Name
+            <input
+              className="field mt-1"
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Starbucks Dining Rule"
+              required
+              value={name}
+            />
           </label>
-          <label>
-            Value
-            <input className="field" placeholder="e.g. Starbucks" />
-          </label>
-          <label>
-            Then
-            <select className="field">
-              <option>Set category</option>
-              <option>Set account</option>
-              <option>Set group</option>
-            </select>
-          </label>
-          <label>
-            To
-            <select className="field">
-              <option>Dining</option>
-              <option>Transport</option>
-              <option>Groceries</option>
-            </select>
-          </label>
-          <label>
-            Priority
-            <input className="field" defaultValue="1" min="1" type="number" />
-          </label>
-          <div className="flex items-end gap-3">
-            <button
-              className="button-primary"
-              onClick={() => setBuilderOpen(false)}
-              type="button"
+
+          <label className="text-xs font-medium text-muted">
+            When Field
+            <select
+              className="field mt-1"
+              onChange={(e) => setConditionField(e.target.value as "merchant" | "note" | "amount")}
+              value={conditionField}
             >
-              Close preview
-            </button>
+              <option value="merchant">Merchant</option>
+              <option value="note">Note / Text</option>
+              <option value="amount">Amount</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-medium text-muted">
+            Condition Operator
+            <select
+              className="field mt-1"
+              onChange={(e) => setConditionOp(e.target.value as "contains" | "equals" | "less_than" | "greater_than")}
+              value={conditionOp}
+            >
+              <option value="contains">Contains</option>
+              <option value="equals">Equals</option>
+              <option value="less_than">Less than (&lt;)</option>
+              <option value="greater_than">Greater than (&gt;)</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-medium text-muted">
+            Condition Value
+            <input
+              className="field mt-1"
+              onChange={(e) => setConditionValue(e.target.value)}
+              placeholder="e.g. Starbucks or 50.00"
+              required
+              value={conditionValue}
+            />
+          </label>
+
+          <label className="text-xs font-medium text-muted">
+            Priority Order
+            <input
+              className="field mt-1"
+              min="1"
+              onChange={(e) => setPriority(e.target.value)}
+              required
+              type="number"
+              value={priority}
+            />
+          </label>
+
+          <label className="text-xs font-medium text-muted">
+            Then Set Field
+            <select
+              className="field mt-1"
+              onChange={(e) => {
+                const val = e.target.value as "category" | "account";
+                setActionField(val);
+                if (val === "category" && options?.categories[0]) {
+                  setActionValue(options.categories[0].name);
+                } else if (val === "account" && options?.accounts[0]) {
+                  setActionValue(options.accounts[0].name);
+                }
+              }}
+              value={actionField}
+            >
+              <option value="category">Set Category to</option>
+              <option value="account">Set Account to</option>
+            </select>
+          </label>
+
+          <label className="text-xs font-medium text-muted">
+            Target Value
+            <select
+              className="field mt-1"
+              onChange={(e) => setActionValue(e.target.value)}
+              value={actionValue}
+            >
+              {actionField === "category"
+                ? options?.categories.map((c) => (
+                    <option key={c.id} value={c.name}>
+                      {c.name}
+                    </option>
+                  ))
+                : options?.accounts.map((a) => (
+                    <option key={a.id} value={a.name}>
+                      {a.name}
+                    </option>
+                  ))}
+            </select>
+          </label>
+
+          <div className="sm:col-span-2 flex items-center justify-end gap-3 pt-2">
             <button
-              className="button-secondary"
+              className="button-secondary text-xs"
               onClick={() => setBuilderOpen(false)}
               type="button"
             >
               Cancel
             </button>
+            <button className="button-primary text-xs" disabled={saving} type="submit">
+              {saving ? "Saving Rule..." : "Save Automation Rule ✓"}
+            </button>
           </div>
-        </section>
+        </form>
       ) : null}
+
       <section className="surface-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-            <thead className="bg-surface-muted text-xs uppercase tracking-wide text-muted">
-              <tr>
-                <th className="px-5 py-3 font-semibold">Rule condition</th>
-                <th className="px-5 py-3 font-semibold">Action</th>
-                <th className="px-5 py-3 font-semibold">Priority</th>
-                <th className="px-5 py-3 text-right font-semibold">
-                  Times applied
-                </th>
-                <th className="px-5 py-3 text-center font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map((rule) => (
-                <tr className="border-t border-border" key={rule.condition}>
-                  <td className="px-5 py-4 font-medium text-ink">
-                    {rule.condition}
-                  </td>
-                  <td className="px-5 py-4">
-                    <span className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
-                      {rule.action}
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-ink">{rule.priority}</td>
-                  <td className="px-5 py-4 text-right text-muted">
-                    {rule.runs}
-                  </td>
-                  <td className="px-5 py-4 text-center">
-                    <span
-                      className={
-                        rule.enabled
-                          ? "rounded-full bg-success-soft px-2.5 py-1 text-xs font-semibold text-success"
-                          : "rounded-full bg-surface-muted px-2.5 py-1 text-xs font-semibold text-muted"
-                      }
-                    >
-                      {rule.enabled ? "Enabled" : "Paused"}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="border-b border-border px-5 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-ink">Configured Rules</h2>
+            <p className="mt-1 text-sm text-muted">
+              {rules.length} active automation rule{rules.length === 1 ? "" : "s"}
+            </p>
+          </div>
         </div>
+
+        {loading ? (
+          <p className="p-5 text-sm text-muted">Loading rules...</p>
+        ) : rules.length === 0 ? (
+          <p className="p-5 text-sm text-muted">No automation rules created yet. Click &quot;New Automation Rule&quot; to create one.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {rules.map((rule) => (
+              <article
+                className={`p-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${
+                  !rule.isEnabled ? "opacity-60 bg-surface-muted/30" : ""
+                }`}
+                key={rule.id}
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-action-soft px-2 py-0.5 text-[11px] font-semibold text-action">
+                      Priority #{rule.priority}
+                    </span>
+                    <h3 className="font-semibold text-ink">{rule.name}</h3>
+                  </div>
+                  <p className="mt-1 text-sm text-muted">
+                    When <strong>{rule.conditionField}</strong> {rule.conditionOp.replace("_", " ")} &quot;{rule.conditionValue}&quot; → set <strong>{rule.actionField}</strong> to &quot;{rule.actionValue}&quot;
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    className={`button-secondary text-xs ${
+                      rule.isEnabled ? "text-success" : "text-muted"
+                    }`}
+                    onClick={() => handleToggleRule(rule)}
+                    type="button"
+                  >
+                    {rule.isEnabled ? "Enabled ✓" : "Disabled"}
+                  </button>
+                  <button
+                    className="button-secondary text-xs text-danger"
+                    onClick={() => handleDeleteRule(rule.id)}
+                    type="button"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

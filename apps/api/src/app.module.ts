@@ -9,6 +9,9 @@ import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { CategoriesModule } from './modules/categories/categories.module.js';
 import { EntryGroupsModule } from './modules/entry-groups/entry-groups.module.js';
 import { LedgerModule } from './modules/ledger/ledger.module.js';
+import { AiIntakeModule } from './modules/ai-intake/ai-intake.module.js';
+import { RulesModule } from './modules/rules/rules.module.js';
+import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module.js';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { LedgerModule } from './modules/ledger/ledger.module.js';
     AnalyticsModule,
     EntryGroupsModule,
     LedgerModule,
+    AiIntakeModule,
+    RulesModule,
+    ReviewInboxModule,
   ],
   controllers: [AppController],
   providers: [AppService],

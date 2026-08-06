@@ -2,11 +2,16 @@
 
 import type {
   CreateAccount,
+  CreateAutomationRule,
   CreateCategory,
   CreateEntryGroup,
   CreateLedgerEntry,
+  ParsedFinanceCommand,
+  ParseTextCommandRequest,
   UpdateAccount,
+  UpdateAutomationRule,
   UpdateCategory,
+  UpdateLedgerEntry,
 } from "@finance/contracts";
 
 const baseUrl = (
@@ -88,6 +93,29 @@ export type AnalyticsSummary = {
 export type AnalyticsBreakdown = {
   expenses: Array<{ category: string; amount: number }>;
   income: Array<{ category: string; amount: number }>;
+};
+export type AutomationRule = {
+  id: string;
+  name: string;
+  conditionField: "merchant" | "note" | "amount";
+  conditionOp: "contains" | "equals" | "less_than" | "greater_than";
+  conditionValue: string;
+  actionField: "category" | "account";
+  actionValue: string;
+  priority: number;
+  isEnabled: boolean;
+  createdAt: string;
+};
+
+export type ReviewMetrics = {
+  pending: number;
+  highConfidence: number;
+  needsAttention: number;
+};
+
+export type ReviewItemsResponse = {
+  data: LedgerEntry[];
+  metrics: ReviewMetrics;
 };
 
 function numberValue(value: unknown): number {
@@ -219,6 +247,24 @@ export async function createLedgerEntry(
     }),
   );
 }
+export async function updateLedgerEntry(
+  id: string,
+  input: UpdateLedgerEntry,
+): Promise<LedgerEntry> {
+  return normalizeEntry(
+    await request<Record<string, unknown>>(`/ledger-entries/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function deleteLedgerEntry(
+  id: string,
+): Promise<{ success: boolean; id: string }> {
+  return request<{ success: boolean; id: string }>(`/ledger-entries/${id}`, {
+    method: "DELETE",
+  });
+}
 export async function getAccounts(): Promise<Account[]> {
   return (await request<Record<string, unknown>[]>("/accounts")).map(
     normalizeAccount,
@@ -321,18 +367,82 @@ export async function getMonthlyBreakdown(
 export async function getNetHistory(): Promise<AnalyticsSummary[]> {
   return request<AnalyticsSummary[]>("/analytics/net-history");
 }
+export async function parseTextCommand(
+  input: ParseTextCommandRequest,
+): Promise<ParsedFinanceCommand> {
+  return request<ParsedFinanceCommand>("/ai-intake/text", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
 
 export const money = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     value,
   );
-export const dateLabel = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
+export const dateLabel = (value: string) => {
+  const iso = value.includes("T") ? value : `${value}T12:00:00`;
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(new Date(iso));
+};
 export const currentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
+export async function getAutomationRules(): Promise<AutomationRule[]> {
+  return request<AutomationRule[]>("/rules");
+}
+export async function createAutomationRule(
+  input: CreateAutomationRule,
+): Promise<AutomationRule> {
+  return request<AutomationRule>("/rules", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export async function updateAutomationRule(
+  id: string,
+  input: UpdateAutomationRule,
+): Promise<AutomationRule> {
+  return request<AutomationRule>(`/rules/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+export async function deleteAutomationRule(
+  id: string,
+): Promise<{ success: boolean; id: string }> {
+  return request<{ success: boolean; id: string }>(`/rules/${id}`, {
+    method: "DELETE",
+  });
+}
+export async function getReviewItems(
+  status?: string,
+): Promise<ReviewItemsResponse> {
+  const query = status ? `?status=${status}` : "";
+  const payload = await request<{
+    data: Record<string, unknown>[];
+    metrics: ReviewMetrics;
+  }>(`/review-items${query}`);
+  return {
+    data: payload.data.map(normalizeEntry),
+    metrics: payload.metrics,
+  };
+}
+export async function approveReviewItem(id: string): Promise<LedgerEntry> {
+  return normalizeEntry(
+    await request<Record<string, unknown>>(`/review-items/${id}/approve`, {
+      method: "POST",
+    }),
+  );
+}
+export async function rejectReviewItem(id: string): Promise<LedgerEntry> {
+  return normalizeEntry(
+    await request<Record<string, unknown>>(`/review-items/${id}/reject`, {
+      method: "POST",
+    }),
+  );
+}

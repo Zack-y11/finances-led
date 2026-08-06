@@ -14,7 +14,7 @@ function Brand() {
         <span className="block text-lg font-semibold tracking-tight text-ink">
           Ledger AI
         </span>
-        <span className="block text-xs text-muted">
+        <span className="hidden text-xs text-muted sm:block">
           Private finance, clearly.
         </span>
       </span>
@@ -55,7 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             href="/capture"
           >
             <Icon className="size-4" name="plus" />
-            <span>Quick capture</span>
+            <span className="hidden sm:inline">Quick capture</span>
           </Link>
         </header>
         <main className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-10 lg:pb-10 lg:pt-10">

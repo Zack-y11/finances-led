@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import type { CreateLedgerEntry, LedgerEntriesQuery } from '@finance/contracts';
+import type {
+  CreateLedgerEntry,
+  LedgerEntriesQuery,
+  UpdateLedgerEntry,
+} from '@finance/contracts';
 import { Prisma } from '@finance/database';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
@@ -83,6 +87,8 @@ export class LedgerService {
     const {
       type,
       month,
+      startDate,
+      endDate,
       categoryId,
       accountId,
       groupId,
@@ -90,12 +96,27 @@ export class LedgerService {
       page,
       pageSize,
     } = query;
+
+    const dateFilter: Prisma.LedgerEntryWhereInput =
+      startDate || endDate
+        ? {
+            occurredAt: {
+              ...(startDate
+                ? { gte: new Date(`${startDate}T00:00:00.000Z`) }
+                : {}),
+              ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
+            },
+          }
+        : month
+          ? { monthKey: month }
+          : {};
+
     const where: Prisma.LedgerEntryWhereInput = {
       userId: this.userId,
+      ...dateFilter,
       ...(type
         ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
         : {}),
-      ...(month ? { monthKey: month } : {}),
       ...(categoryId ? { categoryId } : {}),
       ...(accountId ? { accountId } : {}),
       ...(groupId ? { groupId } : {}),
@@ -164,6 +185,89 @@ export class LedgerService {
     });
     if (!entry) throw new NotFoundException('Ledger entry not found');
     return entry;
+  }
+  async update(id: string, input: UpdateLedgerEntry) {
+    const existing = await this.findOne(id);
+    if (input.accountId || input.categoryId) {
+      await this.assertOwnedReferences(
+        input.accountId ?? existing.accountId!,
+        input.categoryId ?? existing.categoryId!,
+      );
+    }
+
+    const occurredAt = input.occurredAt
+      ? new Date(input.occurredAt)
+      : existing.occurredAt;
+    const monthKey = input.occurredAt
+      ? input.occurredAt.slice(0, 7)
+      : existing.monthKey;
+
+    return this.prisma.db.$transaction(async (tx) => {
+      const updated = await tx.ledgerEntry.update({
+        where: { id },
+        data: {
+          ...(input.type !== undefined
+            ? {
+                type: input.type.toUpperCase() as
+                  'INCOME' | 'EXPENSE' | 'ADJUSTMENT',
+              }
+            : {}),
+          ...(input.amount !== undefined ? { amount: input.amount } : {}),
+          ...(input.currency !== undefined
+            ? { currency: input.currency.toUpperCase() }
+            : {}),
+          ...(input.merchant !== undefined ? { merchant: input.merchant } : {}),
+          ...(input.accountId !== undefined
+            ? { accountId: input.accountId }
+            : {}),
+          ...(input.categoryId !== undefined
+            ? { categoryId: input.categoryId }
+            : {}),
+          ...(input.note !== undefined ? { note: input.note } : {}),
+          occurredAt,
+          monthKey,
+        },
+        include: { account: true, category: true, group: true },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: this.userId,
+          entityType: 'LedgerEntry',
+          entityId: id,
+          action: 'UPDATE',
+          metadata: {
+            type: input.type,
+            amount: input.amount,
+            merchant: input.merchant ?? undefined,
+          },
+        },
+      });
+
+      return updated;
+    });
+  }
+
+  async remove(id: string) {
+    await this.findOne(id);
+
+    return this.prisma.db.$transaction(async (tx) => {
+      await tx.ledgerEntry.delete({
+        where: { id },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          userId: this.userId,
+          entityType: 'LedgerEntry',
+          entityId: id,
+          action: 'DELETE',
+          metadata: { ledgerEntryId: id },
+        },
+      });
+
+      return { success: true, id };
+    });
   }
 
   private async assertOwnedReferences(accountId: string, categoryId: string) {

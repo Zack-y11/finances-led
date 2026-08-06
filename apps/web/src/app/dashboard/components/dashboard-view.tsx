@@ -112,7 +112,7 @@ export function DashboardView() {
   }));
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
         eyebrow="Financial overview"
         title={monthLabel}
@@ -261,18 +261,18 @@ function Metric({
       ? "bg-success-soft text-success"
       : "bg-danger-soft text-danger";
   return (
-    <div className="surface-card p-5">
+    <div className="surface-card p-4 sm:p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted">{label}</p>
         <span
           className={
-            "flex size-9 items-center justify-center rounded-lg " + className
+            "flex size-8 items-center justify-center rounded-lg sm:size-9 " + className
           }
         >
           <Icon className="size-4" name={icon} />
         </span>
       </div>
-      <p className="mt-5 text-2xl font-bold tracking-tight text-ink tabular-nums">
+      <p className="mt-3 text-xl font-bold tracking-tight text-ink tabular-nums sm:mt-5 sm:text-2xl">
         {value}
       </p>
     </div>

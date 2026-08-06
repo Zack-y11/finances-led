@@ -1,13 +1,16 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createPrismaClient, type PrismaClient } from '@finance/database';
+import type { TextCommandParser } from '@finance/ai';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
+import { TEXT_COMMAND_PARSER } from './../src/modules/ai-intake/text-command-parser.provider.js';
 
 describe('Ledger endpoints (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaClient;
+  let devUserId: string;
   let accountId: string;
   let categoryId: string;
   let unownedAccountId: string;
@@ -35,11 +38,31 @@ describe('Ledger endpoints (e2e)', () => {
     note: 'Created by the ledger e2e test',
     inputMethod: 'manual',
   });
+  const fakeTextCommandParser: TextCommandParser = {
+    parseText(input) {
+      return Promise.resolve({
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 3.19,
+          currency: 'USD',
+          merchant: 'Starbucks',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: input.referenceDate,
+        },
+        confidence: 0.94,
+      });
+    },
+  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(TEXT_COMMAND_PARSER)
+      .useValue(fakeTextCommandParser)
+      .compile();
 
     app = moduleFixture.createNestApplication();
     await app.init();
@@ -51,6 +74,7 @@ describe('Ledger endpoints (e2e)', () => {
         'DATABASE_URL and DEV_USER_ID are required for e2e tests',
       );
     }
+    devUserId = userId;
 
     prisma = createPrismaClient(databaseUrl);
     await prisma.$connect();
@@ -99,6 +123,68 @@ describe('Ledger endpoints (e2e)', () => {
 
     unownedAccountId = unownedAccount.id;
     unownedCategoryId = unownedCategory.id;
+  });
+
+  it('parses a text command without creating a ledger entry', async () => {
+    const beforeCount = await prisma.ledgerEntry.count({
+      where: { userId: devUserId },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/ai-intake/text')
+      .send({
+        text: 'I spent $3.19 at Starbucks with BAC today',
+        referenceDate: '2026-07-14',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      intent: 'create_ledger_entry',
+      data: {
+        type: 'expense',
+        amount: 3.19,
+        currency: 'USD',
+        merchant: 'Starbucks',
+        account: 'BAC',
+        category: 'Food',
+        occurredAt: '2026-07-14',
+      },
+      confidence: 0.94,
+    });
+    await expect(
+      prisma.ledgerEntry.count({ where: { userId: devUserId } }),
+    ).resolves.toBe(beforeCount);
+  });
+
+  it('parses a Spanish text command without creating a ledger entry', async () => {
+    const beforeCount = await prisma.ledgerEntry.count({
+      where: { userId: devUserId },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/ai-intake/text')
+      .send({
+        text: 'gaste 3.19 en Starbucks con BAC hoy',
+        referenceDate: '2026-07-14',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      intent: 'create_ledger_entry',
+      data: {
+        type: 'expense',
+        amount: 3.19,
+        currency: 'USD',
+        merchant: 'Starbucks',
+        account: 'BAC',
+        category: 'Food',
+        occurredAt: '2026-07-14',
+      },
+      confidence: 0.94,
+    });
+    await expect(
+      prisma.ledgerEntry.count({ where: { userId: devUserId } }),
+    ).resolves.toBe(beforeCount);
   });
 
   it('creates an entry, writes an audit log, and returns it from list and detail endpoints', async () => {

@@ -56,7 +56,7 @@ export function GroupDetailView({ groupId }: { groupId: string }) {
   if (!group) return <LoadingCard label="Loading group…" />;
   const defaultType = group.type === "mixed" ? "expense" : group.type;
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <Link
         className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-action hover:underline"
         href="/groups"

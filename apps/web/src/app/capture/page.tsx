@@ -1,22 +1,117 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
-import { DemoNotice } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
+import {
+  createLedgerEntry,
+  getLedgerOptions,
+  money,
+  parseTextCommand,
+  type LedgerOptions,
+} from "@/lib/api";
+import type { ParsedFinanceCommand } from "@finance/contracts";
 
 export default function CapturePage() {
   const [text, setText] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [result, setResult] = useState<ParsedFinanceCommand | null>(null);
+  const [options, setOptions] = useState<LedgerOptions | null>(null);
+  const [accountId, setAccountId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+
+  useEffect(() => {
+    void getLedgerOptions().then((data) => {
+      setOptions(data);
+    }).catch(() => null);
+  }, []);
+
+  const suggestedAccountId = useMemo(() => {
+    if (!result || !options) return "";
+    const matchedAccount = options.accounts.find(
+      (a) => a.name.toLowerCase() === result.data.account?.toLowerCase(),
+    );
+    return matchedAccount?.id || options.accounts[0]?.id || "";
+  }, [result, options]);
+
+  const suggestedCategoryId = useMemo(() => {
+    if (!result || !options) return "";
+    const matchedCategory = options.categories.find(
+      (c) => c.name.toLowerCase() === result.data.category?.toLowerCase(),
+    );
+    return matchedCategory?.id || options.categories[0]?.id || "";
+  }, [result, options]);
+
+  const selectedAccountId = accountId || suggestedAccountId;
+  const selectedCategoryId = categoryId || suggestedCategoryId;
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!text.trim() || loading) return;
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+    setResult(null);
+    setAccountId("");
+    setCategoryId("");
+
+    try {
+      const parsed = await parseTextCommand({ text: text.trim() });
+      setResult(parsed);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to parse text command",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirmSave = async () => {
+    if (!result || !selectedAccountId || !selectedCategoryId || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const dateStr = result.data.occurredAt || new Date().toISOString().slice(0, 10);
+      await createLedgerEntry({
+        type: result.data.type,
+        amount: result.data.amount,
+        currency: result.data.currency || "USD",
+        merchant: result.data.merchant || undefined,
+        accountId: selectedAccountId,
+        categoryId: selectedCategoryId,
+        occurredAt: `${dateStr}T12:00:00.000Z`,
+        note: text.trim() || undefined,
+        inputMethod: "text",
+      });
+      setSuccess("Entry saved to your ledger successfully!");
+      setResult(null);
+      setText("");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to save entry to ledger",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
   return (
-    <div className="mx-auto grid max-w-[1000px] gap-8">
+    <div className="mx-auto grid max-w-[1000px] gap-6">
       <PageHeading
-        eyebrow="Quick capture"
-        title="Capture it while it is fresh."
-        description="Type a natural financial note. This interface is ready for a parser and review workflow when those services are connected."
+        eyebrow="Ledger"
+        title="Quick capture"
+        description="Type a natural financial note in English or Spanish. OpenAI (gpt-5.6-luna) parses your command into a structured transaction proposal."
       />
-      <DemoNotice feature="Text interpretation" />
+      <div className="rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3 text-sm text-ink flex items-center gap-2">
+        <Icon className="text-action size-4" name="sparkles" />
+        <span><strong>Live AI Connected:</strong> Text interpretation uses OpenAI <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">gpt-5.6-luna</code> in real-time.</span>
+      </div>
       <section className="surface-card overflow-hidden">
         <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
           <div className="flex items-center gap-2 text-sm font-semibold text-ink">
@@ -24,18 +119,12 @@ export default function CapturePage() {
             Tell Ledger AI what happened
           </div>
         </div>
-        <form
-          className="grid gap-5 p-5 sm:p-6"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setSubmitted(true);
-          }}
-        >
+        <form className="grid gap-5 p-5 sm:p-6" onSubmit={handleSubmit}>
           <textarea
             className="field min-h-35 resize-y"
             onChange={(event) => {
               setText(event.target.value);
-              setSubmitted(false);
+              setError(null);
             }}
             placeholder="e.g. Spent 5.40 at Starbucks with cash"
             value={text}
@@ -46,32 +135,126 @@ export default function CapturePage() {
             </p>
             <button
               className="button-primary"
-              disabled={!text.trim()}
+              disabled={!text.trim() || loading}
+              suppressHydrationWarning
               type="submit"
             >
-              Preview interpretation{" "}
+              {loading ? "Parsing with AI…" : "Preview interpretation"}{" "}
               <Icon className="size-4" name="arrow-right" />
             </button>
           </div>
         </form>
       </section>
-      {submitted ? (
-        <section className="surface-card border-action/30 p-5 sm:p-6">
+      {error ? (
+        <section className="surface-card border-danger/30 p-5 sm:p-6">
+          <div className="flex items-start gap-3 text-danger">
+            <Icon className="size-5 shrink-0" name="shield" />
+            <div>
+              <p className="font-semibold text-ink">Parser Error</p>
+              <p className="mt-1 text-sm text-muted">{error}</p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {success ? (
+        <section className="surface-card border-success/40 bg-success-soft/20 p-5 sm:p-6">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-white">
+                ✓
+              </span>
+              <p className="font-semibold text-ink">{success}</p>
+            </div>
+            <Link className="button-primary text-xs" href="/ledger">
+              View in Ledger →
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
+      {result ? (
+        <section className="surface-card border-action/30 p-5 sm:p-6 grid gap-6">
           <div className="flex items-start gap-3">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-action-soft text-action">
               <Icon name="sparkles" />
             </span>
-            <div>
-              <p className="font-semibold text-ink">Static proposal preview</p>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                This is a visual example only. A parser and review API must
-                exist before it can create a ledger entry.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <Detail label="Amount" value="$5.40" />
-                <Detail label="Category" value="Dining" />
-                <Detail label="Account" value="Cash" />
+            <div className="w-full">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-ink">
+                  Parsed Command Proposal
+                </p>
+                <span className="rounded-full bg-action-soft px-2.5 py-0.5 text-xs font-semibold text-action">
+                  {(result.confidence * 100).toFixed(0)}% confidence
+                </span>
               </div>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Structured proposal generated by AI. Review parameters below and confirm to save to database.
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <Detail label="Amount" value={money(result.data.amount)} />
+                <Detail label="Type" value={result.data.type} />
+                <Detail label="Category" value={result.data.category} />
+                <Detail label="Account" value={result.data.account} />
+                {result.data.merchant ? (
+                  <Detail label="Merchant" value={result.data.merchant} />
+                ) : null}
+                <Detail label="Date" value={result.data.occurredAt} />
+                <Detail label="Intent" value={result.intent} />
+                <Detail label="Currency" value={result.data.currency} />
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-border pt-5 grid gap-4">
+            <h3 className="text-sm font-semibold text-ink">Confirm & Select Account & Category</h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-xs font-medium text-muted">
+                Account
+                <select
+                  className="field mt-1"
+                  onChange={(e) => setAccountId(e.target.value)}
+                  value={selectedAccountId}
+                >
+                  {options?.accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="text-xs font-medium text-muted">
+                Category
+                <select
+                  className="field mt-1"
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  value={selectedCategoryId}
+                >
+                  {options?.categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                className="button-secondary text-xs"
+                onClick={() => setResult(null)}
+                type="button"
+              >
+                Discard proposal
+              </button>
+              <button
+                className="button-primary text-xs"
+                disabled={saving || !selectedAccountId || !selectedCategoryId}
+                onClick={handleConfirmSave}
+                type="button"
+              >
+                {saving ? "Saving to Ledger…" : "Save entry to Ledger ✓"}
+              </button>
             </div>
           </div>
         </section>

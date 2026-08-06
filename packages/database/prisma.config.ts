@@ -9,6 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"] as string, // casted to string to satisfy TypeScript type checking
+    url: process.env["DATABASE_URL"] || "postgresql://postgres:postgres@127.0.0.1:5433/finance_ledger?schema=public",
   },
 });

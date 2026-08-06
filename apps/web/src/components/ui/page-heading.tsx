@@ -12,10 +12,10 @@ export function PageHeading({
   action?: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
       <div>
         <p className="text-sm font-semibold text-action">{eyebrow}</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink sm:text-4xl">
           {title}
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
