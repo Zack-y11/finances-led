@@ -138,6 +138,43 @@ export const parseTextCommandRequestSchema = z.object({
     .optional(),
 });
 
+export const ruleConditionFieldSchema = z.enum(["merchant", "note", "amount"]);
+export const ruleConditionOpSchema = z.enum([
+  "contains",
+  "equals",
+  "less_than",
+  "greater_than",
+]);
+export const ruleActionFieldSchema = z.enum(["category", "account"]);
+
+export const createAutomationRuleSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  conditionField: ruleConditionFieldSchema,
+  conditionOp: ruleConditionOpSchema,
+  conditionValue: z.string().trim().min(1).max(120),
+  actionField: ruleActionFieldSchema,
+  actionValue: z.string().trim().min(1).max(120),
+  priority: z.coerce.number().int().min(1).default(1),
+  isEnabled: z.boolean().default(true),
+});
+
+export const updateAutomationRuleSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    conditionField: ruleConditionFieldSchema.optional(),
+    conditionOp: ruleConditionOpSchema.optional(),
+    conditionValue: z.string().trim().min(1).max(120).optional(),
+    actionField: ruleActionFieldSchema.optional(),
+    actionValue: z.string().trim().min(1).max(120).optional(),
+    priority: z.coerce.number().int().min(1).optional(),
+    isEnabled: z.boolean().optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "At least one rule field must be provided for update",
+  });
+
+export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
+export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
 export type FinanceCommandIntent = z.infer<typeof financeCommandIntentSchema>;
 export type ParsedLedgerEntryCommandData = z.infer<
   typeof parsedLedgerEntryCommandDataSchema
