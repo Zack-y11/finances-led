@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
@@ -16,7 +15,6 @@ import {
 import type { ParsedFinanceCommand } from "@finance/contracts";
 
 export default function CapturePage() {
-  const router = useRouter();
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -28,23 +26,29 @@ export default function CapturePage() {
   const [categoryId, setCategoryId] = useState("");
 
   useEffect(() => {
-    getLedgerOptions().then((data) => {
+    void getLedgerOptions().then((data) => {
       setOptions(data);
     }).catch(() => null);
   }, []);
 
-  useEffect(() => {
-    if (!result || !options) return;
+  const suggestedAccountId = useMemo(() => {
+    if (!result || !options) return "";
     const matchedAccount = options.accounts.find(
       (a) => a.name.toLowerCase() === result.data.account?.toLowerCase(),
     );
-    setAccountId(matchedAccount?.id || options.accounts[0]?.id || "");
+    return matchedAccount?.id || options.accounts[0]?.id || "";
+  }, [result, options]);
 
+  const suggestedCategoryId = useMemo(() => {
+    if (!result || !options) return "";
     const matchedCategory = options.categories.find(
       (c) => c.name.toLowerCase() === result.data.category?.toLowerCase(),
     );
-    setCategoryId(matchedCategory?.id || options.categories[0]?.id || "");
+    return matchedCategory?.id || options.categories[0]?.id || "";
   }, [result, options]);
+
+  const selectedAccountId = accountId || suggestedAccountId;
+  const selectedCategoryId = categoryId || suggestedCategoryId;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -54,6 +58,8 @@ export default function CapturePage() {
     setError(null);
     setSuccess(null);
     setResult(null);
+    setAccountId("");
+    setCategoryId("");
 
     try {
       const parsed = await parseTextCommand({ text: text.trim() });
@@ -68,7 +74,7 @@ export default function CapturePage() {
   };
 
   const handleConfirmSave = async () => {
-    if (!result || !accountId || !categoryId || saving) return;
+    if (!result || !selectedAccountId || !selectedCategoryId || saving) return;
     setSaving(true);
     setError(null);
     try {
@@ -78,8 +84,8 @@ export default function CapturePage() {
         amount: result.data.amount,
         currency: result.data.currency || "USD",
         merchant: result.data.merchant || undefined,
-        accountId,
-        categoryId,
+        accountId: selectedAccountId,
+        categoryId: selectedCategoryId,
         occurredAt: `${dateStr}T12:00:00.000Z`,
         note: text.trim() || undefined,
         inputMethod: "text",
@@ -209,7 +215,7 @@ export default function CapturePage() {
                 <select
                   className="field mt-1"
                   onChange={(e) => setAccountId(e.target.value)}
-                  value={accountId}
+                  value={selectedAccountId}
                 >
                   {options?.accounts.map((a) => (
                     <option key={a.id} value={a.id}>
@@ -223,7 +229,7 @@ export default function CapturePage() {
                 <select
                   className="field mt-1"
                   onChange={(e) => setCategoryId(e.target.value)}
-                  value={categoryId}
+                  value={selectedCategoryId}
                 >
                   {options?.categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -243,7 +249,7 @@ export default function CapturePage() {
               </button>
               <button
                 className="button-primary text-xs"
-                disabled={saving || !accountId || !categoryId}
+                disabled={saving || !selectedAccountId || !selectedCategoryId}
                 onClick={handleConfirmSave}
                 type="button"
               >

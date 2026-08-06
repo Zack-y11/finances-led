@@ -51,7 +51,23 @@ export default function RulesPage() {
   }
 
   useEffect(() => {
-    load();
+    void (async () => {
+      try {
+        const [rulesData, optsData] = await Promise.all([
+          getAutomationRules(),
+          getLedgerOptions(),
+        ]);
+        setRules(rulesData);
+        setOptions(optsData);
+        if (optsData.categories.length > 0) {
+          setActionValue((prev) => (prev ? prev : optsData.categories[0].name));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load rules");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   async function handleCreate(e: React.FormEvent) {

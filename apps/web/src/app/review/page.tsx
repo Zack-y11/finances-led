@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Icon } from "@/components/ui/icon";
@@ -24,7 +24,6 @@ export default function ReviewPage() {
   });
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string>();
-  const [selected, setSelected] = useState<LedgerEntry | null>(null);
   const [actionError, setActionError] = useState<string>();
   const [actionSuccess, setActionSuccess] = useState<string>();
   const [acting, setActing] = useState(false);
@@ -48,17 +47,28 @@ export default function ReviewPage() {
   }
 
   useEffect(() => {
-    load();
+    void (async () => {
+      try {
+        const response = await getReviewItems();
+        setItems(response.data);
+        setMetrics(response.metrics);
+        if (response.data.length > 0) {
+          setSelectedId((prev) => (prev ? prev : response.data[0].id));
+        } else {
+          setSelectedId(undefined);
+        }
+      } catch (err) {
+        setActionError(err instanceof Error ? err.message : "Failed to load review queue");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
-  useEffect(() => {
-    if (!selectedId) {
-      setSelected(null);
-      return;
-    }
-    const found = items.find((i) => i.id === selectedId);
-    setSelected(found || null);
-  }, [selectedId, items]);
+  const selected = useMemo(
+    () => items.find((i) => i.id === selectedId) || null,
+    [items, selectedId],
+  );
 
   async function handleApprove(id: string) {
     setActing(true);
