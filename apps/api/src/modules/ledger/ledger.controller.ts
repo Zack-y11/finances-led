@@ -1,9 +1,21 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   createLedgerEntrySchema,
   type CreateLedgerEntry,
   ledgerEntriesQuerySchema,
   type LedgerEntriesQuery,
+  updateLedgerEntrySchema,
+  type UpdateLedgerEntry,
 } from '@finance/contracts';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
@@ -35,7 +47,21 @@ export class LedgerController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.ledgerService.findOne(id);
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body(new ZodValidationPipe(updateLedgerEntrySchema))
+    input: UpdateLedgerEntry,
+  ) {
+    return this.ledgerService.update(id, input);
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.ledgerService.remove(id);
   }
 }
