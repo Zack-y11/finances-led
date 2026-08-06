@@ -18,7 +18,7 @@ import {
   TEXT_COMMAND_PARSER,
   TextCommandParserNotConfiguredError,
 } from './text-command-parser.provider.js';
-
+import { RulesService } from '../rules/rules.service.js';
 type PrismaCategoryKind = 'INCOME' | 'EXPENSE' | 'BOTH';
 
 @Injectable()
@@ -28,6 +28,7 @@ export class AiIntakeService {
   constructor(
     @Inject(TEXT_COMMAND_PARSER)
     private readonly textCommandParser: TextCommandParser,
+    private readonly rulesService: RulesService,
     private readonly prisma: PrismaService,
     config: ConfigService,
   ) {
@@ -67,7 +68,18 @@ export class AiIntakeService {
         throw new BadGatewayException('AI parser returned an invalid command');
       }
 
-      return result.data;
+      const parsedData = result.data;
+      const evaluated = await this.rulesService.applyRules({
+        merchant: parsedData.data.merchant,
+        amount: parsedData.data.amount,
+        category: parsedData.data.category,
+        account: parsedData.data.account,
+      });
+
+      parsedData.data.category = evaluated.category || parsedData.data.category;
+      parsedData.data.account = evaluated.account || parsedData.data.account;
+
+      return parsedData;
     } catch (error) {
       if (error instanceof TextCommandParserNotConfiguredError) {
         throw new ServiceUnavailableException(
