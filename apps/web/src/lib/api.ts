@@ -5,8 +5,11 @@ import type {
   CreateCategory,
   CreateEntryGroup,
   CreateLedgerEntry,
+  ParsedFinanceCommand,
+  ParseTextCommandRequest,
   UpdateAccount,
   UpdateCategory,
+  UpdateLedgerEntry,
 } from "@finance/contracts";
 
 const baseUrl = (
@@ -219,6 +222,24 @@ export async function createLedgerEntry(
     }),
   );
 }
+export async function updateLedgerEntry(
+  id: string,
+  input: UpdateLedgerEntry,
+): Promise<LedgerEntry> {
+  return normalizeEntry(
+    await request<Record<string, unknown>>(`/ledger-entries/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function deleteLedgerEntry(
+  id: string,
+): Promise<{ success: boolean; id: string }> {
+  return request<{ success: boolean; id: string }>(`/ledger-entries/${id}`, {
+    method: "DELETE",
+  });
+}
 export async function getAccounts(): Promise<Account[]> {
   return (await request<Record<string, unknown>[]>("/accounts")).map(
     normalizeAccount,
@@ -321,17 +342,27 @@ export async function getMonthlyBreakdown(
 export async function getNetHistory(): Promise<AnalyticsSummary[]> {
   return request<AnalyticsSummary[]>("/analytics/net-history");
 }
+export async function parseTextCommand(
+  input: ParseTextCommandRequest,
+): Promise<ParsedFinanceCommand> {
+  return request<ParsedFinanceCommand>("/ai-intake/text", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
 
 export const money = (value: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
     value,
   );
-export const dateLabel = (value: string) =>
-  new Intl.DateTimeFormat("en-US", {
+export const dateLabel = (value: string) => {
+  const iso = value.includes("T") ? value : `${value}T12:00:00`;
+  return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(value));
+  }).format(new Date(iso));
+};
 export const currentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
