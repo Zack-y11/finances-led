@@ -6,10 +6,10 @@ import { DemoNotice } from "@/components/ui/demo-notice";
 
 export default function SettingsPage() {
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
-        eyebrow="Settings"
-        title="Control your financial workspace."
+        eyebrow="Workspace"
+        title="Settings & privacy"
         description="Profile, privacy, processing preferences, and integrations are displayed as ready-to-connect components."
       />
       <DemoNotice feature="Settings and privacy" />

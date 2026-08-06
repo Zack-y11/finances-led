@@ -77,7 +77,7 @@ export function AccountsView() {
   }
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
         eyebrow="Settings"
         title="Accounts"
