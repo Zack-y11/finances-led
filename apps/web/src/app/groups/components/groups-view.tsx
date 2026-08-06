@@ -72,10 +72,10 @@ export function GroupsView() {
 
   const total = groups.reduce((sum, group) => sum + group.total, 0);
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeading
-        eyebrow="Entry groups"
-        title="Keep related spending together."
+        eyebrow="Collaborative finance"
+        title="Groups"
         description="Groups make a larger event traceable without rewriting its individual ledger entries."
         action={
           <button
@@ -143,7 +143,7 @@ export function GroupsView() {
       ) : null}
       {notice ? <StatusMessage tone="success">{notice}</StatusMessage> : null}
       {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
-      <section className="grid gap-4 sm:grid-cols-3">
+      <section className="hidden gap-4 sm:grid sm:grid-cols-3">
         <Metric label="Active groups" value={String(groups.length)} />
         <Metric label="Grouped total" value={money(total)} />
         <Metric label="Data source" value="Live API" />
