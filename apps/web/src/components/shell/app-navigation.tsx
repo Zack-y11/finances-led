@@ -66,32 +66,17 @@ export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
     );
   }
 
-  const primaryItems = items.slice(0, 3);
-  const moreItems = items.slice(3);
-  const moreActive = moreItems.some((item) => isActive(item.href));
+  const mobileItems = [
+    { ...items[0], label: "Home" },
+    items[1],
+    { ...items[2], label: "Capture" },
+    items[3],
+    items[8],
+  ];
 
   return (
-    <nav aria-label="Primary navigation" className="grid grid-cols-4 gap-1">
-      {primaryItems.map((item) => navigationLink(item, true))}
-      <details className="group relative">
-        <summary
-          className={`flex min-h-12 cursor-pointer list-none flex-col items-center justify-center gap-1 rounded-lg px-2 text-[11px] font-semibold transition-colors [&::-webkit-details-marker]:hidden ${moreActive ? "bg-action-soft text-action" : "text-muted hover:bg-surface-muted hover:text-ink"}`}
-        >
-          <Icon className="size-5" name="settings" />
-          <span>More</span>
-        </summary>
-        <div className="surface-card absolute bottom-full right-0 mb-3 grid w-64 gap-1 p-2 shadow-lg">
-          {moreItems.map((item) =>
-            navigationLink(item, false, () => {
-              document
-                .querySelector<HTMLDetailsElement>(
-                  "nav[aria-label='Primary navigation'] details",
-                )
-                ?.removeAttribute("open");
-            }),
-          )}
-        </div>
-      </details>
+    <nav aria-label="Primary navigation" className="grid grid-cols-5 gap-1">
+      {mobileItems.map((item) => navigationLink(item, true))}
     </nav>
   );
 }
