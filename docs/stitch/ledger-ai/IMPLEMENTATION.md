@@ -15,7 +15,8 @@ Live endpoints:
 - `GET /analytics/monthly-breakdown?month=YYYY-MM` returning `expenses` and `income`
 - `GET /analytics/net-history`
 
-Not yet implemented: ledger edit, delete, or reversal; text, voice, receipt, rules, and review-inbox execution APIs.
+- `POST /ai-intake/text` returning a parsed text finance command proposal; it does not create ledger entries.
+  Not yet implemented: ledger edit, delete, or reversal; voice, receipt, rules, review-inbox execution APIs, and confirmed text-command execution.
 
 ## Web route map
 
@@ -29,8 +30,9 @@ Live routes:
 - `/settings/accounts` — persistent account list/create/edit and deactivate/reactivate management.
 - `/settings/categories` — persistent category list/create/edit management.
 - `/settings` — settings hub linking to account and category management.
+- `/capture` — live text command parser proposal preview using `POST /ai-intake/text`.
 
-Design/demo-only routes still present for future phases: `/capture`, `/review`, and `/rules`.
+Design/demo-only routes still present for future phases: `/review` and `/rules`.
 
 ## Delivery notes
 
