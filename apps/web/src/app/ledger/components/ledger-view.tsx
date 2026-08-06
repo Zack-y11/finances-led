@@ -21,15 +21,12 @@ import {
   type LedgerPage,
 } from "@/lib/api";
 
+const SEARCH_DEBOUNCE_MS = 350;
+
 export function LedgerView() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const monthParam = searchParams.get("month");
-  const month =
-    monthParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(monthParam)
-      ? monthParam
-      : "";
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
   const query = searchParams.get("search") || "";
@@ -79,7 +76,7 @@ export function LedgerView() {
       if (href === `${pathname}${window.location.search}`) return;
       setSelectedId(undefined);
       router.replace(href, { scroll: false });
-    }, 300);
+    }, SEARCH_DEBOUNCE_MS);
     return () => window.clearTimeout(timer);
   }, [pathname, query, router, searchInput, searchParams]);
 
@@ -107,42 +104,39 @@ export function LedgerView() {
     let active = true;
     setLoading(true);
     setListError(undefined);
-    const timer = window.setTimeout(async () => {
-      try {
-        const nextResult = await getLedgerEntries({
-          month: startDate || endDate ? undefined : month || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          type: type === "all" ? undefined : type,
-          search: query || undefined,
-          accountId: accountId || undefined,
-          categoryId: categoryId || undefined,
-          groupId: groupId || undefined,
-          page,
-          pageSize: 20,
-        });
+    getLedgerEntries({
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      type: type === "all" ? undefined : type,
+      search: query || undefined,
+      accountId: accountId || undefined,
+      categoryId: categoryId || undefined,
+      groupId: groupId || undefined,
+      page,
+      pageSize: 20,
+    })
+      .then((nextResult) => {
         if (active) setResult(nextResult);
-      } catch (reason) {
+      })
+      .catch((reason) => {
         if (!active) return;
         setListError(
           reason instanceof Error
             ? reason.message
             : "Could not load ledger entries.",
         );
-      } finally {
+      })
+      .finally(() => {
         if (active) setLoading(false);
-      }
-    }, 200);
+      });
     return () => {
       active = false;
-      window.clearTimeout(timer);
     };
   }, [
     accountId,
     categoryId,
     endDate,
     groupId,
-    month,
     page,
     query,
     reload,
@@ -182,12 +176,6 @@ export function LedgerView() {
   function updateFilter(key: string, value: string) {
     setSelectedId(undefined);
     const next = new URLSearchParams(searchParams.toString());
-    if (key === "month" && value) {
-      next.delete("startDate");
-      next.delete("endDate");
-    } else if ((key === "startDate" || key === "endDate") && value) {
-      next.delete("month");
-    }
     if (value) next.set(key, value);
     else next.delete(key);
     if (key !== "page") next.delete("page");
@@ -212,12 +200,6 @@ export function LedgerView() {
     }
     if (endDate) {
       return `Through ${dateLabel(endDate)}`;
-    }
-    if (month) {
-      return new Intl.DateTimeFormat("en-US", {
-        month: "long",
-        year: "numeric",
-      }).format(new Date(`${month}-01T12:00:00`));
     }
     return "All time";
   }
@@ -276,7 +258,7 @@ export function LedgerView() {
                   Showing {result.pagination.total} entries · {formatPeriodLabel()}
                 </p>
               </div>
-              {startDate || endDate || month || query || type !== "all" || accountId || categoryId || groupId ? (
+              {startDate || endDate || query || type !== "all" || accountId || categoryId || groupId ? (
                 <button
                   className="button-secondary text-xs"
                   onClick={clearAllFilters}
@@ -309,18 +291,6 @@ export function LedgerView() {
                   }
                   type="date"
                   value={endDate}
-                />
-              </label>
-              <label className={`order-3 sm:order-none 2xl:col-span-2 ${showFilters ? "" : "!hidden sm:!grid"}`}>
-                <span className="mb-1 block text-xs font-medium text-muted">Month</span>
-                <input
-                  aria-label="Ledger month"
-                  className="field"
-                  onChange={(event) =>
-                    updateFilter("month", event.target.value)
-                  }
-                  type="month"
-                  value={month}
                 />
               </label>
               <label className="order-first sm:col-span-2 md:col-span-1 2xl:col-span-4">
