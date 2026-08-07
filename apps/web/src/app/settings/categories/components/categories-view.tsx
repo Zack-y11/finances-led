@@ -4,8 +4,11 @@
 import { createCategorySchema, updateCategorySchema } from "@finance/contracts";
 import { FormEvent, useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Card, cardVariants } from "@/components/ui/card";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
   createCategory,
@@ -13,6 +16,7 @@ import {
   updateCategory,
   type Category,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 type CategoryKind = Category["kind"];
 
@@ -67,21 +71,21 @@ export function CategoriesView() {
         title="Categories"
         description="Create and edit the income and expense categories used by ledger entries."
         action={
-          <button
-            className="button-primary shrink-0"
+          <Button
+            className="shrink-0"
             onClick={() => setEditing(undefined)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             New category
-          </button>
+          </Button>
         }
       />
       {notice ? <StatusMessage tone="success">{notice}</StatusMessage> : null}
       {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
       <CategoryForm category={editing} onSaved={saved} />
       {loading ? <LoadingCard label="Loading categories…" /> : null}
-      <section className="surface-card overflow-hidden">
+      <Card className="overflow-hidden gap-0">
         <div className="border-b border-border p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-ink">Category list</h2>
           <p className="mt-1 text-sm text-muted">
@@ -101,20 +105,21 @@ export function CategoriesView() {
                   {categoryKindLabels[category.kind]}
                 </p>
               </div>
-              <button
-                className="button-secondary justify-self-start sm:justify-self-end"
+              <Button
+                className="justify-self-start sm:justify-self-end"
                 onClick={() => setEditing(category)}
                 type="button"
+                variant="secondary"
               >
                 Edit
-              </button>
+              </Button>
             </article>
           ))}
           {!categories.length && !loading ? (
             <p className="p-5 text-sm text-muted sm:p-6">No categories yet.</p>
           ) : null}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }
@@ -178,7 +183,10 @@ function CategoryForm({
 
   return (
     <form
-      className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+      className={cn(
+        cardVariants(),
+        "grid gap-4 p-5 sm:grid-cols-2 sm:p-6",
+      )}
       onSubmit={submit}
     >
       <div className="sm:col-span-2">
@@ -191,8 +199,7 @@ function CategoryForm({
       </div>
       <label>
         Name
-        <input
-          className="field"
+        <Input
           onChange={(event) => setName(event.target.value)}
           placeholder="Groceries"
           required
@@ -202,7 +209,7 @@ function CategoryForm({
       <label>
         Kind
         <select
-          className="field"
+          className={nativeSelectClassName}
           onChange={(event) => setKind(event.target.value as CategoryKind)}
           value={kind}
         >
@@ -220,9 +227,9 @@ function CategoryForm({
         </p>
       ) : null}
       <div className="flex gap-3 sm:col-span-2">
-        <button className="button-primary" disabled={saving} type="submit">
+        <Button disabled={saving} type="submit">
           {saving ? "Saving…" : category ? "Save category" : "Create category"}
-        </button>
+        </Button>
       </div>
     </form>
   );
