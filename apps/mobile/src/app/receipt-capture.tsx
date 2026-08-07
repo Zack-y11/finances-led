@@ -1,41 +1,45 @@
-import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { useState } from 'react';
+import { View } from 'react-native';
 
-import { GlassSurface } from "@/components/ui/glass-surface";
-import { LedgerScreen } from "@/components/ui/ledger-screen";
-import { Colors, Fonts, Spacing } from "@/constants/theme";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { LedgerScreen } from '@/components/ui/ledger-screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
-type ReceiptState = "preview" | "processing" | "review";
+type ReceiptState = 'preview' | 'processing' | 'review';
 
 export default function ReceiptCaptureScreen() {
-  const [state, setState] = useState<ReceiptState>("preview");
+  const [state, setState] = useState<ReceiptState>('preview');
   return (
     <LedgerScreen>
-      <View>
-        <Text style={styles.eyebrow}>RECEIPT CAPTURE</Text>
-        <Text style={styles.title}>
-          {state === "preview"
-            ? "Preview receipt"
-            : state === "processing"
-              ? "Analyzing receipt"
-              : "Review capture"}
-        </Text>
-        <Text style={styles.copy}>
-          {state === "preview"
-            ? "Frame the receipt before temporary processing begins."
-            : state === "processing"
-              ? "Each processing step remains visible to preserve trust."
-              : "Confirm the extracted facts before a future ledger write."}
-        </Text>
-      </View>
-      {state === "preview" ? (
-        <Preview onUse={() => setState("processing")} />
+      <ScreenHeader
+        eyebrow="RECEIPT CAPTURE"
+        title={
+          state === 'preview'
+            ? 'Preview receipt'
+            : state === 'processing'
+              ? 'Analyzing receipt'
+              : 'Review capture'
+        }
+        copy={
+          state === 'preview'
+            ? 'Frame the receipt before temporary processing begins.'
+            : state === 'processing'
+              ? 'Each processing step remains visible to preserve trust.'
+              : 'Confirm the extracted facts before a future ledger write.'
+        }
+      />
+      {state === 'preview' ? (
+        <Preview onUse={() => setState('processing')} />
       ) : null}
-      {state === "processing" ? (
-        <Processing onComplete={() => setState("review")} />
+      {state === 'processing' ? (
+        <Processing onComplete={() => setState('review')} />
       ) : null}
-      {state === "review" ? (
-        <Review onRetake={() => setState("preview")} />
+      {state === 'review' ? (
+        <Review onRetake={() => setState('preview')} />
       ) : null}
     </LedgerScreen>
   );
@@ -43,78 +47,94 @@ export default function ReceiptCaptureScreen() {
 
 function Preview({ onUse }: { onUse: () => void }) {
   return (
-    <GlassSurface style={styles.card}>
-      <View style={styles.preview}>
-        <Text style={styles.previewIcon}>⌁</Text>
-        <Text style={styles.previewCopy}>Receipt photo preview</Text>
+    <GlassSurface className="gap-3.5">
+      <View className="border-border bg-background h-[300px] items-center justify-center rounded-xl border border-dashed">
+        <Text className="text-action text-[42px]">⌁</Text>
+        <Text className="text-muted-foreground mt-2.5 text-sm">
+          Receipt photo preview
+        </Text>
       </View>
-      <View style={styles.actions}>
-        <Pressable style={styles.secondary}>
-          <Text style={styles.secondaryText}>Retake</Text>
-        </Pressable>
-        <Pressable onPress={onUse} style={styles.primary}>
-          <Text style={styles.primaryText}>Use photo</Text>
-        </Pressable>
+      <View className="flex-row gap-2.5">
+        <Button variant="outline" className="flex-1">
+          <Text>Retake</Text>
+        </Button>
+        <Button className="bg-foreground flex-1" onPress={onUse}>
+          <Text>Use photo</Text>
+        </Button>
       </View>
     </GlassSurface>
   );
 }
+
 function Processing({ onComplete }: { onComplete: () => void }) {
   return (
-    <GlassSurface style={styles.card}>
-      <View style={styles.scan}>
-        <Text style={styles.scanIcon}>⌁</Text>
+    <GlassSurface className="gap-3.5">
+      <View className="bg-background h-[180px] items-center justify-center rounded-2xl">
+        <Text className="text-action text-[58px]">⌁</Text>
       </View>
-      <Text style={styles.processingTitle}>Analyzing Receipt</Text>
-      {["Reading text", "Detecting amounts", "Securely deleting image"].map(
+      <Text className="text-foreground text-center text-lg font-bold">
+        Analyzing Receipt
+      </Text>
+      {['Reading text', 'Detecting amounts', 'Securely deleting image'].map(
         (step, index) => (
-          <View key={step} style={styles.step}>
-            <Text style={index === 0 ? styles.stepActive : styles.stepIdle}>
-              {index === 0 ? "●" : "○"}
+          <View key={step} className="flex-row items-center gap-2.5">
+            <Text
+              className={
+                index === 0 ? 'text-action' : 'text-muted-foreground'
+              }
+            >
+              {index === 0 ? '●' : '○'}
             </Text>
             <Text
-              style={[styles.stepText, index === 0 && styles.stepTextActive]}
+              className={cn(
+                'text-muted-foreground text-[13px] font-semibold',
+                index === 0 && 'text-action',
+              )}
             >
               {step}...
             </Text>
           </View>
         ),
       )}
-      <Pressable onPress={onComplete} style={styles.complete}>
-        <Text style={styles.primaryText}>Show extracted draft</Text>
-      </Pressable>
+      <Button className="mt-1" onPress={onComplete}>
+        <Text>Show extracted draft</Text>
+      </Button>
     </GlassSurface>
   );
 }
+
 function Review({ onRetake }: { onRetake: () => void }) {
   return (
-    <View style={{ gap: Spacing.three }}>
-      <View style={styles.privacy}>
-        <Text style={styles.privacyTitle}>Privacy secured</Text>
-        <Text style={styles.privacyCopy}>
+    <View className="gap-3">
+      <View className="bg-success-soft rounded-xl p-4">
+        <Text className="text-foreground text-sm font-bold">Privacy secured</Text>
+        <Text className="text-muted-foreground mt-1 text-xs leading-[18px]">
           The original receipt image is represented as deleted. Only extracted
           data would be saved.
         </Text>
       </View>
       <GlassSurface>
-        <Text style={styles.match}>98% MATCH</Text>
+        <Badge variant="success" className="mb-2 self-end">
+          <Text>98% MATCH</Text>
+        </Badge>
         <Field label="Merchant" value="Blue Bottle Coffee" />
-        <View style={styles.row}>
+        <View className="flex-row gap-3.5">
           <Field label="Total amount" value="$14.50" half />
           <Field label="Date" value="Jul 18, 2026" half />
         </View>
         <Field label="Suggested category" value="Dining & Drinks" />
         <Field label="Account" value="BAC Checking" />
-        <Pressable style={styles.primary}>
-          <Text style={styles.primaryText}>Confirm & save transaction</Text>
-        </Pressable>
-        <Pressable onPress={onRetake} style={styles.discard}>
-          <Text style={styles.secondaryText}>Discard</Text>
-        </Pressable>
+        <Button className="bg-foreground mt-2">
+          <Text>Confirm & save transaction</Text>
+        </Button>
+        <Button variant="ghost" className="mt-1" onPress={onRetake}>
+          <Text className="text-muted-foreground">Discard</Text>
+        </Button>
       </GlassSurface>
     </View>
   );
 }
+
 function Field({
   label,
   value,
@@ -125,148 +145,9 @@ function Field({
   half?: boolean;
 }) {
   return (
-    <View style={[styles.field, half && styles.half]}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <Text style={styles.fieldValue}>{value}</Text>
+    <View className={cn('border-border border-b pb-2.5', half && 'flex-1')}>
+      <Text className="text-muted-foreground text-[11px] font-bold">{label}</Text>
+      <Text className="text-foreground mt-1.5 text-base font-bold">{value}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  eyebrow: {
-    color: Colors.light.action,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-  },
-  title: {
-    color: Colors.light.text,
-    fontSize: 28,
-    fontWeight: "700",
-    lineHeight: 34,
-    marginTop: 4,
-  },
-  copy: {
-    color: Colors.light.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  card: { gap: 14 },
-  preview: {
-    alignItems: "center",
-    backgroundColor: Colors.light.background,
-    borderColor: Colors.light.border,
-    borderRadius: 12,
-    borderStyle: "dashed",
-    borderWidth: 1,
-    height: 300,
-    justifyContent: "center",
-  },
-  previewIcon: { color: Colors.light.action, fontSize: 42 },
-  previewCopy: {
-    color: Colors.light.textSecondary,
-    fontSize: 14,
-    marginTop: 10,
-  },
-  actions: { flexDirection: "row", gap: 10 },
-  primary: {
-    alignItems: "center",
-    backgroundColor: Colors.light.text,
-    borderRadius: 8,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
-  primaryText: { color: "#FFFFFF", fontSize: 13, fontWeight: "700" },
-  secondary: {
-    alignItems: "center",
-    backgroundColor: Colors.light.background,
-    borderColor: Colors.light.border,
-    borderRadius: 8,
-    borderWidth: 1,
-    flex: 1,
-    justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 14,
-  },
-  secondaryText: {
-    color: Colors.light.textSecondary,
-    fontSize: 13,
-    fontWeight: "700",
-  },
-  scan: {
-    alignItems: "center",
-    backgroundColor: Colors.light.background,
-    borderRadius: 16,
-    height: 180,
-    justifyContent: "center",
-  },
-  scanIcon: { color: Colors.light.action, fontSize: 58 },
-  processingTitle: {
-    color: Colors.light.text,
-    fontSize: 18,
-    fontWeight: "700",
-    textAlign: "center",
-  },
-  step: { alignItems: "center", flexDirection: "row", gap: 10 },
-  stepActive: { color: Colors.light.action },
-  stepIdle: { color: Colors.light.textSecondary },
-  stepText: {
-    color: Colors.light.textSecondary,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  stepTextActive: { color: Colors.light.action },
-  complete: {
-    alignItems: "center",
-    backgroundColor: Colors.light.action,
-    borderRadius: 8,
-    marginTop: 4,
-    paddingVertical: 12,
-  },
-  privacy: {
-    backgroundColor: Colors.light.successSoft,
-    borderRadius: 12,
-    padding: 16,
-  },
-  privacyTitle: { color: Colors.light.text, fontSize: 14, fontWeight: "700" },
-  privacyCopy: {
-    color: Colors.light.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  match: {
-    alignSelf: "flex-end",
-    backgroundColor: Colors.light.successSoft,
-    borderRadius: 4,
-    color: Colors.light.success,
-    fontSize: 10,
-    fontWeight: "700",
-    overflow: "hidden",
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-  },
-  field: {
-    borderBottomColor: Colors.light.border,
-    borderBottomWidth: 1,
-    paddingBottom: 10,
-  },
-  row: { flexDirection: "row", gap: 14 },
-  half: { flex: 1 },
-  fieldLabel: {
-    color: Colors.light.textSecondary,
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  fieldValue: {
-    color: Colors.light.text,
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 6,
-  },
-  discard: { alignItems: "center", paddingVertical: 8 },
-});
