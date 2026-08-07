@@ -1,5 +1,9 @@
 import type { ReactNode } from "react";
 
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
 type MessageTone = "error" | "success" | "neutral";
 
 export function DemoNotice({ feature }: { feature: string }) {
@@ -18,27 +22,22 @@ export function StatusMessage({
   children: ReactNode;
   tone?: MessageTone;
 }) {
-  const styles =
-    tone === "error"
-      ? "border-danger/20 bg-danger-soft text-danger"
-      : tone === "success"
-        ? "border-success/20 bg-success-soft text-success"
-        : "border-action/20 bg-action-soft/50 text-muted";
+  const variant =
+    tone === "error" ? "destructive" : tone === "success" ? "success" : "default";
   return (
-    <p
-      className={`rounded-xl border px-4 py-3 text-sm font-medium ${styles}`}
-      role={tone === "error" ? "alert" : "status"}
-    >
-      {children}
-    </p>
+    <Alert variant={variant} role={tone === "error" ? "alert" : "status"}>
+      <AlertDescription className="text-sm font-medium text-inherit">
+        {children}
+      </AlertDescription>
+    </Alert>
   );
 }
 
 export function LoadingCard({ label = "Loading…" }: { label?: string }) {
   return (
-    <div aria-busy="true" className="surface-card animate-pulse p-6">
-      <div className="h-4 w-32 rounded bg-surface-muted" />
+    <Card aria-busy="true" className="p-6">
+      <Skeleton className="h-4 w-32" />
       <p className="mt-4 text-sm text-muted">{label}</p>
-    </div>
+    </Card>
   );
 }
