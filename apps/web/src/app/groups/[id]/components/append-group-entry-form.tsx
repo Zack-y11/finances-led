@@ -4,6 +4,10 @@ import { appendEntryToGroupSchema } from "@finance/contracts";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { nativeSelectClassName } from "@/lib/utils";
+
 type Option = { id: string; name: string };
 
 const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -67,7 +71,7 @@ export function AppendGroupEntryForm({
       <h2 className="text-xl font-semibold">Add entry</h2>
       <label>
         Type
-        <select name="type" className="field" defaultValue={defaultType}>
+        <select name="type" className={nativeSelectClassName} defaultValue={defaultType}>
           <option value="expense">Expense</option>
           <option value="income">Income</option>
           <option value="adjustment">Adjustment</option>
@@ -75,15 +79,15 @@ export function AppendGroupEntryForm({
       </label>
       <label>
         Amount
-        <input name="amount" className="field" type="number" min="0.01" step="0.01" placeholder="5.00" required />
+        <Input name="amount" type="number" min="0.01" step="0.01" placeholder="5.00" required />
       </label>
       <label>
         Merchant
-        <input name="merchant" className="field" placeholder="Bus" />
+        <Input name="merchant" placeholder="Bus" />
       </label>
       <label>
         Account
-        <select name="accountId" className="field" required>
+        <select name="accountId" className={nativeSelectClassName} required>
           {accounts.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -93,7 +97,7 @@ export function AppendGroupEntryForm({
       </label>
       <label>
         Category
-        <select name="categoryId" className="field" required>
+        <select name="categoryId" className={nativeSelectClassName} required>
           {categories.map((item) => (
             <option key={item.id} value={item.id}>
               {item.name}
@@ -103,19 +107,18 @@ export function AppendGroupEntryForm({
       </label>
       <label>
         Date
-        <input name="date" className="field" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
+        <Input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required />
       </label>
       <label>
         Note
-        <input name="note" className="field" placeholder="Optional note" />
+        <Input name="note" placeholder="Optional note" />
       </label>
       {error && <p className="text-sm text-red-700">{error}</p>}
-      <button
-        className="rounded bg-zinc-900 px-4 py-2 text-white disabled:opacity-50"
+      <Button
         disabled={saving || !accounts.length || !categories.length}
       >
         {saving ? "Saving..." : "Add entry"}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -4,6 +4,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { LedgerEntryForm } from "@/components/ui/ledger-entry-form";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
@@ -68,14 +70,13 @@ export function GroupDetailView({ groupId }: { groupId: string }) {
         title={group.name}
         description={group.description || "No description yet."}
         action={
-          <button
-            className="button-primary"
+          <Button
             onClick={() => setShowForm((value) => !value)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             Add entry
-          </button>
+          </Button>
         }
       />
       {showForm ? (
@@ -100,7 +101,7 @@ export function GroupDetailView({ groupId }: { groupId: string }) {
         />
         <Metric label="Group type" value={group.type} />
       </section>
-      <section className="surface-card p-5 sm:p-6">
+      <Card className="p-5 sm:p-6">
         <h2 className="text-lg font-semibold text-ink">Group activity</h2>
         <p className="mt-1 text-sm text-muted">
           Entries keep their original date, category, and account.
@@ -108,17 +109,17 @@ export function GroupDetailView({ groupId }: { groupId: string }) {
         <div className="mt-4">
           <TransactionList items={group.ledgerEntries} />
         </div>
-      </section>
+      </Card>
     </div>
   );
 }
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card p-5">
+    <Card className="p-5">
       <p className="text-sm text-muted">{label}</p>
       <p className="mt-3 text-2xl font-bold capitalize text-ink tabular-nums">
         {value}
       </p>
-    </div>
+    </Card>
   );
 }
