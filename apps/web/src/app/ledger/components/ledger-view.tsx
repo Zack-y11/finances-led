@@ -4,10 +4,23 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { LedgerEntryForm } from "@/components/ui/ledger-entry-form";
 import { StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   dateLabel,
   deleteLedgerEntry,
@@ -20,8 +33,14 @@ import {
   type LedgerOptions,
   type LedgerPage,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 const SEARCH_DEBOUNCE_MS = 350;
+
+const filterSelectClassName = cn(
+  nativeSelectClassName,
+  "!min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold",
+);
 
 export function LedgerView() {
   const pathname = usePathname();
@@ -221,14 +240,14 @@ export function LedgerView() {
         title="Transactions"
         description="Every financial movement recorded in your ledger."
         action={
-          <button
-            className="button-primary shrink-0"
+          <Button
+            className="shrink-0"
             onClick={() => setShowForm((value) => !value)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             New transaction
-          </button>
+          </Button>
         }
       />
       {showForm ? (
@@ -250,7 +269,7 @@ export function LedgerView() {
           selectedId ? "2xl:grid-cols-[minmax(0,1fr)_360px]" : ""
         }`}
       >
-        <section className="surface-card min-w-0 overflow-hidden">
+        <Card className="min-w-0 overflow-hidden gap-0">
           <div className="flex flex-col gap-4 border-b border-border p-5 sm:p-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -269,13 +288,14 @@ export function LedgerView() {
               accountId ||
               categoryId ||
               groupId ? (
-                <button
-                  className="button-secondary text-xs"
+                <Button
                   onClick={clearAllFilters}
+                  size="sm"
                   type="button"
+                  variant="secondary"
                 >
                   Reset filters
-                </button>
+                </Button>
               ) : null}
             </div>
             <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-12 2xl:items-end">
@@ -285,9 +305,8 @@ export function LedgerView() {
                 <span className="mb-1 block text-xs font-medium text-muted">
                   From
                 </span>
-                <input
+                <Input
                   aria-label="Start date"
-                  className="field"
                   onInput={(event) =>
                     updateFilter("startDate", event.currentTarget.value)
                   }
@@ -301,9 +320,8 @@ export function LedgerView() {
                 <span className="mb-1 block text-xs font-medium text-muted">
                   To
                 </span>
-                <input
+                <Input
                   aria-label="End date"
-                  className="field"
                   onInput={(event) =>
                     updateFilter("endDate", event.currentTarget.value)
                   }
@@ -319,9 +337,9 @@ export function LedgerView() {
                   <span className="pointer-events-none absolute inset-y-0 left-0 flex w-11 items-center justify-center text-muted">
                     <Icon className="size-5" name="search" />
                   </span>
-                  <input
+                  <Input
                     aria-label="Search transactions"
-                    className="field !pl-11"
+                    className="pl-11"
                     onChange={(event) => setSearchInput(event.target.value)}
                     placeholder="Search transactions..."
                     type="search"
@@ -329,14 +347,16 @@ export function LedgerView() {
                   />
                 </div>
               </label>
-              <button
+              <Button
                 aria-expanded={showFilters}
-                className="button-secondary order-2 min-h-10 justify-between rounded-full px-4 text-xs sm:!hidden"
+                className="order-2 min-h-10 justify-between rounded-full px-4 sm:!hidden"
                 onClick={() => setShowFilters((value) => !value)}
+                size="sm"
                 type="button"
+                variant="secondary"
               >
                 {showFilters ? "Hide filters" : "Filters"}
-              </button>
+              </Button>
               <label
                 className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
               >
@@ -345,7 +365,7 @@ export function LedgerView() {
                 </span>
                 <select
                   aria-label="Transaction type"
-                  className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
+                  className={filterSelectClassName}
                   onChange={(event) =>
                     updateFilter(
                       "type",
@@ -368,7 +388,7 @@ export function LedgerView() {
                 </span>
                 <select
                   aria-label="Account"
-                  className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
+                  className={filterSelectClassName}
                   onChange={(event) =>
                     updateFilter("accountId", event.target.value)
                   }
@@ -390,7 +410,7 @@ export function LedgerView() {
                 </span>
                 <select
                   aria-label="Category"
-                  className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
+                  className={filterSelectClassName}
                   onChange={(event) =>
                     updateFilter("categoryId", event.target.value)
                   }
@@ -412,7 +432,7 @@ export function LedgerView() {
                 </span>
                 <select
                   aria-label="Group"
-                  className="field !min-h-10 !rounded-full !bg-surface-muted !py-2 text-xs font-semibold"
+                  className={filterSelectClassName}
                   onChange={(event) =>
                     updateFilter("groupId", event.target.value)
                   }
@@ -461,55 +481,61 @@ export function LedgerView() {
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
-                    {entry.category.name}
-                  </span>
+                  <Badge>{entry.category.name}</Badge>
                   <EntryStatus status={entry.status} />
                 </span>
               </button>
             ))}
           </div>
-          <div className="hidden overflow-x-auto md:block">
-            <table className="w-full min-w-[760px] border-collapse text-left text-sm">
-              <thead className="bg-surface-muted text-xs uppercase tracking-wide text-muted">
-                <tr>
-                  <th className="px-5 py-3 font-semibold">Date</th>
-                  <th className="px-5 py-3 font-semibold">Description</th>
-                  <th className="px-5 py-3 font-semibold">Category</th>
-                  <th className="px-5 py-3 font-semibold">Account</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 text-right font-semibold">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="hidden md:block">
+            <Table className="min-w-[760px] border-collapse text-left">
+              <TableHeader className="bg-surface-muted text-xs uppercase tracking-wide text-muted">
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="px-5 py-3 font-semibold">Date</TableHead>
+                  <TableHead className="px-5 py-3 font-semibold">
+                    Description
+                  </TableHead>
+                  <TableHead className="px-5 py-3 font-semibold">
+                    Category
+                  </TableHead>
+                  <TableHead className="px-5 py-3 font-semibold">
+                    Account
+                  </TableHead>
+                  <TableHead className="px-5 py-3 font-semibold">
+                    Status
+                  </TableHead>
+                  <TableHead className="px-5 py-3 text-right font-semibold">
+                    Amount
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {result.data.map((entry) => (
-                  <tr
+                  <TableRow
                     className={
                       selectedId === entry.id
-                        ? "cursor-pointer border-t border-border bg-action-soft/50"
-                        : "cursor-pointer border-t border-border hover:bg-surface-muted/70"
+                        ? "cursor-pointer bg-action-soft/50"
+                        : "cursor-pointer hover:bg-surface-muted/70"
                     }
                     key={entry.id}
                     onClick={() => setSelectedId(entry.id)}
                   >
-                    <td className="whitespace-nowrap px-5 py-4 text-muted">
+                    <TableCell className="whitespace-nowrap px-5 py-4 text-muted">
                       {dateLabel(entry.occurredAt)}
-                    </td>
-                    <td className="px-5 py-4 font-semibold text-ink">
+                    </TableCell>
+                    <TableCell className="px-5 py-4 font-semibold text-ink">
                       {entry.merchant}
-                    </td>
-                    <td className="px-5 py-4">
-                      <span className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
-                        {entry.category.name}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-muted">
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
+                      <Badge>{entry.category.name}</Badge>
+                    </TableCell>
+                    <TableCell className="px-5 py-4 text-muted">
                       {entry.account.name}
-                    </td>
-                    <td className="px-5 py-4">
+                    </TableCell>
+                    <TableCell className="px-5 py-4">
                       <EntryStatus status={entry.status} />
-                    </td>
-                    <td
+                    </TableCell>
+                    <TableCell
                       className={
                         entry.type === "income"
                           ? "px-5 py-4 text-right font-bold text-success tabular-nums"
@@ -518,11 +544,11 @@ export function LedgerView() {
                     >
                       {entry.type === "income" ? "+" : "-"}
                       {money(entry.amount)}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
           {loading ? (
             <p className="p-5 text-sm text-muted">Loading ledger entries…</p>
@@ -537,27 +563,29 @@ export function LedgerView() {
               {Math.max(result.pagination.totalPages, 1)}
             </span>
             <div className="flex gap-2">
-              <button
-                className="button-secondary px-3 py-2 text-xs"
+              <Button
                 disabled={loading || page <= 1}
                 onClick={() => updatePage(page - 1)}
+                size="sm"
                 type="button"
+                variant="secondary"
               >
                 Previous
-              </button>
-              <button
-                className="button-secondary px-3 py-2 text-xs"
+              </Button>
+              <Button
                 disabled={loading || page >= result.pagination.totalPages}
                 onClick={() => updatePage(page + 1)}
+                size="sm"
                 type="button"
+                variant="secondary"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
-        </section>
+        </Card>
         {selectedId ? (
-          <aside className="surface-card overflow-hidden 2xl:sticky 2xl:top-24">
+          <Card className="overflow-hidden gap-0 2xl:sticky 2xl:top-24">
             <div className="flex items-center justify-between border-b border-border bg-surface-muted px-5 py-4">
               <h2 className="font-semibold text-ink">Transaction details</h2>
               <button
@@ -588,7 +616,7 @@ export function LedgerView() {
             ) : (
               <p className="p-5 text-sm text-muted">Loading details…</p>
             )}
-          </aside>
+          </Card>
         ) : null}
       </div>
     </div>
@@ -596,12 +624,12 @@ export function LedgerView() {
 }
 
 function EntryStatus({ status }: { status: LedgerEntry["status"] }) {
-  const tone =
+  const variant =
     status === "needs_review"
-      ? "bg-review-soft text-review"
+      ? "review"
       : status === "ignored"
-        ? "bg-surface-muted text-muted"
-        : "bg-success-soft text-[#047857]";
+        ? "secondary"
+        : "success";
   const dot =
     status === "needs_review"
       ? "bg-review"
@@ -614,12 +642,10 @@ function EntryStatus({ status }: { status: LedgerEntry["status"] }) {
     .join(" ");
 
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
-    >
+    <Badge variant={variant}>
       <span aria-hidden="true" className={`size-1.5 rounded-full ${dot}`} />
       {label}
-    </span>
+    </Badge>
   );
 }
 function EntryDetails({
@@ -709,7 +735,7 @@ function EntryDetails({
         <label className="text-xs font-medium text-muted">
           Type
           <select
-            className="field mt-1"
+            className={cn(nativeSelectClassName, "mt-1")}
             onChange={(e) => setType(e.target.value as LedgerEntry["type"])}
             value={type}
           >
@@ -720,8 +746,8 @@ function EntryDetails({
         </label>
         <label className="text-xs font-medium text-muted">
           Amount
-          <input
-            className="field mt-1"
+          <Input
+            className="mt-1"
             min="0.01"
             onChange={(e) => setAmount(e.target.value)}
             required
@@ -732,8 +758,8 @@ function EntryDetails({
         </label>
         <label className="text-xs font-medium text-muted">
           Merchant / Vendor
-          <input
-            className="field mt-1"
+          <Input
+            className="mt-1"
             onChange={(e) => setMerchant(e.target.value)}
             placeholder="Merchant name"
             value={merchant}
@@ -742,7 +768,7 @@ function EntryDetails({
         <label className="text-xs font-medium text-muted">
           Account
           <select
-            className="field mt-1"
+            className={cn(nativeSelectClassName, "mt-1")}
             onChange={(e) => setAccountId(e.target.value)}
             value={accountId}
           >
@@ -756,7 +782,7 @@ function EntryDetails({
         <label className="text-xs font-medium text-muted">
           Category
           <select
-            className="field mt-1"
+            className={cn(nativeSelectClassName, "mt-1")}
             onChange={(e) => setCategoryId(e.target.value)}
             value={categoryId}
           >
@@ -769,8 +795,8 @@ function EntryDetails({
         </label>
         <label className="text-xs font-medium text-muted">
           Date
-          <input
-            className="field mt-1"
+          <Input
+            className="mt-1"
             onChange={(e) => setOccurredAt(e.target.value)}
             required
             type="date"
@@ -779,28 +805,25 @@ function EntryDetails({
         </label>
         <label className="text-xs font-medium text-muted">
           Note
-          <textarea
-            className="field mt-1 min-h-20"
+          <Textarea
+            className="mt-1 min-h-20"
             onChange={(e) => setNote(e.target.value)}
             placeholder="Optional note"
             value={note}
           />
         </label>
         <div className="flex justify-end gap-2 pt-2">
-          <button
-            className="button-secondary text-xs"
+          <Button
             onClick={() => setEditing(false)}
+            size="sm"
             type="button"
+            variant="secondary"
           >
             Cancel
-          </button>
-          <button
-            className="button-primary text-xs"
-            disabled={saving}
-            type="submit"
-          >
+          </Button>
+          <Button disabled={saving} size="sm" type="submit">
             {saving ? "Saving..." : "Save changes"}
-          </button>
+          </Button>
         </div>
       </form>
     );
@@ -819,21 +842,22 @@ function EntryDetails({
           <p className="text-xs font-semibold text-danger">{error}</p>
         ) : null}
         <div className="flex justify-end gap-2 pt-2">
-          <button
-            className="button-secondary text-xs"
+          <Button
             onClick={() => setDeleting(false)}
+            size="sm"
             type="button"
+            variant="secondary"
           >
             Cancel
-          </button>
-          <button
-            className="button-primary text-xs"
+          </Button>
+          <Button
             disabled={saving}
             onClick={handleDelete}
+            size="sm"
             type="button"
           >
             {saving ? "Deleting..." : "Confirm Delete"}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -877,20 +901,24 @@ function EntryDetails({
         </div>
       ) : null}
       <div className="flex gap-2 pt-2 border-t border-border">
-        <button
-          className="button-secondary text-xs flex-1"
+        <Button
+          className="flex-1"
           onClick={() => setEditing(true)}
+          size="sm"
           type="button"
+          variant="secondary"
         >
           Edit transaction
-        </button>
-        <button
-          className="button-secondary text-xs text-danger"
+        </Button>
+        <Button
+          className="text-danger"
           onClick={() => setDeleting(true)}
+          size="sm"
           type="button"
+          variant="secondary"
         >
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   );
