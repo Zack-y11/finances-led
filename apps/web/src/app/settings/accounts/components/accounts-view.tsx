@@ -4,8 +4,12 @@
 import { createAccountSchema, updateAccountSchema } from "@finance/contracts";
 import { FormEvent, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, cardVariants } from "@/components/ui/card";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
   createAccount,
@@ -13,6 +17,7 @@ import {
   updateAccount,
   type Account,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 type AccountType = Account["type"];
 
@@ -83,21 +88,21 @@ export function AccountsView() {
         title="Accounts"
         description="Create accounts, edit labels, and deactivate accounts that should no longer accept new ledger entries."
         action={
-          <button
-            className="button-primary shrink-0"
+          <Button
+            className="shrink-0"
             onClick={() => setEditing(undefined)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             New account
-          </button>
+          </Button>
         }
       />
       {notice ? <StatusMessage tone="success">{notice}</StatusMessage> : null}
       {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
       <AccountForm account={editing} onSaved={saved} />
       {loading ? <LoadingCard label="Loading accounts…" /> : null}
-      <section className="surface-card overflow-hidden">
+      <Card className="overflow-hidden gap-0">
         <div className="border-b border-border p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-ink">Account list</h2>
           <p className="mt-1 text-sm text-muted">
@@ -113,37 +118,31 @@ export function AccountsView() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold text-ink">{account.name}</h3>
-                  <span
-                    className={
-                      account.isActive
-                        ? "rounded-full bg-success-soft px-2 py-1 text-xs font-semibold text-success"
-                        : "rounded-full bg-surface-muted px-2 py-1 text-xs font-semibold text-muted"
-                    }
-                  >
+                  <Badge variant={account.isActive ? "success" : "secondary"}>
                     {account.isActive ? "Active" : "Inactive"}
-                  </span>
+                  </Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted">
                   {accountTypeLabels[account.type]} · {account.currency}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  className="button-secondary"
+                <Button
                   disabled={busyId === account.id}
                   onClick={() => setEditing(account)}
                   type="button"
+                  variant="secondary"
                 >
                   Edit
-                </button>
-                <button
-                  className="button-secondary"
+                </Button>
+                <Button
                   disabled={busyId === account.id}
                   onClick={() => toggleAccount(account)}
                   type="button"
+                  variant="secondary"
                 >
                   {account.isActive ? "Deactivate" : "Reactivate"}
-                </button>
+                </Button>
               </div>
             </article>
           ))}
@@ -151,7 +150,7 @@ export function AccountsView() {
             <p className="p-5 text-sm text-muted sm:p-6">No accounts yet.</p>
           ) : null}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }
@@ -222,7 +221,10 @@ function AccountForm({
 
   return (
     <form
-      className="surface-card grid gap-4 p-5 sm:grid-cols-3 sm:p-6"
+      className={cn(
+        cardVariants(),
+        "grid gap-4 p-5 sm:grid-cols-3 sm:p-6",
+      )}
       onSubmit={submit}
     >
       <div className="sm:col-span-3">
@@ -235,8 +237,7 @@ function AccountForm({
       </div>
       <label>
         Name
-        <input
-          className="field"
+        <Input
           onChange={(event) => setName(event.target.value)}
           placeholder="Seed Wallet"
           required
@@ -246,7 +247,7 @@ function AccountForm({
       <label>
         Type
         <select
-          className="field"
+          className={nativeSelectClassName}
           onChange={(event) => setType(event.target.value as AccountType)}
           value={type}
         >
@@ -258,8 +259,8 @@ function AccountForm({
       </label>
       <label>
         Currency
-        <input
-          className="field uppercase"
+        <Input
+          className="uppercase"
           maxLength={3}
           onChange={(event) => setCurrency(event.target.value.toUpperCase())}
           required
@@ -275,9 +276,9 @@ function AccountForm({
         </p>
       ) : null}
       <div className="flex gap-3 sm:col-span-3">
-        <button className="button-primary" disabled={saving} type="submit">
+        <Button disabled={saving} type="submit">
           {saving ? "Saving…" : account ? "Save account" : "Create account"}
-        </button>
+        </Button>
       </div>
     </form>
   );
