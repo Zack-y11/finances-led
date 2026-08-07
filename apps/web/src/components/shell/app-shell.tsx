@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 
 import { AppNavigation } from "@/components/shell/app-navigation";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 
 function Brand() {
@@ -50,13 +51,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           <p className="hidden text-sm text-muted lg:block">
             Your personal financial ledger
           </p>
-          <Link
-            className="button-primary min-h-10 px-3 text-xs sm:px-4 sm:text-sm"
-            href="/capture"
-          >
-            <Icon className="size-4" name="plus" />
-            <span className="hidden sm:inline">Quick capture</span>
-          </Link>
+          <Button asChild size="sm" variant="default">
+            <Link href="/capture">
+              <Icon className="size-4" name="plus" />
+              <span className="hidden sm:inline">Quick capture</span>
+            </Link>
+          </Button>
         </header>
         <main className="mx-auto w-full max-w-[1280px] px-4 pb-28 pt-6 sm:px-6 sm:pt-8 lg:px-10 lg:pb-10 lg:pt-10">
           {children}
