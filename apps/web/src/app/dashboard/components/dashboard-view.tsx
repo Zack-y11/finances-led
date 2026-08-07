@@ -14,6 +14,8 @@ import {
   YAxis,
 } from "recharts";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
@@ -118,10 +120,12 @@ export function DashboardView() {
         title={monthLabel}
         description="A clear view of income, spending, and the net you have left to direct."
         action={
-          <Link className="button-primary shrink-0" href="/ledger">
-            <Icon className="size-4" name="plus" />
-            Add entry
-          </Link>
+          <Button asChild className="shrink-0">
+            <Link href="/ledger">
+              <Icon className="size-4" name="plus" />
+              Add entry
+            </Link>
+          </Button>
         }
       />
       {error ? <StatusMessage tone="error">{error}</StatusMessage> : null}
@@ -148,7 +152,7 @@ export function DashboardView() {
           tone="success"
         />
       </section>
-      <section className="surface-card p-5 sm:p-6">
+      <Card className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-ink">Monthly net</h2>
@@ -205,7 +209,7 @@ export function DashboardView() {
         ) : (
           <p className="mt-6 text-sm text-muted">No history available yet</p>
         )}
-      </section>
+      </Card>
       <section className="grid gap-6 lg:grid-cols-2">
         <BreakdownChart
           colors={expenseColors}
@@ -220,7 +224,7 @@ export function DashboardView() {
           title="Income breakdown"
         />
       </section>
-      <section className="surface-card p-5 sm:p-6">
+      <Card className="p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-ink">
@@ -240,7 +244,7 @@ export function DashboardView() {
         <div className="mt-4">
           <TransactionList compact items={recent} />
         </div>
-      </section>
+      </Card>
     </div>
   );
 }
@@ -261,7 +265,7 @@ function Metric({
       ? "bg-success-soft text-success"
       : "bg-danger-soft text-danger";
   return (
-    <div className="surface-card p-4 sm:p-5">
+    <Card className="p-4 sm:p-5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-muted">{label}</p>
         <span
@@ -275,7 +279,7 @@ function Metric({
       <p className="mt-3 text-xl font-bold tracking-tight text-ink tabular-nums sm:mt-5 sm:text-2xl">
         {value}
       </p>
-    </div>
+    </Card>
   );
 }
 
@@ -304,7 +308,7 @@ function BreakdownChart({
       : items;
 
   return (
-    <section className="surface-card p-5 sm:p-6">
+    <Card className="p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-ink">{title}</h2>
@@ -382,6 +386,6 @@ function BreakdownChart({
       ) : (
         <p className="mt-6 text-sm text-muted">{emptyLabel}</p>
       )}
-    </section>
+    </Card>
   );
 }
