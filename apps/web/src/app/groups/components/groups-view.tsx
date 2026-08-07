@@ -5,8 +5,12 @@ import { createEntryGroupSchema } from "@finance/contracts";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, cardVariants } from "@/components/ui/card";
 import { StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
   createEntryGroup,
@@ -14,6 +18,7 @@ import {
   money,
   type EntryGroup,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 export function GroupsView() {
   const [creating, setCreating] = useState(false);
@@ -78,19 +83,21 @@ export function GroupsView() {
         title="Groups"
         description="Groups make a larger event traceable without rewriting its individual ledger entries."
         action={
-          <button
-            className="button-primary"
+          <Button
             onClick={() => setCreating((value) => !value)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             New group
-          </button>
+          </Button>
         }
       />
       {creating ? (
         <form
-          className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+          className={cn(
+            cardVariants(),
+            "grid gap-4 p-5 sm:grid-cols-2 sm:p-6",
+          )}
           onSubmit={submit}
         >
           <div className="sm:col-span-2">
@@ -103,8 +110,7 @@ export function GroupsView() {
           </div>
           <label>
             Name
-            <input
-              className="field"
+            <Input
               name="name"
               placeholder="e.g. August trip"
               required
@@ -112,7 +118,7 @@ export function GroupsView() {
           </label>
           <label>
             Group type
-            <select className="field" defaultValue="expense" name="type">
+            <select className={nativeSelectClassName} defaultValue="expense" name="type">
               <option value="expense">Expense</option>
               <option value="income">Income</option>
               <option value="mixed">Mixed</option>
@@ -120,24 +126,23 @@ export function GroupsView() {
           </label>
           <label className="sm:col-span-2">
             Description
-            <input
-              className="field"
+            <Input
               name="description"
               placeholder="What belongs in this group?"
             />
           </label>
           <div className="flex gap-3 sm:col-span-2">
-            <button className="button-primary" disabled={saving} type="submit">
+            <Button disabled={saving} type="submit">
               {saving ? "Creating…" : "Create group"}
-            </button>
-            <button
-              className="button-secondary"
+            </Button>
+            <Button
               disabled={saving}
               onClick={() => setCreating(false)}
               type="button"
+              variant="secondary"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </form>
       ) : null}
@@ -155,13 +160,14 @@ export function GroupsView() {
           {groups.map((group) => (
             <Link
               key={group.id}
-              className="surface-card group p-5 transition-transform hover:-translate-y-0.5"
+              className={cn(
+                cardVariants(),
+                "group p-5 transition-transform hover:-translate-y-0.5",
+              )}
               href={"/groups/" + group.id}
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="rounded-full bg-action-soft px-2.5 py-1 text-xs font-semibold text-action">
-                  {group.type}
-                </span>
+                <Badge>{group.type}</Badge>
                 <Icon
                   className="size-5 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-action"
                   name="arrow-right"
@@ -183,9 +189,9 @@ export function GroupsView() {
           ))}
         </section>
       ) : (
-        <div className="surface-card p-6 text-sm text-muted">
+        <Card className="p-6 text-sm text-muted">
           No groups yet. Create one to collect related ledger entries.
-        </div>
+        </Card>
       )}
     </div>
   );
@@ -193,9 +199,9 @@ export function GroupsView() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="surface-card p-5">
+    <Card className="p-5">
       <p className="text-sm font-medium text-muted">{label}</p>
       <p className="mt-3 text-2xl font-bold text-ink tabular-nums">{value}</p>
-    </div>
+    </Card>
   );
 }
