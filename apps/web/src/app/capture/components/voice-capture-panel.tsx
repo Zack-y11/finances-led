@@ -61,7 +61,15 @@ export function VoiceCapturePanel({
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await Promise.race([
+        navigator.mediaDevices.getUserMedia({ audio: true }),
+        new Promise<never>((_, reject) =>
+          window.setTimeout(
+            () => reject(new Error("Microphone access timed out.")),
+            8_000,
+          ),
+        ),
+      ]);
       streamRef.current = stream;
       const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
         ? "audio/webm;codecs=opus"
@@ -135,7 +143,7 @@ export function VoiceCapturePanel({
   };
 
   return (
-    <section className="surface-card overflow-hidden">
+    <section className="surface-card overflow-hidden" data-testid="voice-capture-panel">
       <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
           <Icon className="text-action" name="mic" />

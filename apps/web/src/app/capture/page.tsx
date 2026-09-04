@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import type { ParsedFinanceCommand, VoiceIntakeResult } from "@finance/contracts";
 import { Icon } from "@/components/ui/icon";
@@ -20,7 +21,17 @@ import { VoiceCapturePanel } from "./components/voice-capture-panel";
 type CaptureMode = "text" | "voice";
 
 export default function CapturePage() {
-  const [mode, setMode] = useState<CaptureMode>("text");
+  return (
+    <Suspense fallback={null}>
+      <CapturePageContent />
+    </Suspense>
+  );
+}
+
+function CapturePageContent() {
+  const searchParams = useSearchParams();
+  const mode: CaptureMode =
+    searchParams.get("mode") === "voice" ? "voice" : "text";
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,21 +101,29 @@ export default function CapturePage() {
           real time. Raw audio is discarded after transcription.
         </span>
       </div>
-      <div className="flex gap-2">
-        <button
+      <div
+        aria-label="Capture mode"
+        className="flex gap-2"
+        role="tablist"
+      >
+        <Link
+          aria-selected={mode === "text"}
           className={mode === "text" ? "button-primary" : "button-secondary"}
-          onClick={() => setMode("text")}
-          type="button"
+          href="/capture"
+          role="tab"
+          scroll={false}
         >
           Text command
-        </button>
-        <button
+        </Link>
+        <Link
+          aria-selected={mode === "voice"}
           className={mode === "voice" ? "button-primary" : "button-secondary"}
-          onClick={() => setMode("voice")}
-          type="button"
+          href="/capture?mode=voice"
+          role="tab"
+          scroll={false}
         >
           Voice capture
-        </button>
+        </Link>
       </div>
       {mode === "text" ? (
         <section className="surface-card overflow-hidden">
