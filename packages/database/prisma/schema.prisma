@@ -62,6 +62,7 @@ model User {
   ledgerEntries LedgerEntry[]
   auditLogs AuditLog[]
   rules AutomationRule[]
+  inputSessions InputSession[]
 }
 
 model Account {
@@ -135,6 +136,7 @@ model LedgerEntry {
   account Account? @relation(fields: [accountId], references: [id])
   category Category? @relation(fields: [categoryId], references: [id])
   group EntryGroup? @relation(fields: [groupId], references: [id])
+  inputSession InputSession?
 
   @@index([userId, occurredAt])
   @@index([userId, monthKey])
@@ -159,6 +161,41 @@ model AuditLog {
   @@index([userId, createdAt])
   @@index([entityType, entityId])
 }
+
+enum InputSessionModality {
+  TEXT
+  VOICE
+  IMAGE
+  MANUAL
+}
+
+enum InputSessionStatus {
+  PROCESSED
+  NEEDS_REVIEW
+  FAILED
+  CONFIRMED
+}
+
+model InputSession {
+  id              String               @id @default(uuid()) @db.Uuid
+  userId          String               @db.Uuid
+  modality        InputSessionModality
+  transcriptText  String?
+  parsedPayload   Json?
+  mediaHash       String?
+  mediaMimeType   String?
+  mediaByteLength Int?
+  mediaDeletedAt  DateTime?            @db.Timestamptz(6)
+  status          InputSessionStatus   @default(PROCESSED)
+  ledgerEntryId   String?              @unique @db.Uuid
+  createdAt       DateTime             @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledgerEntry LedgerEntry? @relation(fields: [ledgerEntryId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
 model AutomationRule {
   id String @id @default(uuid()) @db.Uuid
   userId String @db.Uuid

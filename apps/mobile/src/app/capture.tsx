@@ -1,3 +1,4 @@
+import { Link } from "expo-router";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -58,9 +59,14 @@ export default function CaptureScreen() {
       <GlassSurface>
         <Text style={styles.sectionTitle}>Capture modes</Text>
         <Text style={styles.copy}>
-          Voice and receipt capture components stay unavailable until their
-          privacy lifecycle is connected.
+          Voice capture records in app cache, transcribes on the API, then
+          deletes the local clip. Receipt capture is still a later phase.
         </Text>
+        <Link href={"/voice-capture" as any} asChild>
+          <Pressable style={styles.button}>
+            <Text style={styles.buttonText}>Open voice capture</Text>
+          </Pressable>
+        </Link>
       </GlassSurface>
     </LedgerScreen>
   );

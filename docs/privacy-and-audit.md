@@ -93,6 +93,12 @@ Reason: Merchant rule matched Starbucks.
 Metadata: { ruleId: "...", category: "Food" }
 ```
 
+```txt
+InputSession MEDIA_DELETED
+Reason: Raw voice audio was discarded after transcription.
+Metadata: { mediaHash: "...", mediaDeleted: true, durableAudioStored: false }
+```
+
 ## Security Notes
 
 - Every write must be scoped to the authenticated user.

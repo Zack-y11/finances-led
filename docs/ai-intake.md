@@ -160,6 +160,10 @@ export interface AiParser {
 Provider-specific code should live behind this interface so the app can switch
 between OpenAI, local models, cloud OCR, or self-hosted services later.
 
+`packages/ai` now implements `TextCommandParser.parseText` and
+`AudioTranscriber.transcribeAudio`. The Nest `ai-intake` module injects those
+adapters and is the only write path for input-session traces.
+
 ## Implementation Order
 
 1. Add text parser contract in `packages/contracts`.
@@ -167,5 +171,7 @@ between OpenAI, local models, cloud OCR, or self-hosted services later.
 3. Add command executor that turns validated intent into ledger writes.
 4. Add audit logs for parser result, rule application, and command execution.
 5. Add low-confidence review flow.
-6. Add voice transcription.
+6. Add voice transcription. `POST /ai-intake/voice` transcribes audio in memory,
+   parses the transcript, stores an `InputSession` with `mediaDeletedAt`, and
+   never writes the recording.
 7. Add receipt OCR.

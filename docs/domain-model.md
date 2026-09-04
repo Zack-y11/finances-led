@@ -123,10 +123,10 @@ source = BAC and phrase contains salario -> category = Salary
 
 ## Input Session
 
-Input sessions are future records of capture attempts. They provide traceability
-without retaining raw media.
+Input sessions are capture traces. They provide traceability without retaining
+raw media.
 
-Recommended future shape:
+Current shape:
 
 ```txt
 input_sessions
@@ -136,8 +136,11 @@ input_sessions
 - transcript_text
 - parsed_payload
 - media_hash
+- media_mime_type
+- media_byte_length
 - media_deleted_at
-- status
+- status             processed | needs_review | failed | confirmed
+- ledger_entry_id
 - created_at
 ```
 

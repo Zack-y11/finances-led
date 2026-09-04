@@ -35,6 +35,16 @@ export class LedgerService {
     const occurredAt = new Date(input.occurredAt);
     const monthKey = input.occurredAt.slice(0, 7);
 
+    const status = (input.status ?? 'posted').toUpperCase() as
+      'POSTED' | 'NEEDS_REVIEW';
+
+    if (input.inputSessionId) {
+      const session = await this.prisma.db.inputSession.findFirst({
+        where: { id: input.inputSessionId, userId: this.userId },
+      });
+      if (!session) throw new NotFoundException('Input session not found');
+    }
+
     return this.prisma.db.$transaction(async (tx) => {
       const entry = await tx.ledgerEntry.create({
         data: {
@@ -51,6 +61,8 @@ export class LedgerService {
           monthKey,
           inputMethod: input.inputMethod.toUpperCase() as
             'MANUAL' | 'TEXT' | 'VOICE' | 'RECEIPT',
+          confidence: input.confidence,
+          status,
         },
         include: { account: true, category: true, group: true },
       });
@@ -61,11 +73,44 @@ export class LedgerService {
           entityType: 'LedgerEntry',
           entityId: entry.id,
           action: 'CREATE',
-          metadata: groupId
-            ? { inputMethod: input.inputMethod, groupId }
-            : { inputMethod: input.inputMethod },
+          metadata: {
+            inputMethod: input.inputMethod,
+            ...(groupId ? { groupId } : {}),
+            ...(input.confidence !== undefined
+              ? { confidence: input.confidence }
+              : {}),
+            ...(input.inputSessionId
+              ? { inputSessionId: input.inputSessionId }
+              : {}),
+          },
         },
       });
+
+      if (status === 'NEEDS_REVIEW') {
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'LedgerEntry',
+            entityId: entry.id,
+            action: 'MARK_NEEDS_REVIEW',
+            reason: 'Parsed command was below the high-confidence threshold.',
+            metadata: {
+              confidence: input.confidence,
+              inputMethod: input.inputMethod,
+            },
+          },
+        });
+      }
+
+      if (input.inputSessionId) {
+        await tx.inputSession.update({
+          where: { id: input.inputSessionId },
+          data: {
+            ledgerEntryId: entry.id,
+            status: status === 'NEEDS_REVIEW' ? 'NEEDS_REVIEW' : 'CONFIRMED',
+          },
+        });
+      }
 
       if (groupId) {
         await tx.auditLog.create({

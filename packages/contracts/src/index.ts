@@ -86,6 +86,9 @@ export const createLedgerEntrySchema = z.object({
   accountId: z.string().uuid(),
   note: z.string().trim().max(500).optional(),
   inputMethod: inputMethodSchema.default("manual"),
+  confidence: z.number().min(0).max(1).optional(),
+  status: z.enum(["posted", "needs_review"]).optional(),
+  inputSessionId: z.string().uuid().optional(),
 });
 export const updateLedgerEntrySchema = z
   .object({
@@ -138,6 +141,68 @@ export const parseTextCommandRequestSchema = z.object({
     .optional(),
 });
 
+export const HIGH_CONFIDENCE_THRESHOLD = 0.9;
+export const MIN_CREATE_CONFIDENCE_THRESHOLD = 0.7;
+
+export function reviewRequired(confidence: number): boolean {
+  return confidence < HIGH_CONFIDENCE_THRESHOLD;
+}
+
+export function canCreateFromParsedCommand(confidence: number): boolean {
+  return confidence >= MIN_CREATE_CONFIDENCE_THRESHOLD;
+}
+
+export function ledgerStatusForConfidence(
+  confidence: number,
+): "posted" | "needs_review" {
+  return confidence >= HIGH_CONFIDENCE_THRESHOLD ? "posted" : "needs_review";
+}
+
+export const inputSessionModalitySchema = z.enum([
+  "text",
+  "voice",
+  "image",
+  "manual",
+]);
+
+export const inputSessionStatusSchema = z.enum([
+  "processed",
+  "needs_review",
+  "failed",
+  "confirmed",
+]);
+
+export const parseVoiceCommandRequestSchema = z.object({
+  referenceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+export const voiceIntakeResultSchema = z.object({
+  inputSessionId: z.string().uuid(),
+  transcript: z.string(),
+  command: parsedFinanceCommandSchema.nullable(),
+  mediaDeleted: z.literal(true),
+  reviewRequired: z.boolean(),
+  canCreateEntry: z.boolean(),
+  parseError: z.string().optional(),
+});
+
+export const inputSessionTraceSchema = z.object({
+  id: z.string().uuid(),
+  modality: inputSessionModalitySchema,
+  transcriptText: z.string().nullable(),
+  parsedPayload: z.unknown().nullable(),
+  mediaHash: z.string().nullable(),
+  mediaMimeType: z.string().nullable(),
+  mediaByteLength: z.number().int().nullable(),
+  mediaDeletedAt: z.string().nullable(),
+  status: inputSessionStatusSchema,
+  ledgerEntryId: z.string().uuid().nullable(),
+  createdAt: z.string(),
+});
+
 export const ruleConditionFieldSchema = z.enum(["merchant", "note", "amount"]);
 export const ruleConditionOpSchema = z.enum([
   "contains",
@@ -183,6 +248,13 @@ export type ParsedFinanceCommand = z.infer<typeof parsedFinanceCommandSchema>;
 export type ParseTextCommandRequest = z.infer<
   typeof parseTextCommandRequestSchema
 >;
+export type ParseVoiceCommandRequest = z.infer<
+  typeof parseVoiceCommandRequestSchema
+>;
+export type VoiceIntakeResult = z.infer<typeof voiceIntakeResultSchema>;
+export type InputSessionTrace = z.infer<typeof inputSessionTraceSchema>;
+export type InputSessionModality = z.infer<typeof inputSessionModalitySchema>;
+export type InputSessionStatus = z.infer<typeof inputSessionStatusSchema>;
 
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 export type LedgerEntriesQuery = z.infer<typeof ledgerEntriesQuerySchema>;

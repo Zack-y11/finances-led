@@ -12,7 +12,11 @@ import type {
   UpdateAutomationRule,
   UpdateCategory,
   UpdateLedgerEntry,
+  VoiceIntakeResult,
+  InputSessionTrace,
 } from "@finance/contracts";
+
+export type { InputSessionTrace, VoiceIntakeResult };
 
 const baseUrl = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
@@ -374,6 +378,49 @@ export async function parseTextCommand(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export async function parseVoiceCommand(
+  audio: Blob,
+  filename = "voice-capture.webm",
+  referenceDate?: string,
+): Promise<VoiceIntakeResult> {
+  const form = new FormData();
+  form.append("audio", audio, filename);
+  if (referenceDate) form.append("referenceDate", referenceDate);
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/ai-intake/voice`, {
+      method: "POST",
+      body: form,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(
+      "Unable to reach the finance API. Check that it is running and try again.",
+    );
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const message = Array.isArray(body?.message)
+      ? body.message[0]
+      : body?.message;
+    throw new ApiError(
+      message ?? "The request could not be completed.",
+      response.status,
+    );
+  }
+  return response.json() as Promise<VoiceIntakeResult>;
+}
+
+export async function getInputSessions(): Promise<InputSessionTrace[]> {
+  const payload = await request<{ data: InputSessionTrace[] }>(
+    "/ai-intake/sessions",
+  );
+  return payload.data;
 }
 
 export const money = (value: number) =>

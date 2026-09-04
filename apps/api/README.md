@@ -13,7 +13,11 @@ NestJS backend for Finance Ledger.
 
 ## Current Modules
 
-- `ledger`: create, list, and fetch ledger entries
+- `ledger`: create, list, update, and fetch ledger entries
+- `ai-intake`: parse text commands and transcribe voice clips without retaining media
+- `review-inbox`: approve or reject `NEEDS_REVIEW` entries
+- `rules`: user-owned automation rules
+- `accounts`, `categories`, `entry-groups`, `analytics`
 - `infrastructure`: Prisma database service
 - `common`: shared pipes such as Zod validation
 
@@ -39,11 +43,5 @@ with authenticated request context before supporting real multi-user data.
 
 ## Future Modules
 
-- `accounts`
-- `categories`
-- `groups`
-- `ai-intake`
-- `rules`
-- `analytics`
-- `privacy`
+- `privacy` user-facing audit views
 - `notion-sync`
