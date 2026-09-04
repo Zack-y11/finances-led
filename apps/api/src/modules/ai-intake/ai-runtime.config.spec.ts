@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import {
   OPENROUTER_BASE_URL,
   OPENROUTER_DEFAULT_CHAT_MODEL,
@@ -11,9 +10,40 @@ import {
 import { createAudioTranscriber } from './audio-transcriber.provider.js';
 import { createTextCommandParser } from './text-command-parser.provider.js';
 
+type FetchCall = {
+  url: string;
+  init?: RequestInit;
+};
+
+function stubFetch(payload: unknown): {
+  calls: FetchCall[];
+  restore: () => void;
+} {
+  const calls: FetchCall[] = [];
+  const original = globalThis.fetch;
+  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ url: String(input), init });
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve(payload),
+    } as Response);
+  }) as typeof fetch;
+
+  return {
+    calls,
+    restore: () => {
+      globalThis.fetch = original;
+    },
+  };
+}
+
 describe('OpenRouter AI runtime', () => {
+  const restores: Array<() => void> = [];
+
   afterEach(() => {
-    jest.restoreAllMocks();
+    while (restores.length) {
+      restores.pop()?.();
+    }
   });
 
   it('defaults text and voice to OpenRouter when only OPENROUTER_API_KEY is set', () => {
@@ -87,32 +117,28 @@ describe('OpenRouter AI runtime', () => {
   });
 
   it('sends chat completions to OpenRouter with attribution headers', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          choices: [
-            {
-              message: {
-                content: JSON.stringify({
-                  intent: 'create_ledger_entry',
-                  data: {
-                    type: 'expense',
-                    amount: 3.19,
-                    currency: 'USD',
-                    merchant: 'Starbucks',
-                    account: 'BAC',
-                    category: 'Food',
-                    occurredAt: '2026-09-04',
-                  },
-                  confidence: 0.93,
-                }),
+    const fetchStub = stubFetch({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              intent: 'create_ledger_entry',
+              data: {
+                type: 'expense',
+                amount: 3.19,
+                currency: 'USD',
+                merchant: 'Starbucks',
+                account: 'BAC',
+                category: 'Food',
+                occurredAt: '2026-09-04',
               },
-            },
-          ],
-        }),
+              confidence: 0.93,
+            }),
+          },
+        },
+      ],
     });
-    jest.spyOn(globalThis, 'fetch').mockImplementation(fetchMock);
+    restores.push(fetchStub.restore);
 
     const parser = new OpenRouterTextCommandParser({
       apiKey: 'or-key',
@@ -127,29 +153,26 @@ describe('OpenRouter AI runtime', () => {
     });
 
     expect(result.intent).toBe('create_ledger_entry');
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchStub.calls[0]?.url).toBe(
       'https://openrouter.ai/api/v1/chat/completions',
+    );
+    expect(fetchStub.calls[0]?.init?.method).toBe('POST');
+    expect(fetchStub.calls[0]?.init?.headers).toEqual(
       expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer or-key',
-          'HTTP-Referer': 'https://ledger.example',
-          'X-Title': 'Ledger',
-        }),
+        Authorization: 'Bearer or-key',
+        'HTTP-Referer': 'https://ledger.example',
+        'X-Title': 'Ledger',
       }),
     );
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string) as {
+    const body = JSON.parse(String(fetchStub.calls[0]?.init?.body)) as {
       model: string;
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_CHAT_MODEL);
   });
 
   it('transcribes via OpenRouter input_audio JSON, not api.openai.com', async () => {
-    const fetchMock = jest.fn().mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ text: 'gaste 3.19 en Starbucks' }),
-    });
-    jest.spyOn(globalThis, 'fetch').mockImplementation(fetchMock);
+    const fetchStub = stubFetch({ text: 'gaste 3.19 en Starbucks' });
+    restores.push(fetchStub.restore);
 
     const transcriber = new OpenRouterAudioTranscriber({ apiKey: 'or-key' });
     const audio = Buffer.from('fake-audio');
@@ -160,19 +183,19 @@ describe('OpenRouter AI runtime', () => {
     });
 
     expect(transcript).toBe('gaste 3.19 en Starbucks');
-    expect(fetchMock).toHaveBeenCalledWith(
+    expect(fetchStub.calls[0]?.url).toBe(
       'https://openrouter.ai/api/v1/audio/transcriptions',
+    );
+    expect(fetchStub.calls[0]?.url).not.toContain('api.openai.com');
+    expect(fetchStub.calls[0]?.init?.headers).toEqual(
       expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          Authorization: 'Bearer or-key',
-          'Content-Type': 'application/json',
-          'HTTP-Referer': expect.any(String),
-          'X-Title': expect.any(String),
-        }),
+        Authorization: 'Bearer or-key',
+        'Content-Type': 'application/json',
+        'HTTP-Referer': expect.any(String),
+        'X-Title': expect.any(String),
       }),
     );
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string) as {
+    const body = JSON.parse(String(fetchStub.calls[0]?.init?.body)) as {
       model: string;
       input_audio: { format: string; data: string };
     };
@@ -181,6 +204,5 @@ describe('OpenRouter AI runtime', () => {
     expect(body.input_audio.data).toBe(
       Buffer.from('fake-audio').toString('base64'),
     );
-    expect(String(fetchMock.mock.calls[0][0])).not.toContain('api.openai.com');
   });
 });
