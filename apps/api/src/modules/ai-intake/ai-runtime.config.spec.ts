@@ -15,19 +15,32 @@ type FetchCall = {
   init?: RequestInit;
 };
 
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === 'string') return input;
+  if (input instanceof URL) return input.href;
+  return input.url;
+}
+
+function requestBody(body: BodyInit | null | undefined): string {
+  if (typeof body !== 'string') {
+    throw new Error('expected a JSON string request body');
+  }
+  return body;
+}
+
 function stubFetch(payload: unknown): {
   calls: FetchCall[];
   restore: () => void;
 } {
   const calls: FetchCall[] = [];
   const original = globalThis.fetch;
-  globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
-    calls.push({ url: String(input), init });
+  globalThis.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    calls.push({ url: requestUrl(input), init });
     return Promise.resolve({
       ok: true,
       json: () => Promise.resolve(payload),
     } as Response);
-  }) as typeof fetch;
+  };
 
   return {
     calls,
@@ -164,7 +177,7 @@ describe('OpenRouter AI runtime', () => {
         'X-Title': 'Ledger',
       }),
     );
-    const body = JSON.parse(String(fetchStub.calls[0]?.init?.body)) as {
+    const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
       model: string;
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_CHAT_MODEL);
@@ -195,7 +208,7 @@ describe('OpenRouter AI runtime', () => {
         'X-Title': expect.any(String),
       }),
     );
-    const body = JSON.parse(String(fetchStub.calls[0]?.init?.body)) as {
+    const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
       model: string;
       input_audio: { format: string; data: string };
     };
