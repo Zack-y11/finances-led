@@ -3,43 +3,58 @@ import {
   type ParsedFinanceCommand,
 } from "@finance/contracts";
 
+import {
+  buildOpenRouterHeaders,
+  OPENROUTER_BASE_URL,
+  OPENROUTER_DEFAULT_CHAT_MODEL,
+} from "./openrouter.js";
 import type {
   ParseTextCommandInput,
   TextCommandParser,
 } from "./text-command-parser.js";
 
-type OpenAiMessage = {
+type ChatMessage = {
   message?: {
     content?: string | null;
   };
 };
 
-type OpenAiChatCompletionResponse = {
-  choices?: OpenAiMessage[];
+type ChatCompletionResponse = {
+  choices?: ChatMessage[];
 };
 
-export type OpenAiTextCommandParserOptions = {
+export type OpenRouterTextCommandParserOptions = {
   apiKey: string;
   model?: string;
   baseUrl?: string;
+  httpReferer?: string;
+  appTitle?: string;
 };
 
-export class OpenAiTextCommandParser implements TextCommandParser {
+export class OpenRouterTextCommandParser implements TextCommandParser {
   private readonly apiKey: string;
   private readonly model: string;
   private readonly baseUrl: string;
+  private readonly httpReferer?: string;
+  private readonly appTitle?: string;
 
-  constructor(options: OpenAiTextCommandParserOptions) {
+  constructor(options: OpenRouterTextCommandParserOptions) {
     this.apiKey = options.apiKey;
-    this.model = options.model ?? "gpt-5.6-luna";
-    this.baseUrl = options.baseUrl ?? "https://api.openai.com/v1";
+    this.model = options.model ?? OPENROUTER_DEFAULT_CHAT_MODEL;
+    this.baseUrl = options.baseUrl ?? OPENROUTER_BASE_URL;
+    this.httpReferer = options.httpReferer;
+    this.appTitle = options.appTitle;
   }
 
   async parseText(input: ParseTextCommandInput): Promise<ParsedFinanceCommand> {
     const response = await fetch(`${this.baseUrl}/chat/completions`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${this.apiKey}`,
+        ...buildOpenRouterHeaders({
+          apiKey: this.apiKey,
+          httpReferer: this.httpReferer,
+          appTitle: this.appTitle,
+        }),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -58,7 +73,7 @@ export class OpenAiTextCommandParser implements TextCommandParser {
       );
     }
 
-    const payload = (await response.json()) as OpenAiChatCompletionResponse;
+    const payload = (await response.json()) as ChatCompletionResponse;
     const content = payload.choices?.[0]?.message?.content;
     if (!content) {
       throw new Error("AI parser returned an empty response");

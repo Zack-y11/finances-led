@@ -48,3 +48,4 @@ Design/demo-only routes still present for future phases: receipt-oriented captur
 - Categories are editable only; there is no delete affordance because the current schema has no category active flag.
 - Monthly breakdown uses the existing analytics route and now partitions both income and expense category totals.
 - The web UI uses existing semantic tokens, `.surface-card`, `.field`, and the current shell rather than a second styling system.
+- Live AI intake uses OpenRouter (`OPENROUTER_API_KEY`, default chat model `openai/gpt-4o-mini`, transcription `openai/whisper-1`). Text and voice both call `https://openrouter.ai/api/v1`.

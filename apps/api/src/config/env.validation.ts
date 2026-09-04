@@ -6,6 +6,9 @@ type ValidatedEnvironment = EnvironmentConfig & {
   PORT: number;
   HOST: string;
   CORS_ORIGIN: string;
+  AI_PROVIDER: string;
+  OPENROUTER_BASE_URL?: string;
+  OPENROUTER_HTTP_REFERER?: string;
 };
 
 const uuidPattern =
@@ -69,6 +72,14 @@ function parseDevUserId(config: EnvironmentConfig): string {
   return userId;
 }
 
+function parseAiProvider(config: EnvironmentConfig): string {
+  const provider = readString(config, 'AI_PROVIDER') ?? 'openrouter';
+  if (provider !== 'openrouter' && provider !== 'openai') {
+    throw new Error('AI_PROVIDER must be openrouter or openai');
+  }
+  return provider === 'openai' ? 'openrouter' : provider;
+}
+
 export function validateEnvironment(
   config: EnvironmentConfig,
 ): ValidatedEnvironment {
@@ -82,5 +93,16 @@ export function validateEnvironment(
       readString(config, 'CORS_ORIGIN') ?? 'http://localhost:3000',
       'CORS_ORIGIN',
     ),
+    AI_PROVIDER: parseAiProvider(config),
+    OPENROUTER_BASE_URL: optionalHttpUrl(config, 'OPENROUTER_BASE_URL'),
+    OPENROUTER_HTTP_REFERER: optionalHttpUrl(config, 'OPENROUTER_HTTP_REFERER'),
   };
+}
+
+function optionalHttpUrl(
+  config: EnvironmentConfig,
+  key: string,
+): string | undefined {
+  const value = readString(config, key);
+  return value ? parseHttpUrl(value, key) : undefined;
 }

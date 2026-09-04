@@ -40,9 +40,10 @@ Do not store long term:
 6. Audit log records the resulting command and deletion status.
 ```
 
-For a future stricter privacy mode, support local or self-hosted transcription
-and OCR. The first version can use external providers as long as the UI and docs
-are clear that media is sent temporarily for processing.
+The first version sends text and short voice clips to OpenRouter
+(`https://openrouter.ai/api/v1`) for parsing and transcription. Raw audio is
+not retained after the request. For a future stricter privacy mode, support
+local or self-hosted transcription and OCR.
 
 ## Input Session Policy
 

@@ -1,4 +1,8 @@
-import { OpenAiTextCommandParser, type TextCommandParser } from '@finance/ai';
+import {
+  OpenRouterTextCommandParser,
+  resolveAiRuntimeConfig,
+  type TextCommandParser,
+} from '@finance/ai';
 import { ConfigService } from '@nestjs/config';
 
 export const TEXT_COMMAND_PARSER = Symbol('TEXT_COMMAND_PARSER');
@@ -18,16 +22,14 @@ class DisabledTextCommandParser implements TextCommandParser {
 export function createTextCommandParser(
   config: ConfigService,
 ): TextCommandParser {
-  const apiKey = config.get<string>('OPENAI_API_KEY');
-  if (!apiKey) return new DisabledTextCommandParser();
+  const runtime = resolveAiRuntimeConfig(config);
+  if (!runtime) return new DisabledTextCommandParser();
 
-  const options = { apiKey };
-  const model = config.get<string>('OPENAI_MODEL');
-  const baseUrl = config.get<string>('OPENAI_BASE_URL');
-
-  return new OpenAiTextCommandParser({
-    ...options,
-    ...(model ? { model } : {}),
-    ...(baseUrl ? { baseUrl } : {}),
+  return new OpenRouterTextCommandParser({
+    apiKey: runtime.apiKey,
+    model: runtime.chatModel,
+    baseUrl: runtime.baseUrl,
+    httpReferer: runtime.httpReferer,
+    appTitle: runtime.appTitle,
   });
 }

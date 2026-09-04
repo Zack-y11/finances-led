@@ -97,7 +97,7 @@ function CapturePageContent() {
       <div className="flex items-center gap-2 text-sm text-ink rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3">
         <Icon className="size-4 text-action" name="sparkles" />
         <span>
-          <strong>Live AI Connected:</strong> Text and voice use OpenAI in
+          <strong>Live AI Connected:</strong> Text and voice use OpenRouter in
           real time. Raw audio is discarded after transcription.
         </span>
       </div>
