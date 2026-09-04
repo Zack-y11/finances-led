@@ -6,6 +6,8 @@ import {
   audioFormatFromMimeOrFilename,
   buildOpenRouterHeaders,
   OPENROUTER_BASE_URL,
+  OPENROUTER_DEFAULT_APP_TITLE,
+  OPENROUTER_DEFAULT_HTTP_REFERER,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
 } from "./openrouter.js";
 
@@ -25,15 +27,15 @@ export class OpenRouterAudioTranscriber implements AudioTranscriber {
   private readonly apiKey: string;
   private readonly model: string;
   private readonly baseUrl: string;
-  private readonly httpReferer?: string;
-  private readonly appTitle?: string;
+  private readonly httpReferer: string;
+  private readonly appTitle: string;
 
   constructor(options: OpenRouterAudioTranscriberOptions) {
     this.apiKey = options.apiKey;
     this.model = options.model ?? OPENROUTER_DEFAULT_TRANSCRIBE_MODEL;
     this.baseUrl = options.baseUrl ?? OPENROUTER_BASE_URL;
-    this.httpReferer = options.httpReferer;
-    this.appTitle = options.appTitle;
+    this.httpReferer = options.httpReferer ?? OPENROUTER_DEFAULT_HTTP_REFERER;
+    this.appTitle = options.appTitle ?? OPENROUTER_DEFAULT_APP_TITLE;
   }
 
   async transcribeAudio(input: AudioTranscriptionInput): Promise<string> {

@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import {
   OPENROUTER_BASE_URL,
   OPENROUTER_DEFAULT_CHAT_MODEL,
@@ -122,7 +123,7 @@ describe('OpenRouter AI runtime', () => {
       text: 'spent 3.19 at Starbucks',
       referenceDate: '2026-09-04',
       accounts: [{ name: 'BAC', currency: 'USD' }],
-      categories: [{ name: 'Food', kind: 'EXPENSE' }],
+      categories: [{ name: 'Food', kind: 'expense' }],
     });
 
     expect(result.intent).toBe('create_ledger_entry');
@@ -177,7 +178,9 @@ describe('OpenRouter AI runtime', () => {
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_TRANSCRIBE_MODEL);
     expect(body.input_audio.format).toBe('webm');
-    expect(body.input_audio.data).toBe(Buffer.from('fake-audio').toString('base64'));
+    expect(body.input_audio.data).toBe(
+      Buffer.from('fake-audio').toString('base64'),
+    );
     expect(String(fetchMock.mock.calls[0][0])).not.toContain('api.openai.com');
   });
 });
