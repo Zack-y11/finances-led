@@ -1,9 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   CreateLedgerEntry,
   LedgerEntriesQuery,
   UpdateLedgerEntry,
+} from '@finance/contracts';
+import {
+  canCreateFromParsedCommand,
+  ledgerStatusForConfidence,
 } from '@finance/contracts';
 import { Prisma } from '@finance/database';
 
@@ -29,14 +37,13 @@ export class LedgerService {
   }
 
   private async createEntry(input: CreateLedgerEntry, groupId?: string) {
+    const status = this.statusForInput(input);
+
     await this.assertOwnedReferences(input.accountId, input.categoryId);
     if (groupId) await this.assertOwnedGroup(groupId);
 
     const occurredAt = new Date(input.occurredAt);
     const monthKey = input.occurredAt.slice(0, 7);
-
-    const status = (input.status ?? 'posted').toUpperCase() as
-      'POSTED' | 'NEEDS_REVIEW';
 
     if (input.inputSessionId) {
       const session = await this.prisma.db.inputSession.findFirst({
@@ -333,5 +340,26 @@ export class LedgerService {
       where: { id: groupId, userId: this.userId },
     });
     if (!group) throw new NotFoundException('Entry group not found');
+  }
+
+  private statusForInput(input: CreateLedgerEntry): 'POSTED' | 'NEEDS_REVIEW' {
+    if (input.inputMethod === 'manual') {
+      return (input.status ?? 'posted').toUpperCase() as
+        'POSTED' | 'NEEDS_REVIEW';
+    }
+
+    const confidence = input.confidence;
+    if (
+      confidence === undefined ||
+      !Number.isFinite(confidence) ||
+      !canCreateFromParsedCommand(confidence)
+    ) {
+      throw new BadRequestException(
+        'AI ledger entries require confidence of at least 0.70',
+      );
+    }
+
+    return ledgerStatusForConfidence(confidence).toUpperCase() as
+      'POSTED' | 'NEEDS_REVIEW';
   }
 }
