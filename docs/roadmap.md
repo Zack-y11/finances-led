@@ -6,6 +6,8 @@ advanced automation add complexity.
 
 ## Phase 1: Core Financial Ledger
 
+Status: implemented for the personal development user on web and mobile.
+
 Goal: replace the manual Notion-style finance table with a real app ledger.
 
 - Auth-ready user ownership model
@@ -21,6 +23,8 @@ Done when a user can manage their core finances without AI.
 
 ## Phase 2: Quick Text Command
 
+Status: implemented with explicit confirmation for every proposal.
+
 Goal: create entries from natural language text.
 
 - Text command input
@@ -35,6 +39,8 @@ Done when `gaste 3.19 en Starbucks con BAC` can become a ledger entry.
 
 ## Phase 3: Groups And Sub-Events
 
+Status: implemented on the API, web, and mobile.
+
 Goal: support parent events and append-only grouped spending.
 
 - Create entry groups
@@ -48,6 +54,8 @@ Done when grouped events are traceable without destructive edits.
 
 ## Phase 4: Voice Capture
 
+Status: next milestone; the design route exists but capture is not connected.
+
 Goal: make mobile capture faster than typing.
 
 - Record audio in app cache
@@ -60,6 +68,8 @@ Goal: make mobile capture faster than typing.
 Done when voice capture produces ledger entries and leaves no durable audio.
 
 ## Phase 5: Receipt Photo Capture
+
+Status: next milestone; the design route exists but capture is not connected.
 
 Goal: extract expense details from receipts.
 
@@ -75,6 +85,9 @@ the photo.
 
 ## Phase 6: Rules And Automation
 
+Status: foundational typed rules are implemented. Learning, detection, alerts,
+and prediction remain future work.
+
 Goal: make the system learn from repeated behavior.
 
 - User-owned rules
@@ -88,6 +101,9 @@ Goal: make the system learn from repeated behavior.
 Done when common transactions require less correction over time.
 
 ## Phase 7: Analytics
+
+Status: monthly summary, income/expense category breakdowns, net history, group
+totals, and filterable ledger history are implemented.
 
 Goal: make the dashboard genuinely useful for decisions.
 

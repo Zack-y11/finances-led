@@ -94,12 +94,12 @@ merchants
 - default_category_id
 ```
 
-## Rule
+## Automation Rule
 
-Rules are future deterministic automations. They should be user-owned,
-explainable, and ordered by priority.
+Automation rules are user-owned, explainable, and ordered by ascending priority.
+Targets are UUID references to accounts or categories rather than mutable names.
 
-Recommended future shape:
+Current shape:
 
 ```txt
 rules
@@ -108,7 +108,7 @@ rules
 - condition_type     merchant | phrase | source | amount_range
 - condition_value
 - action_type        set_category | set_account | set_group
-- action_value
+- action_target_id
 - priority
 - active
 ```
@@ -123,21 +123,23 @@ source = BAC and phrase contains salario -> category = Salary
 
 ## Input Session
 
-Input sessions are future records of capture attempts. They provide traceability
-without retaining raw media.
+Input sessions persist capture proposals and their resolution state while
+avoiding retention of the original command or raw media.
 
-Recommended future shape:
+Current text-intake shape:
 
 ```txt
 input_sessions
 - id
 - user_id
-- modality           text | voice | image | manual
-- transcript_text
+- modality           text | voice | receipt
 - parsed_payload
-- media_hash
-- media_deleted_at
-- status
+- confidence
+- applied_rule_ids
+- ledger_entry_id
+- status             proposed | confirmed | dismissed | failed
+- failure_code
+- resolved_at
 - created_at
 ```
 

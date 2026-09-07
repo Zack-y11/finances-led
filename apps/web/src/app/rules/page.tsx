@@ -29,11 +29,17 @@ export default function RulesPage() {
 
   // Rule Form State
   const [name, setName] = useState("");
-  const [conditionField, setConditionField] = useState<"merchant" | "note" | "amount">("merchant");
-  const [conditionOp, setConditionOp] = useState<"contains" | "equals" | "less_than" | "greater_than">("contains");
+  const [conditionField, setConditionField] = useState<
+    "merchant" | "note" | "amount"
+  >("merchant");
+  const [conditionOp, setConditionOp] = useState<
+    "contains" | "equals" | "less_than" | "greater_than"
+  >("contains");
   const [conditionValue, setConditionValue] = useState("");
-  const [actionField, setActionField] = useState<"category" | "account">("category");
-  const [actionValue, setActionValue] = useState("");
+  const [actionField, setActionField] = useState<"category" | "account">(
+    "category",
+  );
+  const [actionTargetId, setActionTargetId] = useState("");
   const [priority, setPriority] = useState("1");
 
   async function load() {
@@ -45,8 +51,8 @@ export default function RulesPage() {
       ]);
       setRules(rulesData);
       setOptions(optsData);
-      if (optsData.categories.length > 0 && !actionValue) {
-        setActionValue(optsData.categories[0].name);
+      if (optsData.categories.length > 0 && !actionTargetId) {
+        setActionTargetId(optsData.categories[0].id);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load rules");
@@ -65,7 +71,9 @@ export default function RulesPage() {
         setRules(rulesData);
         setOptions(optsData);
         if (optsData.categories.length > 0) {
-          setActionValue((prev) => (prev ? prev : optsData.categories[0].name));
+          setActionTargetId((prev) =>
+            prev ? prev : optsData.categories[0].id,
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load rules");
@@ -77,7 +85,8 @@ export default function RulesPage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim() || !conditionValue.trim() || !actionValue.trim() || saving) return;
+    if (!name.trim() || !conditionValue.trim() || !actionTargetId || saving)
+      return;
     setSaving(true);
     setError(undefined);
     try {
@@ -87,7 +96,7 @@ export default function RulesPage() {
         conditionOp,
         conditionValue: conditionValue.trim(),
         actionField,
-        actionValue: actionValue.trim(),
+        actionTargetId,
         priority: Number(priority) || 1,
         isEnabled: true,
       });
@@ -127,10 +136,7 @@ export default function RulesPage() {
         title="Automation rules"
         description="Explicit user input always overrides automation. Enabled rules automatically format category and account defaults on incoming AI text commands."
         action={
-          <Button
-            onClick={() => setBuilderOpen(!builderOpen)}
-            type="button"
-          >
+          <Button onClick={() => setBuilderOpen(!builderOpen)} type="button">
             <Icon className="size-4" name="plus" />
             {builderOpen ? "Close Rule Builder" : "New Automation Rule"}
           </Button>
@@ -140,7 +146,9 @@ export default function RulesPage() {
       <section className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
         <strong className="text-ink">Rule Evaluation Engine</strong>
         <p className="mt-1 leading-6">
-          Rules run in priority order. When an incoming text note matches a condition (e.g. <em>merchant contains Starbucks</em>), the system automatically applies your chosen category or account.
+          Rules run in priority order. When an incoming text note matches a
+          condition (e.g. <em>merchant contains Starbucks</em>), the system
+          automatically applies your chosen category or account.
         </p>
       </section>
 
@@ -152,10 +160,7 @@ export default function RulesPage() {
 
       {builderOpen ? (
         <form
-          className={cn(
-            cardVariants(),
-            "grid gap-4 p-5 sm:grid-cols-2 sm:p-6",
-          )}
+          className={cn(cardVariants(), "grid gap-4 p-5 sm:grid-cols-2 sm:p-6")}
           onSubmit={handleCreate}
         >
           <div className="sm:col-span-2">
@@ -163,7 +168,8 @@ export default function RulesPage() {
               Create Automation Rule
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Define matching criteria and automated actions for AI intake processing.
+              Define matching criteria and automated actions for AI intake
+              processing.
             </p>
           </div>
 
@@ -182,7 +188,11 @@ export default function RulesPage() {
             When Field
             <select
               className={cn(nativeSelectClassName, "mt-1")}
-              onChange={(e) => setConditionField(e.target.value as "merchant" | "note" | "amount")}
+              onChange={(e) => {
+                const value = e.target.value as "merchant" | "note" | "amount";
+                setConditionField(value);
+                setConditionOp(value === "amount" ? "equals" : "contains");
+              }}
               value={conditionField}
             >
               <option value="merchant">Merchant</option>
@@ -195,13 +205,26 @@ export default function RulesPage() {
             Condition Operator
             <select
               className={cn(nativeSelectClassName, "mt-1")}
-              onChange={(e) => setConditionOp(e.target.value as "contains" | "equals" | "less_than" | "greater_than")}
+              onChange={(e) =>
+                setConditionOp(
+                  e.target.value as
+                    "contains" | "equals" | "less_than" | "greater_than",
+                )
+              }
               value={conditionOp}
             >
-              <option value="contains">Contains</option>
-              <option value="equals">Equals</option>
-              <option value="less_than">Less than (&lt;)</option>
-              <option value="greater_than">Greater than (&gt;)</option>
+              {conditionField === "amount" ? (
+                <>
+                  <option value="equals">Equals</option>
+                  <option value="less_than">Less than (&lt;)</option>
+                  <option value="greater_than">Greater than (&gt;)</option>
+                </>
+              ) : (
+                <>
+                  <option value="contains">Contains</option>
+                  <option value="equals">Equals</option>
+                </>
+              )}
             </select>
           </label>
 
@@ -236,9 +259,9 @@ export default function RulesPage() {
                 const val = e.target.value as "category" | "account";
                 setActionField(val);
                 if (val === "category" && options?.categories[0]) {
-                  setActionValue(options.categories[0].name);
+                  setActionTargetId(options.categories[0].id);
                 } else if (val === "account" && options?.accounts[0]) {
-                  setActionValue(options.accounts[0].name);
+                  setActionTargetId(options.accounts[0].id);
                 }
               }}
               value={actionField}
@@ -252,17 +275,17 @@ export default function RulesPage() {
             Target Value
             <select
               className={cn(nativeSelectClassName, "mt-1")}
-              onChange={(e) => setActionValue(e.target.value)}
-              value={actionValue}
+              onChange={(e) => setActionTargetId(e.target.value)}
+              value={actionTargetId}
             >
               {actionField === "category"
                 ? options?.categories.map((c) => (
-                    <option key={c.id} value={c.name}>
+                    <option key={c.id} value={c.id}>
                       {c.name}
                     </option>
                   ))
                 : options?.accounts.map((a) => (
-                    <option key={a.id} value={a.name}>
+                    <option key={a.id} value={a.id}>
                       {a.name}
                     </option>
                   ))}
@@ -290,7 +313,8 @@ export default function RulesPage() {
           <div>
             <h2 className="font-semibold text-ink">Configured Rules</h2>
             <p className="mt-1 text-sm text-muted">
-              {rules.length} active automation rule{rules.length === 1 ? "" : "s"}
+              {rules.length} active automation rule
+              {rules.length === 1 ? "" : "s"}
             </p>
           </div>
         </div>
@@ -298,7 +322,10 @@ export default function RulesPage() {
         {loading ? (
           <p className="p-5 text-sm text-muted">Loading rules...</p>
         ) : rules.length === 0 ? (
-          <p className="p-5 text-sm text-muted">No automation rules created yet. Click &quot;New Automation Rule&quot; to create one.</p>
+          <p className="p-5 text-sm text-muted">
+            No automation rules created yet. Click &quot;New Automation
+            Rule&quot; to create one.
+          </p>
         ) : (
           <div className="divide-y divide-border">
             {rules.map((rule) => (
@@ -316,7 +343,11 @@ export default function RulesPage() {
                     <h3 className="font-semibold text-ink">{rule.name}</h3>
                   </div>
                   <p className="mt-1 text-sm text-muted">
-                    When <strong>{rule.conditionField}</strong> {rule.conditionOp.replace("_", " ")} &quot;{rule.conditionValue}&quot; → set <strong>{rule.actionField}</strong> to &quot;{rule.actionValue}&quot;
+                    When <strong>{rule.conditionField}</strong>{" "}
+                    {rule.conditionOp.replace("_", " ")} &quot;
+                    {rule.conditionValue}&quot; → set{" "}
+                    <strong>{rule.actionField}</strong> to &quot;
+                    {rule.actionTarget?.name ?? "missing target"}&quot;
                   </p>
                 </div>
 

@@ -18,7 +18,7 @@ Store:
 - Group
 - Note
 - Parser confidence
-- Redacted transcript or parse payload when needed
+- Redacted structured parse payload when needed
 - Audit event
 - Media deletion timestamp or processing status
 
@@ -57,6 +57,11 @@ An input session should answer:
 
 It should not become a hidden media archive.
 
+Text intake currently stores the structured proposal, confidence, applied rule
+IDs, and resolution state. It deliberately does not store the submitted raw
+command. A pending proposal is written to the ledger only after explicit user
+confirmation.
+
 ## Audit Log Policy
 
 Write an audit event when the system:
@@ -66,6 +71,7 @@ Write an audit event when the system:
 - Appends an entry to a group
 - Auto-categorizes an entry
 - Applies a user rule
+- Confirms or dismisses an intake proposal
 - Marks an entry as needing review
 - Deletes or confirms deletion of raw media
 - Syncs an entry to Notion

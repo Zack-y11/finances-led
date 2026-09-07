@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - master
       - feat/**
       - codex/**
 
@@ -63,6 +63,9 @@ jobs:
 
       - name: Typecheck
         run: pnpm check-types
+
+      - name: Validate Expo dependencies
+        run: pnpm --filter @finance/mobile exec expo install --check
 
       - name: Lint
         run: pnpm lint

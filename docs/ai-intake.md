@@ -19,16 +19,19 @@ flowchart TD
     Parse["AI parser proposes intent"]
     Rules["Rules engine applies deterministic defaults"]
     Validate["Backend validates command"]
+    Review["Persistent review inbox"]
+    Confirm["User confirms or dismisses"]
     Execute["Command executor writes ledger data"]
-    Review["Clarification inbox"]
     Audit["Audit log"]
 
     Input --> Normalize
     Normalize --> Parse
     Parse --> Rules
     Rules --> Validate
-    Validate -->|high confidence| Execute
-    Validate -->|low confidence or missing fields| Review
+    Validate --> Review
+    Review --> Confirm
+    Confirm -->|confirm| Execute
+    Confirm -->|dismiss| Audit
     Execute --> Audit
     Review --> Audit
 ```
@@ -73,8 +76,8 @@ type ParsedFinanceIntent = {
 };
 ```
 
-Do not expose this as a final API contract until the product flow is implemented.
-For now, it is a design target for `packages/contracts`.
+The implemented text endpoint exposes a narrower validated proposal contract in
+`packages/contracts`. Broader actions in this example remain design targets.
 
 ## Example: Create Expense
 
@@ -134,16 +137,16 @@ Output:
 }
 ```
 
-## Confidence Policy
+## Confirmation Policy
 
-Suggested starting thresholds:
+Text parsing never writes a ledger entry automatically. Every successful parse
+creates a `PROPOSED` input session. The review UI shows the normalized fields,
+confidence, and any deterministic rule matches. The user must select valid owned
+references and confirm before the backend creates a `POSTED` entry.
 
-- `>= 0.90`: create posted entry if required fields resolve.
-- `0.70 - 0.89`: create `NEEDS_REVIEW` draft or send to clarification inbox.
-- `< 0.70`: do not create a ledger entry.
-
-Rules can increase completeness, but they should not hide uncertainty. If a rule
-fills a category, record the rule id in audit metadata.
+Confidence remains useful context but is not an auto-post threshold. Rules can
+increase completeness, but they do not bypass confirmation. Applied rule IDs are
+stored with the session and included in structured audit metadata.
 
 ## Provider Boundary
 
@@ -162,10 +165,7 @@ between OpenAI, local models, cloud OCR, or self-hosted services later.
 
 ## Implementation Order
 
-1. Add text parser contract in `packages/contracts`.
-2. Add a backend `ai-intake` module that returns parsed intent without writing.
-3. Add command executor that turns validated intent into ledger writes.
-4. Add audit logs for parser result, rule application, and command execution.
-5. Add low-confidence review flow.
-6. Add voice transcription.
-7. Add receipt OCR.
+Implemented: text parser contract, persisted proposal sessions, typed rule
+application, confirmation/dismissal execution, and audit coverage.
+
+Next: voice transcription and receipt OCR using the same proposal boundary.

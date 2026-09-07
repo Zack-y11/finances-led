@@ -10,6 +10,7 @@ import {
   type CategoryKind,
   type ParsedFinanceCommand,
   type ParseTextCommandRequest,
+  type TextIntakeProposal,
 } from '@finance/contracts';
 import type { TextCommandParser } from '@finance/ai';
 
@@ -37,7 +38,14 @@ export class AiIntakeService {
 
   async parseTextCommand(
     input: ParseTextCommandRequest,
-  ): Promise<ParsedFinanceCommand> {
+  ): Promise<TextIntakeProposal> {
+    const session = await this.prisma.db.inputSession.create({
+      data: {
+        userId: this.userId,
+        modality: 'TEXT',
+        status: 'PROPOSED',
+      },
+    });
     const referenceDate = input.referenceDate ?? currentDate();
     const [accounts, categories] = await Promise.all([
       this.prisma.db.account.findMany({
@@ -68,24 +76,57 @@ export class AiIntakeService {
         throw new BadGatewayException('AI parser returned an invalid command');
       }
 
-      const parsedData = result.data;
+      const parsedData: ParsedFinanceCommand = result.data;
+      let appliedRules: TextIntakeProposal['appliedRules'] = [];
       try {
         const evaluated = await this.rulesService.applyRules({
           merchant: parsedData.data.merchant,
+          note: parsedData.data.note,
           amount: parsedData.data.amount,
           category: parsedData.data.category,
           account: parsedData.data.account,
         });
 
         parsedData.data.category =
-          evaluated.category || parsedData.data.category;
-        parsedData.data.account = evaluated.account || parsedData.data.account;
+          evaluated.target.category || parsedData.data.category;
+        parsedData.data.account =
+          evaluated.target.account || parsedData.data.account;
+        appliedRules = evaluated.appliedRules;
       } catch {
         // Rules engine failure should not block AI intake response
       }
 
-      return parsedData;
+      await this.prisma.db.inputSession.update({
+        where: { id: session.id },
+        data: {
+          parsedPayload: parsedData,
+          confidence: parsedData.confidence,
+          appliedRuleIds: appliedRules.map((rule) => rule.id),
+        },
+      });
+
+      return {
+        sessionId: session.id,
+        status: 'proposed',
+        proposal: parsedData,
+        appliedRules,
+      };
     } catch (error) {
+      await this.prisma.db.inputSession
+        .update({
+          where: { id: session.id },
+          data: {
+            status: 'FAILED',
+            failureCode:
+              error instanceof TextCommandParserNotConfiguredError
+                ? 'PARSER_NOT_CONFIGURED'
+                : error instanceof BadGatewayException
+                  ? 'INVALID_PROVIDER_RESPONSE'
+                  : 'PARSER_FAILED',
+            resolvedAt: new Date(),
+          },
+        })
+        .catch(() => undefined);
       if (error instanceof TextCommandParserNotConfiguredError) {
         throw new ServiceUnavailableException(
           'AI text command parser is not configured',

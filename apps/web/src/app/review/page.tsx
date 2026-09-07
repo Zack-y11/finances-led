@@ -9,95 +9,144 @@ import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
-  approveReviewItem,
+  confirmReviewItem,
   dateLabel,
+  dismissReviewItem,
+  getLedgerOptions,
   getReviewItems,
   money,
-  rejectReviewItem,
-  type LedgerEntry,
+  type LedgerOptions,
+  type ReviewItem,
   type ReviewMetrics,
 } from "@/lib/api";
+import { nativeSelectClassName } from "@/lib/utils";
+
+const emptyMetrics: ReviewMetrics = {
+  pending: 0,
+  highConfidence: 0,
+  needsAttention: 0,
+};
 
 export default function ReviewPage() {
-  const [items, setItems] = useState<LedgerEntry[]>([]);
-  const [metrics, setMetrics] = useState<ReviewMetrics>({
-    pending: 0,
-    highConfidence: 0,
-    needsAttention: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ReviewItem[]>([]);
+  const [metrics, setMetrics] = useState<ReviewMetrics>(emptyMetrics);
+  const [options, setOptions] = useState<LedgerOptions>();
   const [selectedId, setSelectedId] = useState<string>();
-  const [actionError, setActionError] = useState<string>();
-  const [actionSuccess, setActionSuccess] = useState<string>();
+  const [accountId, setAccountId] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [loading, setLoading] = useState(true);
   const [acting, setActing] = useState(false);
+  const [message, setMessage] = useState<{
+    tone: "success" | "error";
+    text: string;
+  }>();
 
   async function load() {
     setLoading(true);
     try {
-      const response = await getReviewItems();
-      setItems(response.data);
-      setMetrics(response.metrics);
-      if (response.data.length > 0) {
-        setSelectedId((prev) => (prev ? prev : response.data[0].id));
-      } else {
-        setSelectedId(undefined);
-      }
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to load review queue");
+      const [review, ledgerOptions] = await Promise.all([
+        getReviewItems(),
+        getLedgerOptions(),
+      ]);
+      setItems(review.data);
+      setMetrics(review.metrics);
+      setOptions(ledgerOptions);
+      setSelectedId((current) =>
+        review.data.some((item) => item.id === current)
+          ? current
+          : review.data[0]?.id,
+      );
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text:
+          error instanceof Error
+            ? error.message
+            : "Failed to load review queue",
+      });
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void (async () => {
-      try {
-        const response = await getReviewItems();
-        setItems(response.data);
-        setMetrics(response.metrics);
-        if (response.data.length > 0) {
-          setSelectedId((prev) => (prev ? prev : response.data[0].id));
-        } else {
-          setSelectedId(undefined);
-        }
-      } catch (err) {
-        setActionError(err instanceof Error ? err.message : "Failed to load review queue");
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const selected = useMemo(
-    () => items.find((i) => i.id === selectedId) || null,
+    () => items.find((item) => item.id === selectedId) ?? null,
     [items, selectedId],
   );
+  const matchedAccountId =
+    options?.accounts.find(
+      (account) =>
+        account.name.toLowerCase() ===
+        selected?.proposal.data.account.toLowerCase(),
+    )?.id ??
+    options?.accounts[0]?.id ??
+    "";
+  const matchedCategoryId =
+    options?.categories.find(
+      (category) =>
+        category.name.toLowerCase() ===
+        selected?.proposal.data.category.toLowerCase(),
+    )?.id ??
+    options?.categories[0]?.id ??
+    "";
+  const selectedAccountId = accountId || matchedAccountId;
+  const selectedCategoryId = categoryId || matchedCategoryId;
 
-  async function handleApprove(id: string) {
+  function selectItem(id: string) {
+    setSelectedId(id);
+    setAccountId("");
+    setCategoryId("");
+    setMessage(undefined);
+  }
+
+  async function confirm(item: ReviewItem) {
+    if (!selectedAccountId || !selectedCategoryId || acting) return;
     setActing(true);
-    setActionError(undefined);
-    setActionSuccess(undefined);
+    setMessage(undefined);
     try {
-      await approveReviewItem(id);
-      setActionSuccess("Transaction approved and posted to your ledger!");
+      const proposal = item.proposal.data;
+      await confirmReviewItem(item.id, {
+        type: proposal.type,
+        amount: proposal.amount,
+        currency: proposal.currency,
+        merchant: proposal.merchant,
+        note: proposal.note,
+        accountId: selectedAccountId,
+        categoryId: selectedCategoryId,
+        occurredAt: `${proposal.occurredAt}T12:00:00.000Z`,
+      });
+      setMessage({ tone: "success", text: "Proposal posted to the ledger." });
       await load();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to approve proposal");
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text:
+          error instanceof Error ? error.message : "Failed to confirm proposal",
+      });
     } finally {
       setActing(false);
     }
   }
 
-  async function handleReject(id: string) {
+  async function dismiss(id: string) {
+    if (acting) return;
     setActing(true);
-    setActionError(undefined);
-    setActionSuccess(undefined);
+    setMessage(undefined);
     try {
-      await rejectReviewItem(id);
-      setActionSuccess("Transaction proposal rejected and ignored.");
+      await dismissReviewItem(id);
+      setMessage({ tone: "success", text: "Proposal dismissed." });
       await load();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Failed to reject proposal");
+    } catch (error) {
+      setMessage({
+        tone: "error",
+        text:
+          error instanceof Error ? error.message : "Failed to dismiss proposal",
+      });
     } finally {
       setActing(false);
     }
@@ -108,76 +157,80 @@ export default function ReviewPage() {
       <PageHeading
         eyebrow="AI review"
         title="Review inbox"
-        description="Review, verify, and approve AI proposals or low-confidence intake notes before posting them to your financial record."
+        description="Finish or dismiss structured proposals that were not confirmed during capture. Original command text is not retained."
       />
 
-      <section className="flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-3 sm:gap-4">
-        <Metric label="Pending review" value={String(metrics.pending)} tone="action" />
-        <Metric label="High confidence" value={String(metrics.highConfidence)} tone="success" />
-        <Metric label="Needs attention" value={String(metrics.needsAttention)} tone="review" />
+      <section className="grid grid-cols-3 gap-3 sm:gap-4">
+        <Metric label="Pending" value={metrics.pending} />
+        <Metric label="High confidence" value={metrics.highConfidence} />
+        <Metric label="Needs attention" value={metrics.needsAttention} />
       </section>
 
-      {actionSuccess ? (
-        <p className="p-4 rounded-xl border border-success/40 bg-success-soft/20 text-sm text-ink font-semibold flex items-center justify-between">
-          <span>✓ {actionSuccess}</span>
-          <Link className="text-action text-xs font-semibold hover:underline" href="/ledger">
-            View Ledger →
-          </Link>
-        </p>
-      ) : null}
-
-      {actionError ? (
-        <p className="p-4 rounded-xl border border-danger/30 bg-danger-soft/20 text-sm text-danger font-medium">
-          {actionError}
+      {message ? (
+        <p
+          className={`rounded-xl border p-4 text-sm font-medium ${
+            message.tone === "error"
+              ? "border-danger/30 bg-danger-soft/20 text-danger"
+              : "border-success/40 bg-success-soft/20 text-ink"
+          }`}
+        >
+          {message.text}
+          {message.tone === "success" ? (
+            <Link className="ml-3 text-action hover:underline" href="/ledger">
+              View ledger
+            </Link>
+          ) : null}
         </p>
       ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[minmax(17rem,.8fr)_minmax(0,1.2fr)]">
         <Card className="overflow-hidden gap-0">
           <div className="border-b border-border px-5 py-4">
-            <h2 className="font-semibold text-ink">Review Queue</h2>
+            <h2 className="font-semibold text-ink">Review queue</h2>
             <p className="mt-1 text-sm text-muted">
-              {items.length} pending proposal{items.length === 1 ? "" : "s"} awaiting approval
+              {items.length} pending proposals
             </p>
           </div>
-
           {loading ? (
-            <p className="p-5 text-sm text-muted">Loading review queue...</p>
+            <p className="p-5 text-sm text-muted">Loading review queue…</p>
           ) : items.length === 0 ? (
             <div className="p-6 text-center text-sm text-muted">
-              <p className="font-semibold text-ink">All caught up!</p>
-              <p className="mt-1">No transactions are currently awaiting review.</p>
+              <p className="font-semibold text-ink">All caught up.</p>
               <Button asChild className="mt-4" size="sm">
-                <Link href="/capture">Create new capture →</Link>
+                <Link href="/capture">Capture an entry</Link>
               </Button>
             </div>
           ) : (
             <div className="divide-y divide-border">
               {items.map((item) => (
                 <button
-                  className={`w-full text-left transition-colors px-5 py-4 ${
+                  className={`w-full px-5 py-4 text-left transition-colors ${
                     selectedId === item.id
                       ? "border-l-2 border-action bg-action-soft/50"
                       : "hover:bg-surface-muted/60"
                   }`}
                   key={item.id}
-                  onClick={() => setSelectedId(item.id)}
+                  onClick={() => selectItem(item.id)}
                   type="button"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                        {item.inputMethod} intake
+                        {(item.proposal.confidence * 100).toFixed(0)}%
+                        confidence
                       </p>
                       <h3 className="mt-1 font-semibold text-ink">
-                        {item.merchant}
+                        {item.proposal.data.merchant ??
+                          item.proposal.data.note ??
+                          "Untitled entry"}
                       </h3>
                       <p className="mt-1 text-xs text-muted">
-                        {dateLabel(item.occurredAt)} · {item.category.name}
+                        {dateLabel(item.proposal.data.occurredAt)} ·{" "}
+                        {item.proposal.data.category}
                       </p>
                     </div>
-                    <p className="font-bold text-ink tabular-nums">
-                      {money(item.amount)}
+                    <p className="font-bold tabular-nums text-ink">
+                      {money(item.proposal.data.amount)}
                     </p>
                   </div>
                 </button>
@@ -192,67 +245,99 @@ export default function ReviewPage() {
               <div className="flex items-center justify-between border-b border-border bg-surface-muted px-5 py-4 sm:px-6">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-action">
-                    {selected.inputMethod} intake
+                    Text proposal
                   </p>
                   <h2 className="mt-1 text-lg font-semibold text-ink">
-                    {selected.merchant}
+                    {selected.proposal.data.merchant ?? "Ledger entry"}
                   </h2>
                 </div>
-                <Badge variant="review">Needs Review</Badge>
+                <Badge variant="review">Needs review</Badge>
               </div>
-
               <div className="grid gap-6 p-5 sm:p-6">
-                {selected.note ? (
-                  <section className="rounded-xl border border-border bg-surface-muted/60 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                      Input Command / Note
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-ink">
-                      &ldquo;{selected.note}&rdquo;
-                    </p>
-                  </section>
-                ) : null}
-
                 <section>
                   <div className="flex items-center gap-2">
                     <Icon className="size-4 text-action" name="sparkles" />
-                    <h3 className="font-semibold text-ink">Proposal Details</h3>
+                    <h3 className="font-semibold text-ink">Proposal details</h3>
                   </div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <Detail label="Amount" value={money(selected.amount)} />
-                    <Detail label="Type" value={selected.type} />
-                    <Detail label="Category" value={selected.category.name} />
-                    <Detail label="Account" value={selected.account.name} />
-                    <Detail label="Date" value={dateLabel(selected.occurredAt)} />
-                    <Detail label="Status" value={selected.status} />
+                    <Detail
+                      label="Amount"
+                      value={money(selected.proposal.data.amount)}
+                    />
+                    <Detail label="Type" value={selected.proposal.data.type} />
+                    <Detail
+                      label="Date"
+                      value={dateLabel(selected.proposal.data.occurredAt)}
+                    />
+                    <Detail
+                      label="Currency"
+                      value={selected.proposal.data.currency}
+                    />
                   </div>
                 </section>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <section className="grid gap-3 sm:grid-cols-2">
+                  <label className="text-xs font-medium text-muted">
+                    Account
+                    <select
+                      className={`${nativeSelectClassName} mt-1`}
+                      onChange={(event) => setAccountId(event.target.value)}
+                      value={selectedAccountId}
+                    >
+                      {options?.accounts.map((account) => (
+                        <option key={account.id} value={account.id}>
+                          {account.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="text-xs font-medium text-muted">
+                    Category
+                    <select
+                      className={`${nativeSelectClassName} mt-1`}
+                      onChange={(event) => setCategoryId(event.target.value)}
+                      value={selectedCategoryId}
+                    >
+                      {options?.categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </section>
+                {selected.appliedRules.length ? (
+                  <p className="text-sm text-muted">
+                    Applied defaults:{" "}
+                    {selected.appliedRules.map((rule) => rule.name).join(", ")}
+                  </p>
+                ) : null}
+                <div className="flex justify-end gap-3 border-t border-border pt-4">
                   <Button
                     className="text-danger"
                     disabled={acting}
-                    onClick={() => handleReject(selected.id)}
+                    onClick={() => void dismiss(selected.id)}
                     size="sm"
                     type="button"
                     variant="secondary"
                   >
-                    {acting ? "Processing..." : "Reject & Ignore"}
+                    Dismiss
                   </Button>
                   <Button
-                    disabled={acting}
-                    onClick={() => handleApprove(selected.id)}
+                    disabled={
+                      acting || !selectedAccountId || !selectedCategoryId
+                    }
+                    onClick={() => void confirm(selected)}
                     size="sm"
                     type="button"
                   >
-                    {acting ? "Posting..." : "Approve & Post to Ledger ✓"}
+                    {acting ? "Processing…" : "Confirm and post"}
                   </Button>
                 </div>
               </div>
             </>
           ) : (
             <div className="p-6 text-center text-sm text-muted">
-              Select an item from the review queue to inspect proposal details.
+              Select a proposal to inspect it.
             </div>
           )}
         </Card>
@@ -261,29 +346,11 @@ export default function ReviewPage() {
   );
 }
 
-function Metric({
-  label,
-  value,
-  tone = "action",
-}: {
-  label: string;
-  value: string;
-  tone?: "action" | "success" | "review";
-}) {
-  const toneClasses =
-    tone === "success"
-      ? "bg-success-soft text-success"
-      : tone === "review"
-        ? "bg-review-soft text-review"
-        : "bg-action-soft text-action";
+function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <Card className="min-w-36 flex-1 p-4">
+    <Card className="min-w-0 p-4">
       <p className="text-xs font-medium text-muted">{label}</p>
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className={`text-2xl font-bold ${toneClasses.split(" ")[1]}`}>
-          {value}
-        </span>
-      </div>
+      <p className="mt-2 text-2xl font-bold text-action">{value}</p>
     </Card>
   );
 }

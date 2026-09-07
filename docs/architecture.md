@@ -15,6 +15,7 @@ finance-ledger/
 
   packages/
     contracts/  Shared Zod schemas and DTO types
+    api-client/ Shared normalized API client for web and mobile
     database/   Prisma schema, migrations, and client
 
   infra/
@@ -90,15 +91,17 @@ policy before it creates or updates ledger data.
 2. API records an input session with text modality.
 3. Parser produces a proposed command.
 4. Rules engine fills deterministic defaults, such as category by merchant.
-5. API validates and executes the command if confidence is high enough.
-6. Low-confidence commands go to a future clarification inbox.
+5. API persists the structured proposal in the review inbox without the raw
+   command text.
+6. The user confirms or dismisses the proposal. Confirmation validates all
+   owned references and creates the ledger entry transactionally.
 
 ### Voice or Receipt Capture
 
 1. Mobile stores audio or image in local app cache.
 2. Media is sent to a transcription or OCR provider.
 3. Provider returns text or structured receipt data.
-4. API stores only the transcript or redacted parse payload needed for traceability.
+4. API stores only the redacted structured parse payload needed for traceability.
 5. App deletes the raw local media after processing.
 6. API stores `mediaDeletedAt` or equivalent evidence in the input session.
 

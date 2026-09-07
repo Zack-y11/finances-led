@@ -1,13 +1,14 @@
 # Ledger AI implementation status
 
-This file tracks what the design exports currently map to in the app. The authoritative product phases remain in `docs/AI_FINANCE_LEDGER_DEVELOPMENT_GUIDE.md` and `docs/roadmap.md`.
+This file tracks what the design exports currently map to in the app. The
+authoritative product phases remain in `docs/roadmap.md`.
 
 ## API coverage
 
 Live endpoints:
 
 - `GET /health`
-- `GET /ledger-entries`, `POST /ledger-entries`, `GET /ledger-entries/:id`, `GET /ledger-entries/options`
+- `GET /ledger-entries`, `POST /ledger-entries`, `GET /ledger-entries/:id`, `PATCH /ledger-entries/:id`, `DELETE /ledger-entries/:id`, `GET /ledger-entries/options`
 - `GET /entry-groups`, `POST /entry-groups`, `GET /entry-groups/:id`, `POST /entry-groups/:id/entries`
 - `GET /accounts`, `POST /accounts`, `PATCH /accounts/:id`
 - `GET /categories`, `POST /categories`, `PATCH /categories/:id`
@@ -15,8 +16,14 @@ Live endpoints:
 - `GET /analytics/monthly-breakdown?month=YYYY-MM` returning `expenses` and `income`
 - `GET /analytics/net-history`
 
-- `POST /ai-intake/text` returning a parsed text finance command proposal; it does not create ledger entries.
-  Not yet implemented: ledger edit, delete, or reversal; voice, receipt, rules, review-inbox execution APIs, and confirmed text-command execution.
+- `POST /ai-intake/text` returning and persisting a structured proposal without
+  retaining the raw command.
+- `GET /review-items`, `POST /review-items/:id/confirm`, and
+  `POST /review-items/:id/dismiss` for explicit proposal resolution.
+- `GET /rules`, `POST /rules`, `PATCH /rules/:id`, and `DELETE /rules/:id` for
+  typed, owned automation rules.
+
+Not yet implemented: voice processing, receipt processing, or ledger reversal.
 
 ## Web route map
 
@@ -30,9 +37,23 @@ Live routes:
 - `/settings/accounts` — persistent account list/create/edit and deactivate/reactivate management.
 - `/settings/categories` — persistent category list/create/edit management.
 - `/settings` — settings hub linking to account and category management.
-- `/capture` — live text command parser proposal preview using `POST /ai-intake/text`.
+- `/capture` — live text proposal preview with confirm and dismiss actions.
+- `/review` — live pending proposal inbox.
+- `/rules` — live typed rule management.
 
-Design/demo-only routes still present for future phases: `/review` and `/rules`.
+## Mobile route map
+
+Live Expo routes:
+
+- `/` — current-month summary and recent ledger activity.
+- `/explore` — searchable ledger with edit and delete actions.
+- `/capture` — manual entry and text proposal confirmation.
+- `/groups` and `/groups/[id]` — group creation, history, and append-entry flow.
+- `/review` — pending proposal confirmation and dismissal.
+- `/rules` — typed rule creation, toggle, and deletion.
+- `/settings/entities` — account/category creation and account activation.
+
+Voice and receipt design routes remain non-production previews.
 
 ## Delivery notes
 
@@ -40,3 +61,5 @@ Design/demo-only routes still present for future phases: `/review` and `/rules`.
 - Categories are editable only; there is no delete affordance because the current schema has no category active flag.
 - Monthly breakdown uses the existing analytics route and now partitions both income and expense category totals.
 - The web UI uses existing semantic tokens, `.surface-card`, `.field`, and the current shell rather than a second styling system.
+- Web and mobile use the shared normalized client in `packages/api-client`.
+- Android is the first supported native build target for the MVP.

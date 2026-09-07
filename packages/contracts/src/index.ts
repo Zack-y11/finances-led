@@ -9,7 +9,6 @@ export const transactionTypeSchema = z.enum([
 export const monthKeySchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 export const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-
 export const ledgerEntriesQuerySchema = z.object({
   type: transactionTypeSchema.optional(),
   month: monthKeySchema.optional(),
@@ -102,7 +101,6 @@ export const updateLedgerEntrySchema = z
     message: "At least one field must be provided for update",
   });
 
-
 export const createEntryGroupSchema = z.object({
   name: z.string().trim().min(1).max(120),
   type: entryGroupTypeSchema,
@@ -147,16 +145,58 @@ export const ruleConditionOpSchema = z.enum([
 ]);
 export const ruleActionFieldSchema = z.enum(["category", "account"]);
 
-export const createAutomationRuleSchema = z.object({
-  name: z.string().trim().min(1).max(120),
-  conditionField: ruleConditionFieldSchema,
-  conditionOp: ruleConditionOpSchema,
-  conditionValue: z.string().trim().min(1).max(120),
-  actionField: ruleActionFieldSchema,
-  actionValue: z.string().trim().min(1).max(120),
-  priority: z.coerce.number().int().min(1).default(1),
-  isEnabled: z.boolean().default(true),
-});
+function validateRuleCondition(
+  input: {
+    conditionField?: z.infer<typeof ruleConditionFieldSchema> | undefined;
+    conditionOp?: z.infer<typeof ruleConditionOpSchema> | undefined;
+    conditionValue?: string | undefined;
+  },
+  context: z.RefinementCtx,
+) {
+  if (!input.conditionField || !input.conditionOp) return;
+  const numericOperator = ["equals", "less_than", "greater_than"].includes(
+    input.conditionOp,
+  );
+  if (input.conditionField === "amount") {
+    if (!numericOperator) {
+      context.addIssue({
+        code: "custom",
+        path: ["conditionOp"],
+        message: "Amount rules require equals, less_than, or greater_than",
+      });
+    }
+    if (
+      input.conditionValue !== undefined &&
+      (!Number.isFinite(Number(input.conditionValue)) ||
+        Number(input.conditionValue) < 0)
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["conditionValue"],
+        message: "Amount rule values must be non-negative numbers",
+      });
+    }
+  } else if (!["contains", "equals"].includes(input.conditionOp)) {
+    context.addIssue({
+      code: "custom",
+      path: ["conditionOp"],
+      message: "Text rules require contains or equals",
+    });
+  }
+}
+
+export const createAutomationRuleSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    conditionField: ruleConditionFieldSchema,
+    conditionOp: ruleConditionOpSchema,
+    conditionValue: z.string().trim().min(1).max(120),
+    actionField: ruleActionFieldSchema,
+    actionTargetId: z.string().uuid(),
+    priority: z.coerce.number().int().min(1).default(1),
+    isEnabled: z.boolean().default(true),
+  })
+  .superRefine(validateRuleCondition);
 
 export const updateAutomationRuleSchema = z
   .object({
@@ -165,16 +205,66 @@ export const updateAutomationRuleSchema = z
     conditionOp: ruleConditionOpSchema.optional(),
     conditionValue: z.string().trim().min(1).max(120).optional(),
     actionField: ruleActionFieldSchema.optional(),
-    actionValue: z.string().trim().min(1).max(120).optional(),
+    actionTargetId: z.string().uuid().optional(),
     priority: z.coerce.number().int().min(1).optional(),
     isEnabled: z.boolean().optional(),
   })
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one rule field must be provided for update",
-  });
+  })
+  .superRefine(validateRuleCondition);
+
+export const inputSessionStatusSchema = z.enum([
+  "proposed",
+  "confirmed",
+  "dismissed",
+  "failed",
+]);
+
+export const confirmInputSessionSchema = createLedgerEntrySchema
+  .omit({ inputMethod: true })
+  .extend({ groupId: z.string().uuid().optional() });
+
+export const appliedAutomationRuleSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  actionField: ruleActionFieldSchema,
+  targetId: z.string().uuid(),
+  targetName: z.string(),
+});
+
+export const textIntakeProposalSchema = z.object({
+  sessionId: z.string().uuid(),
+  status: z.literal("proposed"),
+  proposal: parsedFinanceCommandSchema,
+  appliedRules: z.array(appliedAutomationRuleSchema),
+});
+
+export const reviewItemSchema = z.object({
+  id: z.string().uuid(),
+  status: inputSessionStatusSchema,
+  proposal: parsedFinanceCommandSchema,
+  appliedRules: z.array(appliedAutomationRuleSchema),
+  createdAt: z.string(),
+});
+
+export const reviewItemsResponseSchema = z.object({
+  data: z.array(reviewItemSchema),
+  metrics: z.object({
+    pending: z.number().int().nonnegative(),
+    highConfidence: z.number().int().nonnegative(),
+    needsAttention: z.number().int().nonnegative(),
+  }),
+});
 
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
+export type InputSessionStatus = z.infer<typeof inputSessionStatusSchema>;
+export type ConfirmInputSession = z.infer<typeof confirmInputSessionSchema>;
+export type AppliedAutomationRule = z.infer<typeof appliedAutomationRuleSchema>;
+export type TextIntakeProposal = z.infer<typeof textIntakeProposalSchema>;
+export type ReviewItem = z.infer<typeof reviewItemSchema>;
+export type ReviewItemsResponse = z.infer<typeof reviewItemsResponseSchema>;
 export type FinanceCommandIntent = z.infer<typeof financeCommandIntentSchema>;
 export type ParsedLedgerEntryCommandData = z.infer<
   typeof parsedLedgerEntryCommandDataSchema

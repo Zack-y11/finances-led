@@ -15,6 +15,7 @@ entry without retaining raw audio or receipt images.
 - Mobile: Expo
 - Database: PostgreSQL and Prisma
 - Shared contracts: Zod schemas in `packages/contracts`
+- Shared API client: typed fetch wrapper in `packages/api-client`
 
 ## Product Principles
 
@@ -45,6 +46,7 @@ apps/web       Next.js dashboard
 apps/mobile    Expo mobile app
 
 packages/contracts   Shared Zod schemas and DTO types
+packages/api-client  Shared normalized API client for web and mobile
 packages/database    Prisma schema, migrations, and client
 ```
 
@@ -92,6 +94,13 @@ Run all checks:
 pnpm check-types
 pnpm lint
 pnpm test
+pnpm build
+```
+
+Run the Android-first Expo app separately:
+
+```bash
+pnpm dev:mobile
 ```
 
 ## Environment
@@ -105,18 +114,26 @@ Expected local variables include:
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/finance_ledger?schema=public
 DEV_USER_ID=1b58fb29-1f33-43d8-bdf0-b70844c20045
 NEXT_PUBLIC_API_URL=http://localhost:3001
+EXPO_PUBLIC_API_URL=http://192.168.1.100:3001
 ```
+
+Use the development machine's LAN address for a physical Android device. The
+Android emulator can normally reach the host API at `http://10.0.2.2:3001`.
 
 ## MVP Target
 
-The first strong MVP is:
+The personal MVP now supports:
 
 1. Manual web ledger with accounts and categories.
 2. Monthly net and category breakdowns.
-3. Text command parsing for simple income and expenses.
-4. Basic auto-categorization.
+3. Text command proposals for simple income and expenses, always confirmed by
+   the user before posting.
+4. Typed merchant, note, and amount rules for deterministic account/category
+   defaults.
 5. Entry groups and sub-events.
-6. Audit logs for created and appended entries.
+6. A persistent review inbox and structured audit logs without raw command
+   retention.
+7. Live web and Android-first Expo workflows through a shared API client.
 
 Voice, receipt OCR, advanced rules, and Notion sync come after the core model is
 stable.

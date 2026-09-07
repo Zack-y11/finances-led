@@ -10,14 +10,15 @@ import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  createLedgerEntry,
+  confirmReviewItem,
+  dismissReviewItem,
   getLedgerOptions,
   money,
   parseTextCommand,
   type LedgerOptions,
 } from "@/lib/api";
 import { nativeSelectClassName } from "@/lib/utils";
-import type { ParsedFinanceCommand } from "@finance/contracts";
+import type { TextIntakeProposal } from "@finance/contracts";
 
 export default function CapturePage() {
   const [text, setText] = useState("");
@@ -25,21 +26,24 @@ export default function CapturePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [result, setResult] = useState<ParsedFinanceCommand | null>(null);
+  const [result, setResult] = useState<TextIntakeProposal | null>(null);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [accountId, setAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
 
   useEffect(() => {
-    void getLedgerOptions().then((data) => {
-      setOptions(data);
-    }).catch(() => null);
+    void getLedgerOptions()
+      .then((data) => {
+        setOptions(data);
+      })
+      .catch(() => null);
   }, []);
 
   const suggestedAccountId = useMemo(() => {
     if (!result || !options) return "";
     const matchedAccount = options.accounts.find(
-      (a) => a.name.toLowerCase() === result.data.account?.toLowerCase(),
+      (a) =>
+        a.name.toLowerCase() === result.proposal.data.account?.toLowerCase(),
     );
     return matchedAccount?.id || options.accounts[0]?.id || "";
   }, [result, options]);
@@ -47,7 +51,8 @@ export default function CapturePage() {
   const suggestedCategoryId = useMemo(() => {
     if (!result || !options) return "";
     const matchedCategory = options.categories.find(
-      (c) => c.name.toLowerCase() === result.data.category?.toLowerCase(),
+      (c) =>
+        c.name.toLowerCase() === result.proposal.data.category?.toLowerCase(),
     );
     return matchedCategory?.id || options.categories[0]?.id || "";
   }, [result, options]);
@@ -83,17 +88,18 @@ export default function CapturePage() {
     setSaving(true);
     setError(null);
     try {
-      const dateStr = result.data.occurredAt || new Date().toISOString().slice(0, 10);
-      await createLedgerEntry({
-        type: result.data.type,
-        amount: result.data.amount,
-        currency: result.data.currency || "USD",
-        merchant: result.data.merchant || undefined,
+      const dateStr =
+        result.proposal.data.occurredAt ||
+        new Date().toISOString().slice(0, 10);
+      await confirmReviewItem(result.sessionId, {
+        type: result.proposal.data.type,
+        amount: result.proposal.data.amount,
+        currency: result.proposal.data.currency || "USD",
+        merchant: result.proposal.data.merchant || undefined,
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         occurredAt: `${dateStr}T12:00:00.000Z`,
-        note: text.trim() || undefined,
-        inputMethod: "text",
+        note: result.proposal.data.note,
       });
       setSuccess("Entry saved to your ledger successfully!");
       setResult(null);
@@ -101,6 +107,21 @@ export default function CapturePage() {
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to save entry to ledger",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+  const handleDismiss = async () => {
+    if (!result || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await dismissReviewItem(result.sessionId);
+      setResult(null);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to dismiss proposal",
       );
     } finally {
       setSaving(false);
@@ -115,7 +136,13 @@ export default function CapturePage() {
       />
       <div className="rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3 text-sm text-ink flex items-center gap-2">
         <Icon className="text-action size-4" name="sparkles" />
-        <span><strong>Live AI Connected:</strong> Text interpretation uses OpenAI <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">gpt-5.6-luna</code> in real-time.</span>
+        <span>
+          <strong>Live AI Connected:</strong> Text interpretation uses OpenAI{" "}
+          <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">
+            gpt-5.6-luna
+          </code>{" "}
+          in real-time.
+        </span>
       </div>
       <Card className="overflow-hidden gap-0">
         <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
@@ -189,30 +216,45 @@ export default function CapturePage() {
                   Parsed Command Proposal
                 </p>
                 <Badge>
-                  {(result.confidence * 100).toFixed(0)}% confidence
+                  {(result.proposal.confidence * 100).toFixed(0)}% confidence
                 </Badge>
               </div>
               <p className="mt-1 text-sm leading-6 text-muted">
-                Structured proposal generated by AI. Review parameters below and confirm to save to database.
+                Structured proposal generated by AI. Review parameters below and
+                confirm to save to database.
               </p>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                <Detail label="Amount" value={money(result.data.amount)} />
-                <Detail label="Type" value={result.data.type} />
-                <Detail label="Category" value={result.data.category} />
-                <Detail label="Account" value={result.data.account} />
-                {result.data.merchant ? (
-                  <Detail label="Merchant" value={result.data.merchant} />
+                <Detail
+                  label="Amount"
+                  value={money(result.proposal.data.amount)}
+                />
+                <Detail label="Type" value={result.proposal.data.type} />
+                <Detail
+                  label="Category"
+                  value={result.proposal.data.category}
+                />
+                <Detail label="Account" value={result.proposal.data.account} />
+                {result.proposal.data.merchant ? (
+                  <Detail
+                    label="Merchant"
+                    value={result.proposal.data.merchant}
+                  />
                 ) : null}
-                <Detail label="Date" value={result.data.occurredAt} />
-                <Detail label="Intent" value={result.intent} />
-                <Detail label="Currency" value={result.data.currency} />
+                <Detail label="Date" value={result.proposal.data.occurredAt} />
+                <Detail label="Intent" value={result.proposal.intent} />
+                <Detail
+                  label="Currency"
+                  value={result.proposal.data.currency}
+                />
               </div>
             </div>
           </div>
 
           <div className="border-t border-border pt-5 grid gap-4">
-            <h3 className="text-sm font-semibold text-ink">Confirm & Select Account & Category</h3>
+            <h3 className="text-sm font-semibold text-ink">
+              Confirm & Select Account & Category
+            </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="text-xs font-medium text-muted">
                 Account
@@ -245,7 +287,7 @@ export default function CapturePage() {
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <Button
-                onClick={() => setResult(null)}
+                onClick={() => void handleDismiss()}
                 size="sm"
                 type="button"
                 variant="secondary"

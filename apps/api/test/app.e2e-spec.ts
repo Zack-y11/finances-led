@@ -27,6 +27,9 @@ describe('Ledger endpoints (e2e)', () => {
   const lifecycleAccountIds: string[] = [];
   const lifecycleCategoryIds: string[] = [];
   const lifecycleEntryIds: string[] = [];
+  const inputSessionIds: string[] = [];
+  const intakeEntryIds: string[] = [];
+  const automationRuleIds: string[] = [];
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -138,19 +141,31 @@ describe('Ledger endpoints (e2e)', () => {
       })
       .expect(201);
 
+    inputSessionIds.push(response.body.sessionId as string);
     expect(response.body).toEqual({
-      intent: 'create_ledger_entry',
-      data: {
-        type: 'expense',
-        amount: 3.19,
-        currency: 'USD',
-        merchant: 'Starbucks',
-        account: 'BAC',
-        category: 'Food',
-        occurredAt: '2026-07-14',
+      sessionId: expect.any(String),
+      status: 'proposed',
+      proposal: {
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 3.19,
+          currency: 'USD',
+          merchant: 'Starbucks',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: '2026-07-14',
+        },
+        confidence: 0.94,
       },
-      confidence: 0.94,
+      appliedRules: [],
     });
+    const storedSession = await prisma.inputSession.findUniqueOrThrow({
+      where: { id: response.body.sessionId },
+    });
+    expect(JSON.stringify(storedSession)).not.toContain(
+      'I spent $3.19 at Starbucks with BAC today',
+    );
     await expect(
       prisma.ledgerEntry.count({ where: { userId: devUserId } }),
     ).resolves.toBe(beforeCount);
@@ -169,22 +184,123 @@ describe('Ledger endpoints (e2e)', () => {
       })
       .expect(201);
 
+    inputSessionIds.push(response.body.sessionId as string);
     expect(response.body).toEqual({
-      intent: 'create_ledger_entry',
-      data: {
-        type: 'expense',
-        amount: 3.19,
-        currency: 'USD',
-        merchant: 'Starbucks',
-        account: 'BAC',
-        category: 'Food',
-        occurredAt: '2026-07-14',
+      sessionId: expect.any(String),
+      status: 'proposed',
+      proposal: {
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 3.19,
+          currency: 'USD',
+          merchant: 'Starbucks',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: '2026-07-14',
+        },
+        confidence: 0.94,
       },
-      confidence: 0.94,
+      appliedRules: [],
     });
     await expect(
       prisma.ledgerEntry.count({ where: { userId: devUserId } }),
     ).resolves.toBe(beforeCount);
+  });
+
+  it('applies typed rules and confirms or dismisses persisted proposals', async () => {
+    const ruleResponse = await request(app.getHttpServer())
+      .post('/rules')
+      .send({
+        name: `Coffee category ${fixtureId}`,
+        conditionField: 'merchant',
+        conditionOp: 'contains',
+        conditionValue: 'starbucks',
+        actionField: 'category',
+        actionTargetId: categoryId,
+        priority: 1,
+        isEnabled: true,
+      })
+      .expect(201);
+    automationRuleIds.push(ruleResponse.body.id as string);
+    expect(ruleResponse.body.actionTarget).toEqual({
+      id: categoryId,
+      name: expect.stringContaining('Ledger e2e category'),
+    });
+
+    await request(app.getHttpServer())
+      .post('/rules')
+      .send({
+        name: 'Invalid amount rule',
+        conditionField: 'amount',
+        conditionOp: 'contains',
+        conditionValue: '3',
+        actionField: 'category',
+        actionTargetId: categoryId,
+      })
+      .expect(400);
+
+    const parsed = await request(app.getHttpServer())
+      .post('/ai-intake/text')
+      .send({ text: 'Starbucks purchase', referenceDate: '2026-07-14' })
+      .expect(201);
+    inputSessionIds.push(parsed.body.sessionId as string);
+    expect(parsed.body.proposal.data.category).toBe(
+      `Ledger e2e category ${fixtureId}`,
+    );
+    expect(parsed.body.appliedRules).toEqual([
+      expect.objectContaining({ id: ruleResponse.body.id }),
+    ]);
+
+    const review = await request(app.getHttpServer())
+      .get('/review-items')
+      .expect(200);
+    expect(review.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: parsed.body.sessionId }),
+      ]),
+    );
+
+    const confirmation = {
+      type: 'expense',
+      amount: 3.19,
+      currency: 'USD',
+      merchant: 'Starbucks',
+      accountId,
+      categoryId,
+      occurredAt: '2026-07-14T12:00:00.000Z',
+    };
+    const confirmed = await request(app.getHttpServer())
+      .post(`/review-items/${parsed.body.sessionId}/confirm`)
+      .send(confirmation)
+      .expect(201);
+    intakeEntryIds.push(confirmed.body.id as string);
+    expect(confirmed.body).toEqual(
+      expect.objectContaining({
+        inputMethod: 'TEXT',
+        status: 'POSTED',
+        accountId,
+        categoryId,
+      }),
+    );
+
+    const retried = await request(app.getHttpServer())
+      .post(`/review-items/${parsed.body.sessionId}/confirm`)
+      .send(confirmation)
+      .expect(201);
+    expect(retried.body.id).toBe(confirmed.body.id);
+
+    await request(app.getHttpServer())
+      .post(`/review-items/${inputSessionIds[0]}/dismiss`)
+      .expect(201);
+    await request(app.getHttpServer())
+      .post(`/review-items/${inputSessionIds[0]}/confirm`)
+      .send(confirmation)
+      .expect(409);
+
+    await request(app.getHttpServer())
+      .delete(`/rules/${ruleResponse.body.id}`)
+      .expect(200);
   });
 
   it('creates an entry, writes an audit log, and returns it from list and detail endpoints', async () => {
@@ -959,6 +1075,33 @@ describe('Ledger endpoints (e2e)', () => {
   });
   afterAll(async () => {
     if (prisma) {
+      if (
+        inputSessionIds.length ||
+        intakeEntryIds.length ||
+        automationRuleIds.length
+      ) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            OR: [
+              { entityType: 'InputSession', entityId: { in: inputSessionIds } },
+              { entityType: 'LedgerEntry', entityId: { in: intakeEntryIds } },
+              {
+                entityType: 'AutomationRule',
+                entityId: { in: automationRuleIds },
+              },
+            ],
+          },
+        });
+        await prisma.inputSession.deleteMany({
+          where: { id: { in: inputSessionIds } },
+        });
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: intakeEntryIds } },
+        });
+        await prisma.automationRule.deleteMany({
+          where: { id: { in: automationRuleIds } },
+        });
+      }
       if (analyticsEntryIds.length) {
         await prisma.ledgerEntry.deleteMany({
           where: { id: { in: analyticsEntryIds } },

@@ -1,68 +1,185 @@
-import { View } from 'react-native';
+import { useCallback, useEffect, useState } from "react";
+import { View } from "react-native";
 
-import { GlassSurface } from '@/components/ui/glass-surface';
-import { LedgerScreen } from '@/components/ui/ledger-screen';
-import { ScreenHeader } from '@/components/ui/screen-header';
-import { Text } from '@/components/ui/text';
-import { Colors } from '@/constants/theme';
-
-const items = [
-  'Starbucks · low category confidence',
-  'Unknown merchant · account needed',
-  'Super Selectos · receipt total differs',
-];
+import type { LedgerOptions } from "@finance/api-client";
+import type { ReviewItem, ReviewItemsResponse } from "@finance/contracts";
+import { ApiState } from "@/components/api-state";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { GlassSurface } from "@/components/ui/glass-surface";
+import { LedgerScreen } from "@/components/ui/ledger-screen";
+import { ScreenHeader } from "@/components/ui/screen-header";
+import { Text } from "@/components/ui/text";
+import { getFinanceApi } from "@/lib/api";
+import { dateLabel, money } from "@finance/api-client";
 
 export default function ReviewScreen() {
+  const [review, setReview] = useState<ReviewItemsResponse>();
+  const [options, setOptions] = useState<LedgerOptions>();
+  const [loading, setLoading] = useState(true);
+  const [actingId, setActingId] = useState<string>();
+  const [error, setError] = useState<string>();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const api = getFinanceApi();
+      const [nextReview, nextOptions] = await Promise.all([
+        api.getReviewItems(),
+        api.getLedgerOptions(),
+      ]);
+      setReview(nextReview);
+      setOptions(nextOptions);
+      setError(undefined);
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Unable to load review inbox",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => void load(), 0);
+    return () => clearTimeout(timer);
+  }, [load]);
+
+  function targetId(items: { id: string; name: string }[], name: string) {
+    return (
+      items.find((item) => item.name.toLowerCase() === name.toLowerCase())
+        ?.id ?? items[0]?.id
+    );
+  }
+  async function confirm(item: ReviewItem) {
+    const accountId = targetId(
+      options?.accounts ?? [],
+      item.proposal.data.account,
+    );
+    const categoryId = targetId(
+      options?.categories ?? [],
+      item.proposal.data.category,
+    );
+    if (!accountId || !categoryId) {
+      setError("Create an account and category before confirming.");
+      return;
+    }
+    setActingId(item.id);
+    try {
+      const data = item.proposal.data;
+      await getFinanceApi().confirmReviewItem(item.id, {
+        type: data.type,
+        amount: data.amount,
+        currency: data.currency,
+        merchant: data.merchant,
+        note: data.note,
+        accountId,
+        categoryId,
+        occurredAt: `${data.occurredAt}T12:00:00.000Z`,
+      });
+      await load();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Unable to confirm proposal",
+      );
+    } finally {
+      setActingId(undefined);
+    }
+  }
+  async function dismiss(id: string) {
+    setActingId(id);
+    try {
+      await getFinanceApi().dismissReviewItem(id);
+      await load();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "Unable to dismiss proposal",
+      );
+    } finally {
+      setActingId(undefined);
+    }
+  }
+
   return (
     <LedgerScreen>
       <ScreenHeader
-        eyebrow="REVIEW INBOX"
-        title="Keep automation explainable."
-        copy="Every uncertain proposal waits for an intentional decision."
+        eyebrow="AI REVIEW"
+        title="Review inbox."
+        copy="Unconfirmed structured proposals stay here; original command text is never retained."
       />
-      <View className="flex-row gap-2">
-        <Metric label="Pending" value="3" color={Colors.light.actionSoft} />
-        <Metric label="Attention" value="2" color={Colors.light.reviewSoft} />
-      </View>
-      <GlassSurface>
-        <Text className="text-foreground text-[17px] font-bold">
-          Items to review
-        </Text>
-        {items.map((item) => (
-          <View
-            key={item}
-            className="border-border flex-row items-center gap-2.5 border-t py-3.5"
-          >
-            <View className="bg-review h-2 w-2 rounded" />
-            <View className="flex-1">
-              <Text className="text-foreground text-sm font-bold">
-                {item.split(' · ')[0]}
-              </Text>
-              <Text className="text-muted-foreground mt-0.5 text-xs">
-                {item.split(' · ')[1]}
-              </Text>
+      {review ? (
+        <View className="flex-row gap-2">
+          <Metric label="Pending" value={review.metrics.pending} />
+          <Metric
+            label="High confidence"
+            value={review.metrics.highConfidence}
+          />
+          <Metric label="Attention" value={review.metrics.needsAttention} />
+        </View>
+      ) : null}
+      <ApiState
+        empty={!review?.data.length}
+        emptyText="No pending proposals."
+        error={error}
+        loading={loading}
+        onRetry={() => void load()}
+      />
+      {review?.data.map((item) => {
+        const data = item.proposal.data;
+        return (
+          <GlassSurface key={item.id}>
+            <View className="flex-row items-start justify-between">
+              <View className="flex-1">
+                <Text className="text-foreground font-bold">
+                  {data.merchant ?? data.note ?? "Ledger proposal"}
+                </Text>
+                <Text className="text-muted-foreground mt-1 text-xs">
+                  {data.category} · {data.account} ·{" "}
+                  {dateLabel(data.occurredAt)}
+                </Text>
+              </View>
+              <Badge variant="review">
+                <Text>{(item.proposal.confidence * 100).toFixed(0)}%</Text>
+              </Badge>
             </View>
-            <Text className="text-action text-[22px]">›</Text>
-          </View>
-        ))}
-      </GlassSurface>
+            <Text className="text-foreground mt-3 text-xl font-bold">
+              {money(data.amount)}
+            </Text>
+            {item.appliedRules.length ? (
+              <Text className="text-muted-foreground mt-2 text-xs">
+                Rules: {item.appliedRules.map((rule) => rule.name).join(", ")}
+              </Text>
+            ) : null}
+            <View className="mt-3 flex-row gap-2">
+              <Button
+                className="flex-1"
+                disabled={actingId === item.id}
+                onPress={() => void dismiss(item.id)}
+                variant="outline"
+              >
+                <Text>Dismiss</Text>
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={actingId === item.id}
+                onPress={() => void confirm(item)}
+              >
+                <Text>{actingId === item.id ? "Working…" : "Confirm"}</Text>
+              </Button>
+            </View>
+          </GlassSurface>
+        );
+      })}
     </LedgerScreen>
   );
 }
 
-function Metric({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: string;
-  color: string;
-}) {
+function Metric({ label, value }: { label: string; value: number }) {
   return (
-    <View className="flex-1 rounded-2xl p-3" style={{ backgroundColor: color }}>
-      <Text className="text-muted-foreground text-xs font-bold">{label}</Text>
-      <Text className="text-foreground mt-3 text-[26px] font-bold">{value}</Text>
-    </View>
+    <GlassSurface className="min-w-0 flex-1">
+      <Text className="text-muted-foreground text-[10px] font-semibold">
+        {label}
+      </Text>
+      <Text className="text-action mt-1 text-xl font-bold">{value}</Text>
+    </GlassSurface>
   );
 }
