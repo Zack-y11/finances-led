@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { CreateLedgerEntry } from '@finance/contracts';
+import { jest } from '@jest/globals';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { LedgerService } from './ledger.service.js';
@@ -10,23 +11,32 @@ describe('LedgerService confidence policy', () => {
   const categoryId = '22222222-2222-4222-8222-222222222222';
   const userId = '33333333-3333-4333-8333-333333333333';
   const entry = { id: '44444444-4444-4444-8444-444444444444' };
-  const create = jest.fn().mockResolvedValue(entry);
+  const create = jest
+    .fn<() => Promise<typeof entry>>()
+    .mockResolvedValue(entry);
   const transaction = {
     ledgerEntry: { create },
-    auditLog: { create: jest.fn().mockResolvedValue({}) },
+    auditLog: {
+      create: jest
+        .fn<() => Promise<Record<string, never>>>()
+        .mockResolvedValue({}),
+    },
   };
   const db = {
     account: {
-      findFirst: jest.fn().mockResolvedValue({ id: accountId }),
+      findFirst: jest.fn<() => Promise<{ id: string }>>().mockResolvedValue({
+        id: accountId,
+      }),
     },
     category: {
-      findFirst: jest.fn().mockResolvedValue({ id: categoryId }),
+      findFirst: jest.fn<() => Promise<{ id: string }>>().mockResolvedValue({
+        id: categoryId,
+      }),
     },
     $transaction: jest
       .fn()
-      .mockImplementation(
-        async (callback: (tx: typeof transaction) => unknown) =>
-          callback(transaction),
+      .mockImplementation((callback: (tx: typeof transaction) => unknown) =>
+        callback(transaction),
       ),
   };
   const prisma = { db } as unknown as PrismaService;

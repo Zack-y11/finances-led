@@ -220,9 +220,7 @@ describe('ReviewInboxService', () => {
     persistedEntry = { ...persistedEntry, status };
 
     const transition =
-      action === 'approve'
-        ? service.approve(entryId)
-        : service.reject(entryId);
+      action === 'approve' ? service.approve(entryId) : service.reject(entryId);
 
     await expect(transition).rejects.toBeInstanceOf(ConflictException);
     expect(entryUpdates).toEqual([]);
