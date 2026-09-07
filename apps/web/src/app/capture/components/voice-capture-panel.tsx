@@ -9,6 +9,54 @@ import { parseVoiceCommand } from "@/lib/api";
 type RecorderState = "idle" | "recording" | "ready";
 
 const MAX_RECORDING_MS = 60_000;
+const MICROPHONE_TIMEOUT_MS = 8_000;
+const RECORDING_MIME_TYPES = [
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/mp4",
+  "audio/ogg;codecs=opus",
+  "audio/ogg",
+] as const;
+
+function getUserMediaWithTimeout(
+  request: () => Promise<MediaStream>,
+): Promise<MediaStream> {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeoutId = window.setTimeout(() => {
+      settled = true;
+      reject(new Error("Microphone access timed out."));
+    }, MICROPHONE_TIMEOUT_MS);
+
+    let requestPromise: Promise<MediaStream>;
+    try {
+      requestPromise = request();
+    } catch (error) {
+      settled = true;
+      window.clearTimeout(timeoutId);
+      reject(error);
+      return;
+    }
+
+    void requestPromise.then(
+      (stream) => {
+        if (settled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        settled = true;
+        window.clearTimeout(timeoutId);
+        resolve(stream);
+      },
+      (error) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        reject(error);
+      },
+    );
+  });
+}
 
 export function VoiceCapturePanel({
   disabled,
@@ -61,19 +109,20 @@ export function VoiceCapturePanel({
     }
 
     try {
-      const stream = await Promise.race([
+      const stream = await getUserMediaWithTimeout(() =>
         navigator.mediaDevices.getUserMedia({ audio: true }),
-        new Promise<never>((_, reject) =>
-          window.setTimeout(
-            () => reject(new Error("Microphone access timed out.")),
-            8_000,
-          ),
-        ),
-      ]);
+      );
       streamRef.current = stream;
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
+      const mimeType = RECORDING_MIME_TYPES.find((candidate) =>
+        MediaRecorder.isTypeSupported(candidate),
+      );
+      if (!mimeType) {
+        stopStream();
+        onError(
+          "This browser cannot record audio. Choose a short audio file instead.",
+        );
+        return;
+      }
       const recorder = new MediaRecorder(stream, { mimeType });
       chunksRef.current = [];
       recorder.ondataavailable = (event) => {
@@ -81,7 +130,7 @@ export function VoiceCapturePanel({
       };
       recorder.onstop = () => {
         const blob = new Blob(chunksRef.current, {
-          type: recorder.mimeType || "audio/webm",
+          type: recorder.mimeType || mimeType,
         });
         setClip(blob);
         setState("ready");
@@ -143,7 +192,10 @@ export function VoiceCapturePanel({
   };
 
   return (
-    <section className="surface-card overflow-hidden" data-testid="voice-capture-panel">
+    <section
+      className="surface-card overflow-hidden"
+      data-testid="voice-capture-panel"
+    >
       <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
           <Icon className="text-action" name="mic" />
