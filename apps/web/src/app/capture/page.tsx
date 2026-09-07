@@ -1,54 +1,58 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
+import type { ParsedFinanceCommand, VoiceIntakeResult } from "@finance/contracts";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
-  createLedgerEntry,
+  getInputSessions,
   getLedgerOptions,
-  money,
   parseTextCommand,
+  type InputSessionTrace,
   type LedgerOptions,
 } from "@/lib/api";
-import type { ParsedFinanceCommand } from "@finance/contracts";
+
+import { CommandProposal } from "./components/command-proposal";
+import { VoiceCapturePanel } from "./components/voice-capture-panel";
+
+type CaptureMode = "text" | "voice";
 
 export default function CapturePage() {
+  return (
+    <Suspense fallback={null}>
+      <CapturePageContent />
+    </Suspense>
+  );
+}
+
+function CapturePageContent() {
+  const searchParams = useSearchParams();
+  const mode: CaptureMode =
+    searchParams.get("mode") === "voice" ? "voice" : "text";
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [result, setResult] = useState<ParsedFinanceCommand | null>(null);
+  const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(null);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
-  const [accountId, setAccountId] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [sessions, setSessions] = useState<InputSessionTrace[]>([]);
+
+  const refreshSessions = () => {
+    void getInputSessions()
+      .then((data) => setSessions(data.filter((session) => session.modality === "voice")))
+      .catch(() => null);
+  };
 
   useEffect(() => {
-    void getLedgerOptions().then((data) => {
-      setOptions(data);
-    }).catch(() => null);
+    void getLedgerOptions()
+      .then((data) => setOptions(data))
+      .catch(() => null);
+    refreshSessions();
   }, []);
-
-  const suggestedAccountId = useMemo(() => {
-    if (!result || !options) return "";
-    const matchedAccount = options.accounts.find(
-      (a) => a.name.toLowerCase() === result.data.account?.toLowerCase(),
-    );
-    return matchedAccount?.id || options.accounts[0]?.id || "";
-  }, [result, options]);
-
-  const suggestedCategoryId = useMemo(() => {
-    if (!result || !options) return "";
-    const matchedCategory = options.categories.find(
-      (c) => c.name.toLowerCase() === result.data.category?.toLowerCase(),
-    );
-    return matchedCategory?.id || options.categories[0]?.id || "";
-  }, [result, options]);
-
-  const selectedAccountId = accountId || suggestedAccountId;
-  const selectedCategoryId = categoryId || suggestedCategoryId;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -58,8 +62,7 @@ export default function CapturePage() {
     setError(null);
     setSuccess(null);
     setResult(null);
-    setAccountId("");
-    setCategoryId("");
+    setVoiceResult(null);
 
     try {
       const parsed = await parseTextCommand({ text: text.trim() });
@@ -73,90 +76,119 @@ export default function CapturePage() {
     }
   };
 
-  const handleConfirmSave = async () => {
-    if (!result || !selectedAccountId || !selectedCategoryId || saving) return;
-    setSaving(true);
-    setError(null);
-    try {
-      const dateStr = result.data.occurredAt || new Date().toISOString().slice(0, 10);
-      await createLedgerEntry({
-        type: result.data.type,
-        amount: result.data.amount,
-        currency: result.data.currency || "USD",
-        merchant: result.data.merchant || undefined,
-        accountId: selectedAccountId,
-        categoryId: selectedCategoryId,
-        occurredAt: `${dateStr}T12:00:00.000Z`,
-        note: text.trim() || undefined,
-        inputMethod: "text",
-      });
-      setSuccess("Entry saved to your ledger successfully!");
-      setResult(null);
-      setText("");
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to save entry to ledger",
-      );
-    } finally {
-      setSaving(false);
-    }
+  const handleVoiceParsed = (parsed: VoiceIntakeResult) => {
+    setSuccess(null);
+    setError(parsed.parseError ?? null);
+    setVoiceResult(parsed);
+    setResult(parsed.command);
+    refreshSessions();
   };
+
+  const proposalNote = voiceResult?.transcript ?? text.trim();
+  const proposalMethod: CaptureMode = voiceResult ? "voice" : "text";
+
   return (
     <div className="mx-auto grid max-w-[1000px] gap-6">
       <PageHeading
         eyebrow="Ledger"
         title="Quick capture"
-        description="Type a natural financial note in English or Spanish. OpenAI (gpt-5.6-luna) parses your command into a structured transaction proposal."
+        description="Type or speak a natural financial note in English or Spanish. The backend transcribes, parses, and validates before any ledger write."
       />
-      <div className="rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3 text-sm text-ink flex items-center gap-2">
-        <Icon className="text-action size-4" name="sparkles" />
-        <span><strong>Live AI Connected:</strong> Text interpretation uses OpenAI <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">gpt-5.6-luna</code> in real-time.</span>
+      <div className="flex items-center gap-2 text-sm text-ink rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3">
+        <Icon className="size-4 text-action" name="sparkles" />
+        <span>
+          <strong>Live AI Connected:</strong> Text and voice use OpenRouter in
+          real time. Raw audio is discarded after transcription.
+        </span>
       </div>
-      <section className="surface-card overflow-hidden">
-        <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
-          <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-            <Icon className="text-action" name="sparkles" />
-            Tell Ledger AI what happened
+      <div
+        aria-label="Capture mode"
+        className="flex gap-2"
+        role="tablist"
+      >
+        <Link
+          aria-selected={mode === "text"}
+          className={mode === "text" ? "button-primary" : "button-secondary"}
+          href="/capture"
+          role="tab"
+          scroll={false}
+        >
+          Text command
+        </Link>
+        <Link
+          aria-selected={mode === "voice"}
+          className={mode === "voice" ? "button-primary" : "button-secondary"}
+          href="/capture?mode=voice"
+          role="tab"
+          scroll={false}
+        >
+          Voice capture
+        </Link>
+      </div>
+      {mode === "text" ? (
+        <section className="surface-card overflow-hidden">
+          <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
+            <div className="flex items-center gap-2 text-sm font-semibold text-ink">
+              <Icon className="text-action" name="sparkles" />
+              Tell Ledger AI what happened
+            </div>
           </div>
-        </div>
-        <form className="grid gap-5 p-5 sm:p-6" onSubmit={handleSubmit}>
-          <textarea
-            className="field min-h-35 resize-y"
-            onChange={(event) => {
-              setText(event.target.value);
-              setError(null);
-            }}
-            placeholder="e.g. Spent 5.40 at Starbucks with cash"
-            value={text}
-          />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-muted">
-              Try: “Gaste 3.19 en Starbucks con BAC.”
-            </p>
-            <button
-              className="button-primary"
-              disabled={!text.trim() || loading}
-              suppressHydrationWarning
-              type="submit"
-            >
-              {loading ? "Parsing with AI…" : "Preview interpretation"}{" "}
-              <Icon className="size-4" name="arrow-right" />
-            </button>
-          </div>
-        </form>
-      </section>
+          <form className="grid gap-5 p-5 sm:p-6" onSubmit={(event) => void handleSubmit(event)}>
+            <textarea
+              className="field min-h-35 resize-y"
+              onChange={(event) => {
+                setText(event.target.value);
+                setError(null);
+              }}
+              placeholder="e.g. Spent 5.40 at Starbucks with cash"
+              value={text}
+            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted">
+                Try: “Gaste 3.19 en Starbucks con BAC.”
+              </p>
+              <button
+                className="button-primary"
+                disabled={!text.trim() || loading}
+                suppressHydrationWarning
+                type="submit"
+              >
+                {loading ? "Parsing with AI…" : "Preview interpretation"}{" "}
+                <Icon className="size-4" name="arrow-right" />
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : (
+        <VoiceCapturePanel
+          disabled={loading}
+          onError={(message) => setError(message || null)}
+          onParsed={handleVoiceParsed}
+        />
+      )}
+      {voiceResult ? (
+        <section className="surface-card border-success/40 bg-success-soft/20 p-5 sm:p-6">
+          <p className="font-semibold text-ink">Audio discarded after transcription</p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Transcript: “{voiceResult.transcript}”. Session{" "}
+            <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">
+              {voiceResult.inputSessionId.slice(0, 8)}
+            </code>{" "}
+            stores the hash and deletion timestamp only.
+          </p>
+        </section>
+      ) : null}
       {error ? (
         <section className="surface-card border-danger/30 p-5 sm:p-6">
           <div className="flex items-start gap-3 text-danger">
             <Icon className="size-5 shrink-0" name="shield" />
             <div>
-              <p className="font-semibold text-ink">Parser Error</p>
+              <p className="font-semibold text-ink">Capture error</p>
               <p className="mt-1 text-sm text-muted">{error}</p>
             </div>
           </div>
         </section>
       ) : null}
-
       {success ? (
         <section className="surface-card border-success/40 bg-success-soft/20 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
@@ -172,124 +204,77 @@ export default function CapturePage() {
           </div>
         </section>
       ) : null}
-
       {result ? (
-        <section className="surface-card border-action/30 p-5 sm:p-6 grid gap-6">
-          <div className="flex items-start gap-3">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-action-soft text-action">
-              <Icon name="sparkles" />
-            </span>
-            <div className="w-full">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-ink">
-                  Parsed Command Proposal
+        <CommandProposal
+          inputMethod={proposalMethod}
+          inputSessionId={voiceResult?.inputSessionId}
+          key={voiceResult?.inputSessionId ?? proposalNote}
+          note={proposalNote}
+          onDiscard={() => {
+            setResult(null);
+            setVoiceResult(null);
+          }}
+          onSaved={(message) => {
+            setSuccess(message);
+            setResult(null);
+            setVoiceResult(null);
+            setText("");
+            refreshSessions();
+          }}
+          options={options}
+          result={result}
+        />
+      ) : null}
+      {sessions.length ? (
+        <section className="surface-card p-5 sm:p-6">
+          <h2 className="font-semibold text-ink">Recent voice traces</h2>
+          <p className="mt-1 text-sm text-muted">
+            These records prove capture happened without keeping the audio.
+          </p>
+          <div className="mt-4 grid gap-3">
+            {sessions.slice(0, 5).map((session) => (
+              <div
+                className="rounded-xl border border-border bg-surface-muted/70 px-4 py-3"
+                key={session.id}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-ink">
+                    {session.transcriptText || "No transcript"}
+                  </p>
+                  <span className="text-xs font-semibold text-success">
+                    {session.mediaDeletedAt ? "Audio deleted" : "No media stored"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted">
+                  {session.status} · {session.mediaMimeType ?? "no mime"} · hash{" "}
+                  {session.mediaHash?.slice(0, 12) ?? "none"}
                 </p>
-                <span className="rounded-full bg-action-soft px-2.5 py-0.5 text-xs font-semibold text-action">
-                  {(result.confidence * 100).toFixed(0)}% confidence
-                </span>
               </div>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                Structured proposal generated by AI. Review parameters below and confirm to save to database.
-              </p>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                <Detail label="Amount" value={money(result.data.amount)} />
-                <Detail label="Type" value={result.data.type} />
-                <Detail label="Category" value={result.data.category} />
-                <Detail label="Account" value={result.data.account} />
-                {result.data.merchant ? (
-                  <Detail label="Merchant" value={result.data.merchant} />
-                ) : null}
-                <Detail label="Date" value={result.data.occurredAt} />
-                <Detail label="Intent" value={result.intent} />
-                <Detail label="Currency" value={result.data.currency} />
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-border pt-5 grid gap-4">
-            <h3 className="text-sm font-semibold text-ink">Confirm & Select Account & Category</h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="text-xs font-medium text-muted">
-                Account
-                <select
-                  className="field mt-1"
-                  onChange={(e) => setAccountId(e.target.value)}
-                  value={selectedAccountId}
-                >
-                  {options?.accounts.map((a) => (
-                    <option key={a.id} value={a.id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs font-medium text-muted">
-                Category
-                <select
-                  className="field mt-1"
-                  onChange={(e) => setCategoryId(e.target.value)}
-                  value={selectedCategoryId}
-                >
-                  {options?.categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                className="button-secondary text-xs"
-                onClick={() => setResult(null)}
-                type="button"
-              >
-                Discard proposal
-              </button>
-              <button
-                className="button-primary text-xs"
-                disabled={saving || !selectedAccountId || !selectedCategoryId}
-                onClick={handleConfirmSave}
-                type="button"
-              >
-                {saving ? "Saving to Ledger…" : "Save entry to Ledger ✓"}
-              </button>
-            </div>
+            ))}
           </div>
         </section>
       ) : null}
       <section className="grid gap-4 sm:grid-cols-3">
         <CaptureCard
+          copy="Use the live Ledger form when precision matters."
           icon="ledger"
           title="Manual entry"
-          copy="Use the live Ledger form when precision matters."
         />
         <CaptureCard
+          copy="Type a command or speak it. The parser never writes the ledger."
           icon="sparkles"
-          title="Text command"
-          copy="Preview the future plain-language workflow."
+          title="Text and voice"
         />
         <CaptureCard
+          copy="Voice audio is transcribed, hashed, and discarded immediately."
           icon="shield"
           title="Private capture"
-          copy="Media workflows remain unavailable until lifecycle guarantees exist."
         />
       </section>
     </div>
   );
 }
 
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-surface-muted px-4 py-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-        {label}
-      </p>
-      <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
-    </div>
-  );
-}
 function CaptureCard({
   icon,
   title,

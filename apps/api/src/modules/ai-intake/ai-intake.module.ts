@@ -5,6 +5,10 @@ import { RulesModule } from '../rules/rules.module.js';
 import { AiIntakeController } from './ai-intake.controller.js';
 import { AiIntakeService } from './ai-intake.service.js';
 import {
+  AUDIO_TRANSCRIBER,
+  createAudioTranscriber,
+} from './audio-transcriber.provider.js';
+import {
   createTextCommandParser,
   TEXT_COMMAND_PARSER,
 } from './text-command-parser.provider.js';
@@ -18,6 +22,11 @@ import {
       provide: TEXT_COMMAND_PARSER,
       inject: [ConfigService],
       useFactory: createTextCommandParser,
+    },
+    {
+      provide: AUDIO_TRANSCRIBER,
+      inject: [ConfigService],
+      useFactory: createAudioTranscriber,
     },
   ],
 })

@@ -57,6 +57,8 @@ Goal: make mobile capture faster than typing.
 - Store input session trace
 - Support needs-review flow for uncertain commands
 
+Current slice: web and mobile can record or upload a short clip, `POST /ai-intake/voice` transcribes it, stores an `InputSession` trace, writes `MEDIA_DELETED` audit logs, and never persists the audio. High-confidence proposals can post to the ledger; uncertain ones go to the review inbox.
+
 Done when voice capture produces ledger entries and leaves no durable audio.
 
 ## Phase 5: Receipt Photo Capture

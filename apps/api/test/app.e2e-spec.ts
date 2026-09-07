@@ -1,10 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createPrismaClient, type PrismaClient } from '@finance/database';
-import type { TextCommandParser } from '@finance/ai';
+import type { AudioTranscriber, TextCommandParser } from '@finance/ai';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
+import { AUDIO_TRANSCRIBER } from './../src/modules/ai-intake/audio-transcriber.provider.js';
 import { TEXT_COMMAND_PARSER } from './../src/modules/ai-intake/text-command-parser.provider.js';
 
 describe('Ledger endpoints (e2e)', () => {
@@ -27,6 +28,8 @@ describe('Ledger endpoints (e2e)', () => {
   const lifecycleAccountIds: string[] = [];
   const lifecycleCategoryIds: string[] = [];
   const lifecycleEntryIds: string[] = [];
+  const voiceSessionIds: string[] = [];
+  let voiceEntryId: string | undefined;
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -56,12 +59,20 @@ describe('Ledger endpoints (e2e)', () => {
     },
   };
 
+  const fakeAudioTranscriber: AudioTranscriber = {
+    transcribeAudio() {
+      return Promise.resolve('gaste 3.19 en Starbucks con BAC');
+    },
+  };
+
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
       .overrideProvider(TEXT_COMMAND_PARSER)
       .useValue(fakeTextCommandParser)
+      .overrideProvider(AUDIO_TRANSCRIBER)
+      .useValue(fakeAudioTranscriber)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -185,6 +196,147 @@ describe('Ledger endpoints (e2e)', () => {
     await expect(
       prisma.ledgerEntry.count({ where: { userId: devUserId } }),
     ).resolves.toBe(beforeCount);
+  });
+
+  it('transcribes voice audio into a session trace without retaining the recording', async () => {
+    const beforeEntries = await prisma.ledgerEntry.count({
+      where: { userId: devUserId },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/ai-intake/voice')
+      .field('referenceDate', '2026-07-14')
+      .attach('audio', Buffer.from('fake-voice-bytes'), {
+        filename: 'clip.webm',
+        contentType: 'audio/webm',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      inputSessionId: expect.any(String),
+      transcript: 'gaste 3.19 en Starbucks con BAC',
+      command: {
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 3.19,
+          currency: 'USD',
+          merchant: 'Starbucks',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: '2026-07-14',
+        },
+        confidence: 0.94,
+      },
+      mediaDeleted: true,
+      reviewRequired: false,
+      canCreateEntry: true,
+    });
+
+    voiceSessionIds.push(response.body.inputSessionId);
+    const session = await prisma.inputSession.findUniqueOrThrow({
+      where: { id: response.body.inputSessionId },
+    });
+    expect(session).toEqual(
+      expect.objectContaining({
+        userId: devUserId,
+        modality: 'VOICE',
+        transcriptText: 'gaste 3.19 en Starbucks con BAC',
+        mediaMimeType: 'audio/webm',
+        mediaByteLength: 16,
+        status: 'PROCESSED',
+      }),
+    );
+    expect(session.mediaDeletedAt).toBeTruthy();
+    expect(session.mediaHash).toHaveLength(64);
+    expect(JSON.stringify(session)).not.toContain('fake-voice-bytes');
+
+    const audits = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'InputSession',
+        entityId: session.id,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(audits.map((entry) => entry.action)).toEqual([
+      'CREATE',
+      'MEDIA_DELETED',
+      'PARSE',
+    ]);
+    await expect(
+      prisma.ledgerEntry.count({ where: { userId: devUserId } }),
+    ).resolves.toBe(beforeEntries);
+
+    const listed = await request(app.getHttpServer())
+      .get('/ai-intake/sessions')
+      .expect(200);
+    expect(listed.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: session.id,
+          modality: 'voice',
+          transcriptText: 'gaste 3.19 en Starbucks con BAC',
+          mediaDeletedAt: expect.any(String),
+          status: 'processed',
+        }),
+      ]),
+    );
+    expect(JSON.stringify(listed.body)).not.toContain('fake-voice-bytes');
+  });
+
+  it('rejects voice intake without an audio file', async () => {
+    await request(app.getHttpServer()).post('/ai-intake/voice').expect(400);
+  });
+
+  it('saves an uncertain voice proposal as a needs-review ledger entry linked to the session', async () => {
+    const parsed = await request(app.getHttpServer())
+      .post('/ai-intake/voice')
+      .attach('audio', Buffer.from('review-voice-bytes'), {
+        filename: 'review.webm',
+        contentType: 'audio/webm',
+      })
+      .expect(201);
+
+    voiceSessionIds.push(parsed.body.inputSessionId);
+
+    const created = await request(app.getHttpServer())
+      .post('/ledger-entries')
+      .send({
+        type: 'expense',
+        amount: 3.19,
+        currency: 'USD',
+        merchant: 'Starbucks',
+        occurredAt: '2026-07-14T12:00:00.000Z',
+        note: parsed.body.transcript,
+        inputMethod: 'voice',
+        confidence: 0.81,
+        status: 'needs_review',
+        inputSessionId: parsed.body.inputSessionId,
+        accountId,
+        categoryId,
+      })
+      .expect(201);
+
+    voiceEntryId = created.body.id;
+    expect(created.body).toEqual(
+      expect.objectContaining({
+        inputMethod: 'VOICE',
+        status: 'NEEDS_REVIEW',
+      }),
+    );
+
+    const session = await prisma.inputSession.findUniqueOrThrow({
+      where: { id: parsed.body.inputSessionId },
+    });
+    expect(session.ledgerEntryId).toBe(created.body.id);
+    expect(session.status).toBe('NEEDS_REVIEW');
+
+    const reviewAudits = await prisma.auditLog.findMany({
+      where: { entityType: 'LedgerEntry', entityId: created.body.id },
+    });
+    expect(reviewAudits.map((entry) => entry.action)).toEqual(
+      expect.arrayContaining(['CREATE', 'MARK_NEEDS_REVIEW']),
+    );
   });
 
   it('creates an entry, writes an audit log, and returns it from list and detail endpoints', async () => {
@@ -995,6 +1147,23 @@ describe('Ledger endpoints (e2e)', () => {
             entityId: { in: lifecycleCategoryIds },
           },
         });
+      }
+      if (voiceSessionIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'InputSession',
+            entityId: { in: voiceSessionIds },
+          },
+        });
+        await prisma.inputSession.deleteMany({
+          where: { id: { in: voiceSessionIds } },
+        });
+      }
+      if (voiceEntryId) {
+        await prisma.auditLog.deleteMany({
+          where: { entityType: 'LedgerEntry', entityId: voiceEntryId },
+        });
+        await prisma.ledgerEntry.delete({ where: { id: voiceEntryId } });
       }
       if (createdEntryId) {
         await prisma.auditLog.deleteMany({

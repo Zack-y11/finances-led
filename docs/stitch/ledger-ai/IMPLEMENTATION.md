@@ -16,7 +16,13 @@ Live endpoints:
 - `GET /analytics/net-history`
 
 - `POST /ai-intake/text` returning a parsed text finance command proposal; it does not create ledger entries.
-  Not yet implemented: ledger edit, delete, or reversal; voice, receipt, rules, review-inbox execution APIs, and confirmed text-command execution.
+- `POST /ai-intake/voice` accepting in-memory audio, transcribing it, storing an `InputSession` trace, and returning a proposal. Raw audio is never persisted.
+- `GET /ai-intake/sessions` listing capture traces (transcript, hash, deletion timestamp). No media bytes.
+- `GET /rules`, `POST /rules`, `PATCH /rules/:id`, `DELETE /rules/:id`
+- `GET /review-items`, `POST /review-items/:id/approve`, `POST /review-items/:id/reject`
+- Ledger `PATCH`/`DELETE` and date-range filters.
+
+Not yet implemented: receipt OCR, confirmed text-command auto-execution without the client save step, and Notion sync.
 
 ## Web route map
 
@@ -30,9 +36,11 @@ Live routes:
 - `/settings/accounts` — persistent account list/create/edit and deactivate/reactivate management.
 - `/settings/categories` — persistent category list/create/edit management.
 - `/settings` — settings hub linking to account and category management.
-- `/capture` — live text command parser proposal preview using `POST /ai-intake/text`.
+- `/capture` — live text and voice capture. Voice uses `POST /ai-intake/voice`, shows the transcript, and saves posted or needs-review ledger entries.
+- `/review` — live review inbox for `NEEDS_REVIEW` entries.
+- `/rules` — live automation rules.
 
-Design/demo-only routes still present for future phases: `/review` and `/rules`.
+Design/demo-only routes still present for future phases: receipt-oriented capture only.
 
 ## Delivery notes
 
@@ -40,3 +48,4 @@ Design/demo-only routes still present for future phases: `/review` and `/rules`.
 - Categories are editable only; there is no delete affordance because the current schema has no category active flag.
 - Monthly breakdown uses the existing analytics route and now partitions both income and expense category totals.
 - The web UI uses existing semantic tokens, `.surface-card`, `.field`, and the current shell rather than a second styling system.
+- Live AI intake uses OpenRouter (`OPENROUTER_API_KEY`, default chat model `openai/gpt-4o-mini`, transcription `openai/whisper-1`). Text and voice both call `https://openrouter.ai/api/v1`.

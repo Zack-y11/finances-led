@@ -13,7 +13,11 @@ NestJS backend for Finance Ledger.
 
 ## Current Modules
 
-- `ledger`: create, list, and fetch ledger entries
+- `ledger`: create, list, update, and fetch ledger entries
+- `ai-intake`: parse text commands and transcribe voice clips without retaining media
+- `review-inbox`: approve or reject `NEEDS_REVIEW` entries
+- `rules`: user-owned automation rules
+- `accounts`, `categories`, `entry-groups`, `analytics`
 - `infrastructure`: Prisma database service
 - `common`: shared pipes such as Zod validation
 
@@ -37,13 +41,15 @@ pnpm --filter @finance/api test:e2e
 The current API uses `DEV_USER_ID` from environment configuration. Replace this
 with authenticated request context before supporting real multi-user data.
 
+## AI intake
+
+Text parsing and voice transcription use OpenRouter. Set `OPENROUTER_API_KEY`
+and optionally `OPENROUTER_MODEL` / `OPENROUTER_TRANSCRIBE_MODEL`. Requests go
+to `https://openrouter.ai/api/v1` unless `OPENROUTER_BASE_URL` is overridden.
+`OPENAI_API_KEY` is a temporary alias for the same OpenRouter key and does not
+call `api.openai.com`.
+
 ## Future Modules
 
-- `accounts`
-- `categories`
-- `groups`
-- `ai-intake`
-- `rules`
-- `analytics`
-- `privacy`
+- `privacy` user-facing audit views
 - `notion-sync`

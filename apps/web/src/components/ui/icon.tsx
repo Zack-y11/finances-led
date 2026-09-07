@@ -16,7 +16,8 @@ export type IconName =
   | "shield"
   | "tag"
   | "inbox"
-  | "rule";
+  | "rule"
+  | "mic";
 
 const paths: Record<IconName, ReactNode> = {
   chart: (
@@ -112,6 +113,12 @@ const paths: Record<IconName, ReactNode> = {
       <path d="M4 6h16M4 18h16M8 6v6M16 12v6" />
       <circle cx="8" cy="13" r="2" />
       <circle cx="16" cy="11" r="2" />
+    </>
+  ),
+  mic: (
+    <>
+      <rect x="9" y="2" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v4" />
     </>
   ),
 };

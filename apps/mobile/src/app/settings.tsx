@@ -43,8 +43,8 @@ export default function SettingsScreen() {
       <GlassSurface>
         <Text style={styles.itemTitle}>Privacy & capture</Text>
         <Text style={styles.itemCopy}>
-          Temporary media controls will appear when voice and receipt flows are
-          connected.
+          Voice recordings are transcribed, hashed, and deleted. Input sessions
+          keep the transcript and deletion timestamp, never the audio file.
         </Text>
       </GlassSurface>
       <GlassSurface>
