@@ -70,11 +70,12 @@ export default function VoiceCaptureScreen() {
     setPhase("ready");
   };
 
-  const deleteLocalClip = async (uri: string) => {
+  const deleteLocalClip = async (uri: string): Promise<boolean> => {
     try {
       await deleteAsync(uri, { idempotent: true });
+      return true;
     } catch {
-      // Best-effort. The API never persists the bytes.
+      return false;
     }
   };
 
@@ -82,6 +83,7 @@ export default function VoiceCaptureScreen() {
     if (!clipUri) return;
     setPhase("processing");
     setError(null);
+    setStatus(null);
     try {
       const filename = clipUri.toLowerCase().includes(".wav")
         ? "voice-capture.wav"
@@ -97,7 +99,14 @@ export default function VoiceCaptureScreen() {
         { uri: clipUri, name: filename, type: mimeType },
         filename,
       );
-      await deleteLocalClip(clipUri);
+      const localClipDeleted = await deleteLocalClip(clipUri);
+      if (!localClipDeleted) {
+        setError(
+          "Transcription succeeded, but the local audio could not be deleted. Tap retry to try again.",
+        );
+        setPhase("ready");
+        return;
+      }
       setClipUri(null);
       setResult(parsed);
       setStatus("Local audio deleted after transcription.");
@@ -127,7 +136,13 @@ export default function VoiceCaptureScreen() {
         result.command.data.category,
       );
       if (!accountId || !categoryId) {
-        throw new Error("Add an account and category before saving.");
+        const unmatched = [
+          !accountId ? `account “${result.command.data.account}”` : null,
+          !categoryId ? `category “${result.command.data.category}”` : null,
+        ].filter((value): value is string => value !== null);
+        throw new Error(
+          `Could not match the suggested ${unmatched.join(" or ")}. Add or rename it in Settings, then try saving again.`,
+        );
       }
       const dateStr =
         result.command.data.occurredAt ||
