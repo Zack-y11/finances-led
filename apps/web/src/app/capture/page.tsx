@@ -4,7 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import type { ParsedFinanceCommand, VoiceIntakeResult } from "@finance/contracts";
+import type {
+  ParsedFinanceCommand,
+  VoiceIntakeResult,
+} from "@finance/contracts";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
@@ -40,7 +43,9 @@ function CapturePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [result, setResult] = useState<ParsedFinanceCommand | null>(null);
-  const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(null);
+  const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(
+    null,
+  );
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [sessions, setSessions] = useState<InputSessionTrace[]>([]);
 
@@ -107,12 +112,25 @@ function CapturePageContent() {
         </span>
       </div>
       <div aria-label="Capture mode" className="flex gap-2" role="tablist">
-        <Button asChild size="sm" variant={mode === "text" ? "default" : "outline"}>
-          <Link aria-selected={mode === "text"} href="/capture" role="tab" scroll={false}>
+        <Button
+          asChild
+          size="sm"
+          variant={mode === "text" ? "default" : "outline"}
+        >
+          <Link
+            aria-selected={mode === "text"}
+            href="/capture"
+            role="tab"
+            scroll={false}
+          >
             Text command
           </Link>
         </Button>
-        <Button asChild size="sm" variant={mode === "voice" ? "default" : "outline"}>
+        <Button
+          asChild
+          size="sm"
+          variant={mode === "voice" ? "default" : "outline"}
+        >
           <Link
             aria-selected={mode === "voice"}
             href="/capture?mode=voice"

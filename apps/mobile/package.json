@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/ui": "~57.0.4",
+    "@finance/api-client": "workspace:*",
     "@finance/contracts": "workspace:*",
     "@finance/design-tokens": "workspace:*",
     "@rn-primitives/dialog": "^1.5.2",
