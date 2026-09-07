@@ -1,6 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../infrastructure/prisma.service.js';
+
+type ReviewTransition = {
+  entryStatus: 'POSTED' | 'IGNORED';
+  sessionStatus: 'CONFIRMED' | 'FAILED';
+  entryAction: 'APPROVE' | 'REJECT';
+  sessionAction: 'CONFIRM' | 'REJECT';
+  reason: string;
+};
 
 @Injectable()
 export class ReviewInboxService {
@@ -56,28 +68,91 @@ export class ReviewInboxService {
   }
 
   async approve(id: string) {
-    const entry = await this.prisma.db.ledgerEntry.findFirst({
-      where: { id, userId: this.userId },
-    });
-    if (!entry) throw new NotFoundException('Review item not found');
-
-    return this.prisma.db.ledgerEntry.update({
-      where: { id },
-      data: { status: 'POSTED' },
-      include: { account: true, category: true, group: true },
+    return this.transition(id, {
+      entryStatus: 'POSTED',
+      sessionStatus: 'CONFIRMED',
+      entryAction: 'APPROVE',
+      sessionAction: 'CONFIRM',
+      reason: 'Review item was approved and posted to the ledger.',
     });
   }
 
   async reject(id: string) {
-    const entry = await this.prisma.db.ledgerEntry.findFirst({
-      where: { id, userId: this.userId },
+    return this.transition(id, {
+      entryStatus: 'IGNORED',
+      sessionStatus: 'FAILED',
+      entryAction: 'REJECT',
+      sessionAction: 'REJECT',
+      reason: 'Review item was rejected and ignored.',
     });
-    if (!entry) throw new NotFoundException('Review item not found');
+  }
 
-    return this.prisma.db.ledgerEntry.update({
-      where: { id },
-      data: { status: 'IGNORED' },
-      include: { account: true, category: true, group: true },
+  private async transition(id: string, transition: ReviewTransition) {
+    return this.prisma.db.$transaction(async (tx) => {
+      const entry = await tx.ledgerEntry.findFirst({
+        where: { id, userId: this.userId },
+        include: { inputSession: true },
+      });
+      if (!entry) throw new NotFoundException('Review item not found');
+      if (entry.status !== 'NEEDS_REVIEW') {
+        throw new ConflictException('Review item is no longer awaiting review');
+      }
+
+      // Keep the status predicate on the write as well as the read so a
+      // concurrent approve/reject cannot apply a second transition.
+      const updatedCount = await tx.ledgerEntry.updateMany({
+        where: { id, userId: this.userId, status: 'NEEDS_REVIEW' },
+        data: { status: transition.entryStatus },
+      });
+      if (updatedCount.count !== 1) {
+        throw new ConflictException('Review item is no longer awaiting review');
+      }
+
+      if (entry.inputSession) {
+        await tx.inputSession.update({
+          where: { id: entry.inputSession.id },
+          data: { status: transition.sessionStatus },
+        });
+      }
+
+      await tx.auditLog.create({
+        data: {
+          userId: this.userId,
+          entityType: 'LedgerEntry',
+          entityId: id,
+          action: transition.entryAction,
+          reason: transition.reason,
+          metadata: {
+            previousStatus: entry.status,
+            newStatus: transition.entryStatus,
+            ...(entry.inputSession
+              ? { inputSessionId: entry.inputSession.id }
+              : {}),
+          },
+        },
+      });
+
+      if (entry.inputSession) {
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'InputSession',
+            entityId: entry.inputSession.id,
+            action: transition.sessionAction,
+            reason: transition.reason,
+            metadata: {
+              previousStatus: entry.inputSession.status,
+              newStatus: transition.sessionStatus,
+              ledgerEntryId: id,
+            },
+          },
+        });
+      }
+
+      return tx.ledgerEntry.findFirst({
+        where: { id, userId: this.userId },
+        include: { account: true, category: true, group: true },
+      });
     });
   }
 }
