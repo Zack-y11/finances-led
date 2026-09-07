@@ -100,7 +100,7 @@ export function matchOptionId(
   const match = options.find(
     (option) => option.name.toLowerCase() === name?.toLowerCase(),
   );
-  return match?.id || options[0]?.id || "";
+  return match?.id ?? "";
 }
 
 export type { ParsedFinanceCommand, VoiceIntakeResult };
