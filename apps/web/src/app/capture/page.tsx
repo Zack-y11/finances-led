@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import type {
   ParsedFinanceCommand,
+  ReceiptIntakeResult,
   VoiceIntakeResult,
 } from "@finance/contracts";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,10 @@ import {
 } from "@/lib/api";
 
 import { CommandProposal } from "./components/command-proposal";
+import { ReceiptCapturePanel } from "./components/receipt-capture-panel";
 import { VoiceCapturePanel } from "./components/voice-capture-panel";
 
-type CaptureMode = "text" | "voice";
+type CaptureMode = "text" | "voice" | "receipt";
 
 export default function CapturePage() {
   return (
@@ -36,8 +38,11 @@ export default function CapturePage() {
 
 function CapturePageContent() {
   const searchParams = useSearchParams();
+  const requestedMode = searchParams.get("mode");
   const mode: CaptureMode =
-    searchParams.get("mode") === "voice" ? "voice" : "text";
+    requestedMode === "voice" || requestedMode === "receipt"
+      ? requestedMode
+      : "text";
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,13 +51,21 @@ function CapturePageContent() {
   const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(
     null,
   );
+  const [receiptResult, setReceiptResult] =
+    useState<ReceiptIntakeResult | null>(null);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [sessions, setSessions] = useState<InputSessionTrace[]>([]);
 
   const refreshSessions = () => {
     void getInputSessions()
       .then((data) =>
-        setSessions(data.filter((session) => session.modality === "voice")),
+        setSessions(
+          data.filter((session) =>
+            mode === "receipt"
+              ? session.modality === "image"
+              : session.modality === "voice",
+          ),
+        ),
       )
       .catch(() => null);
   };
@@ -62,7 +75,9 @@ function CapturePageContent() {
       .then((data) => setOptions(data))
       .catch(() => null);
     refreshSessions();
-  }, []);
+    // Refresh traces when the capture mode changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -73,6 +88,7 @@ function CapturePageContent() {
     setSuccess(null);
     setResult(null);
     setVoiceResult(null);
+    setReceiptResult(null);
 
     try {
       const parsed = await parseTextCommand({ text: text.trim() });
@@ -91,24 +107,40 @@ function CapturePageContent() {
     setError(parsed.parseError ?? null);
     setVoiceResult(parsed);
     setResult(parsed.command);
+    setReceiptResult(null);
     refreshSessions();
   };
 
-  const proposalNote = voiceResult?.transcript ?? text.trim();
-  const proposalMethod: CaptureMode = voiceResult ? "voice" : "text";
+  const handleReceiptParsed = (parsed: ReceiptIntakeResult) => {
+    setSuccess(null);
+    setError(parsed.parseError ?? null);
+    setReceiptResult(parsed);
+    setVoiceResult(null);
+    setResult(parsed.command);
+    refreshSessions();
+  };
+
+  const mediaResult = receiptResult ?? voiceResult;
+  const proposalNote = mediaResult?.transcript ?? text.trim();
+  const proposalMethod: CaptureMode = receiptResult
+    ? "receipt"
+    : voiceResult
+      ? "voice"
+      : "text";
 
   return (
     <div className="mx-auto grid max-w-[1000px] gap-6">
       <PageHeading
         eyebrow="Ledger"
         title="Quick capture"
-        description="Type or speak a natural financial note in English or Spanish. The backend transcribes, parses, and validates before any ledger write."
+        description="Type, speak, or photograph a financial note in English or Spanish. The backend parses and validates before any ledger write."
       />
       <div className="flex items-center gap-2 rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3 text-sm text-ink">
         <Icon className="size-4 text-action" name="sparkles" />
         <span>
-          <strong>Live AI Connected:</strong> Text and voice use OpenRouter in
-          real time. Raw audio is discarded after transcription.
+          <strong>Live AI Connected:</strong> Text, voice, and receipts use
+          OpenRouter in real time. Raw audio and photos are discarded after
+          processing.
         </span>
       </div>
       <div aria-label="Capture mode" className="flex gap-2" role="tablist">
@@ -138,6 +170,20 @@ function CapturePageContent() {
             scroll={false}
           >
             Voice capture
+          </Link>
+        </Button>
+        <Button
+          asChild
+          size="sm"
+          variant={mode === "receipt" ? "default" : "outline"}
+        >
+          <Link
+            aria-selected={mode === "receipt"}
+            href="/capture?mode=receipt"
+            role="tab"
+            scroll={false}
+          >
+            Receipt capture
           </Link>
         </Button>
       </div>
@@ -177,22 +223,31 @@ function CapturePageContent() {
             </div>
           </form>
         </Card>
-      ) : (
+      ) : mode === "voice" ? (
         <VoiceCapturePanel
           disabled={loading}
           onError={(message) => setError(message || null)}
           onParsed={handleVoiceParsed}
         />
+      ) : (
+        <ReceiptCapturePanel
+          disabled={loading}
+          onError={(message) => setError(message || null)}
+          onParsed={handleReceiptParsed}
+        />
       )}
-      {voiceResult ? (
+      {mediaResult ? (
         <Card className="border-success/40 bg-success-soft/20 p-5 sm:p-6">
           <p className="font-semibold text-ink">
-            Audio discarded after transcription
+            {receiptResult
+              ? "Photo discarded after extraction"
+              : "Audio discarded after transcription"}
           </p>
           <p className="mt-1 text-sm leading-6 text-muted">
-            Transcript: “{voiceResult.transcript}”. Session{" "}
+            {receiptResult ? "Extracted" : "Transcript"}: “
+            {mediaResult.transcript}”. Session{" "}
             <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-xs">
-              {voiceResult.inputSessionId.slice(0, 8)}
+              {mediaResult.inputSessionId.slice(0, 8)}
             </code>{" "}
             stores the hash and deletion timestamp only.
           </p>
@@ -227,17 +282,19 @@ function CapturePageContent() {
       {result ? (
         <CommandProposal
           inputMethod={proposalMethod}
-          inputSessionId={voiceResult?.inputSessionId}
-          key={voiceResult?.inputSessionId ?? proposalNote}
+          inputSessionId={mediaResult?.inputSessionId}
+          key={mediaResult?.inputSessionId ?? proposalNote}
           note={proposalNote}
           onDiscard={() => {
             setResult(null);
             setVoiceResult(null);
+            setReceiptResult(null);
           }}
           onSaved={(message) => {
             setSuccess(message);
             setResult(null);
             setVoiceResult(null);
+            setReceiptResult(null);
             setText("");
             refreshSessions();
           }}
@@ -245,11 +302,14 @@ function CapturePageContent() {
           result={result}
         />
       ) : null}
-      {sessions.length ? (
+      {sessions.length && mode !== "text" ? (
         <Card className="p-5 sm:p-6">
-          <h2 className="font-semibold text-ink">Recent voice traces</h2>
+          <h2 className="font-semibold text-ink">
+            {mode === "receipt" ? "Recent receipt traces" : "Recent voice traces"}
+          </h2>
           <p className="mt-1 text-sm text-muted">
-            These records prove capture happened without keeping the audio.
+            These records prove capture happened without keeping the{" "}
+            {mode === "receipt" ? "photo" : "audio"}.
           </p>
           <div className="mt-4 grid gap-3">
             {sessions.slice(0, 5).map((session) => (
@@ -259,11 +319,13 @@ function CapturePageContent() {
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-ink">
-                    {session.transcriptText || "No transcript"}
+                    {session.transcriptText || "No extracted facts"}
                   </p>
                   <span className="text-xs font-semibold text-success">
                     {session.mediaDeletedAt
-                      ? "Audio deleted"
+                      ? mode === "receipt"
+                        ? "Photo deleted"
+                        : "Audio deleted"
                       : "No media stored"}
                   </span>
                 </div>
@@ -283,12 +345,12 @@ function CapturePageContent() {
           title="Manual entry"
         />
         <CaptureCard
-          copy="Type a command or speak it. The parser never writes the ledger."
+          copy="Type a command, speak it, or photograph a receipt. The parser never writes the ledger."
           icon="sparkles"
-          title="Text and voice"
+          title="Text, voice, and receipts"
         />
         <CaptureCard
-          copy="Voice audio is transcribed, hashed, and discarded immediately."
+          copy="Raw audio and receipt photos are hashed and discarded immediately."
           icon="shield"
           title="Private capture"
         />

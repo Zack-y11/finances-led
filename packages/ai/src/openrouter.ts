@@ -1,6 +1,7 @@
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const OPENROUTER_DEFAULT_CHAT_MODEL = "openai/gpt-4o-mini";
 export const OPENROUTER_DEFAULT_TRANSCRIBE_MODEL = "openai/whisper-1";
+export const OPENROUTER_DEFAULT_VISION_MODEL = "openai/gpt-4o-mini";
 export const OPENROUTER_DEFAULT_HTTP_REFERER =
   "https://github.com/Zack-y11/finances-led";
 export const OPENROUTER_DEFAULT_APP_TITLE = "Finance Ledger";

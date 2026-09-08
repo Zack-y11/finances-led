@@ -67,12 +67,17 @@ export default function CaptureScreen() {
           Capture modes
         </Text>
         <Text className="text-muted-foreground mt-2 text-sm leading-5">
-          Voice capture records in app cache, transcribes on the API, then
-          deletes the local clip. Receipt capture is still a later phase.
+          Voice and receipts record in app cache, extract on the API, then
+          delete the local media. Raw photos are never kept.
         </Text>
         <Link asChild href={'/voice-capture' as any}>
           <Button className="mt-3">
             <Text>Open voice capture</Text>
+          </Button>
+        </Link>
+        <Link asChild href={'/receipt-capture' as any}>
+          <Button className="mt-2" variant="outline">
+            <Text>Open receipt capture</Text>
           </Button>
         </Link>
       </GlassSurface>

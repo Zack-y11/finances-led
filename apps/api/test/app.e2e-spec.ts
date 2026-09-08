@@ -1,11 +1,16 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createPrismaClient, type PrismaClient } from '@finance/database';
-import type { AudioTranscriber, TextCommandParser } from '@finance/ai';
+import type {
+  AudioTranscriber,
+  ReceiptParser,
+  TextCommandParser,
+} from '@finance/ai';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';
 import { AUDIO_TRANSCRIBER } from './../src/modules/ai-intake/audio-transcriber.provider.js';
+import { RECEIPT_PARSER } from './../src/modules/ai-intake/receipt-parser.provider.js';
 import { TEXT_COMMAND_PARSER } from './../src/modules/ai-intake/text-command-parser.provider.js';
 
 describe('Ledger endpoints (e2e)', () => {
@@ -30,6 +35,8 @@ describe('Ledger endpoints (e2e)', () => {
   const lifecycleEntryIds: string[] = [];
   const voiceSessionIds: string[] = [];
   let voiceEntryId: string | undefined;
+  const receiptSessionIds: string[] = [];
+  let receiptEntryId: string | undefined;
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -64,6 +71,28 @@ describe('Ledger endpoints (e2e)', () => {
       return Promise.resolve('gaste 3.19 en Starbucks con BAC');
     },
   };
+  const fakeReceiptParser: ReceiptParser = {
+    parseReceipt(input) {
+      return Promise.resolve({
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 14.5,
+          currency: 'USD',
+          merchant: 'Blue Bottle Coffee',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: input.referenceDate,
+        },
+        confidence: 0.94,
+      });
+    },
+  };
+
+  const receiptPng = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -73,6 +102,8 @@ describe('Ledger endpoints (e2e)', () => {
       .useValue(fakeTextCommandParser)
       .overrideProvider(AUDIO_TRANSCRIBER)
       .useValue(fakeAudioTranscriber)
+      .overrideProvider(RECEIPT_PARSER)
+      .useValue(fakeReceiptParser)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -286,6 +317,152 @@ describe('Ledger endpoints (e2e)', () => {
 
   it('rejects voice intake without an audio file', async () => {
     await request(app.getHttpServer()).post('/ai-intake/voice').expect(400);
+  });
+
+  it('parses a receipt image into a session trace without retaining the photo', async () => {
+    const beforeEntries = await prisma.ledgerEntry.count({
+      where: { userId: devUserId },
+    });
+
+    const response = await request(app.getHttpServer())
+      .post('/ai-intake/receipt')
+      .field('referenceDate', '2026-07-18')
+      .attach('image', receiptPng, {
+        filename: 'receipt.png',
+        contentType: 'image/png',
+      })
+      .expect(201);
+
+    expect(response.body).toEqual({
+      inputSessionId: expect.any(String),
+      transcript: 'Receipt from Blue Bottle Coffee: USD 14.50 on 2026-07-18',
+      command: {
+        intent: 'create_ledger_entry',
+        data: {
+          type: 'expense',
+          amount: 14.5,
+          currency: 'USD',
+          merchant: 'Blue Bottle Coffee',
+          account: 'BAC',
+          category: 'Food',
+          occurredAt: '2026-07-18',
+        },
+        confidence: 0.94,
+      },
+      mediaDeleted: true,
+      reviewRequired: false,
+      canCreateEntry: true,
+    });
+
+    receiptSessionIds.push(response.body.inputSessionId);
+    const session = await prisma.inputSession.findUniqueOrThrow({
+      where: { id: response.body.inputSessionId },
+    });
+    expect(session).toEqual(
+      expect.objectContaining({
+        userId: devUserId,
+        modality: 'IMAGE',
+        transcriptText:
+          'Receipt from Blue Bottle Coffee: USD 14.50 on 2026-07-18',
+        mediaMimeType: 'image/png',
+        mediaByteLength: receiptPng.length,
+        status: 'PROCESSED',
+      }),
+    );
+    expect(session.mediaDeletedAt).toBeTruthy();
+    expect(session.mediaHash).toHaveLength(64);
+    expect(JSON.stringify(session)).not.toContain(
+      receiptPng.toString('base64'),
+    );
+
+    const audits = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'InputSession',
+        entityId: session.id,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(audits.map((entry) => entry.action)).toEqual([
+      'CREATE',
+      'MEDIA_DELETED',
+      'PARSE',
+    ]);
+    expect(audits[1]?.metadata).toEqual(
+      expect.objectContaining({
+        mediaDeleted: true,
+        durableImageStored: false,
+      }),
+    );
+    await expect(
+      prisma.ledgerEntry.count({ where: { userId: devUserId } }),
+    ).resolves.toBe(beforeEntries);
+
+    const listed = await request(app.getHttpServer())
+      .get('/ai-intake/sessions')
+      .expect(200);
+    expect(listed.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: session.id,
+          modality: 'image',
+          transcriptText:
+            'Receipt from Blue Bottle Coffee: USD 14.50 on 2026-07-18',
+          mediaDeletedAt: expect.any(String),
+          status: 'processed',
+        }),
+      ]),
+    );
+    expect(JSON.stringify(listed.body)).not.toContain(
+      receiptPng.toString('base64'),
+    );
+  });
+
+  it('rejects receipt intake without an image file', async () => {
+    await request(app.getHttpServer()).post('/ai-intake/receipt').expect(400);
+  });
+
+  it('saves an uncertain receipt proposal as a needs-review ledger entry linked to the session', async () => {
+    const parsed = await request(app.getHttpServer())
+      .post('/ai-intake/receipt')
+      .attach('image', receiptPng, {
+        filename: 'review.png',
+        contentType: 'image/png',
+      })
+      .expect(201);
+
+    receiptSessionIds.push(parsed.body.inputSessionId);
+
+    const created = await request(app.getHttpServer())
+      .post('/ledger-entries')
+      .send({
+        type: 'expense',
+        amount: 14.5,
+        currency: 'USD',
+        merchant: 'Blue Bottle Coffee',
+        occurredAt: '2026-07-18T12:00:00.000Z',
+        note: parsed.body.transcript,
+        inputMethod: 'receipt',
+        confidence: 0.81,
+        status: 'needs_review',
+        inputSessionId: parsed.body.inputSessionId,
+        accountId,
+        categoryId,
+      })
+      .expect(201);
+
+    receiptEntryId = created.body.id;
+    expect(created.body).toEqual(
+      expect.objectContaining({
+        inputMethod: 'RECEIPT',
+        status: 'NEEDS_REVIEW',
+      }),
+    );
+
+    const session = await prisma.inputSession.findUniqueOrThrow({
+      where: { id: parsed.body.inputSessionId },
+    });
+    expect(session.ledgerEntryId).toBe(created.body.id);
+    expect(session.status).toBe('NEEDS_REVIEW');
   });
 
   it('saves an uncertain voice proposal as a needs-review ledger entry linked to the session', async () => {
@@ -1159,11 +1336,28 @@ describe('Ledger endpoints (e2e)', () => {
           where: { id: { in: voiceSessionIds } },
         });
       }
+      if (receiptSessionIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'InputSession',
+            entityId: { in: receiptSessionIds },
+          },
+        });
+        await prisma.inputSession.deleteMany({
+          where: { id: { in: receiptSessionIds } },
+        });
+      }
       if (voiceEntryId) {
         await prisma.auditLog.deleteMany({
           where: { entityType: 'LedgerEntry', entityId: voiceEntryId },
         });
         await prisma.ledgerEntry.delete({ where: { id: voiceEntryId } });
+      }
+      if (receiptEntryId) {
+        await prisma.auditLog.deleteMany({
+          where: { entityType: 'LedgerEntry', entityId: receiptEntryId },
+        });
+        await prisma.ledgerEntry.delete({ where: { id: receiptEntryId } });
       }
       if (createdEntryId) {
         await prisma.auditLog.deleteMany({

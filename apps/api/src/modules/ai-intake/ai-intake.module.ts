@@ -9,6 +9,10 @@ import {
   createAudioTranscriber,
 } from './audio-transcriber.provider.js';
 import {
+  createReceiptParser,
+  RECEIPT_PARSER,
+} from './receipt-parser.provider.js';
+import {
   createTextCommandParser,
   TEXT_COMMAND_PARSER,
 } from './text-command-parser.provider.js';
@@ -27,6 +31,11 @@ import {
       provide: AUDIO_TRANSCRIBER,
       inject: [ConfigService],
       useFactory: createAudioTranscriber,
+    },
+    {
+      provide: RECEIPT_PARSER,
+      inject: [ConfigService],
+      useFactory: createReceiptParser,
     },
   ],
 })

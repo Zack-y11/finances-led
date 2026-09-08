@@ -160,12 +160,14 @@ export interface AiParser {
 Provider-specific code should live behind this interface so the app can switch
 between OpenRouter, local models, cloud OCR, or self-hosted services later.
 
-`packages/ai` implements `TextCommandParser.parseText` and
-`AudioTranscriber.transcribeAudio` with OpenRouter as the default provider
-(`https://openrouter.ai/api/v1`). Chat parsing uses `OPENROUTER_MODEL`
-(default `openai/gpt-4o-mini`). Voice transcription uses the same API key
-against OpenRouter's `/audio/transcriptions` endpoint
-(`OPENROUTER_TRANSCRIBE_MODEL`, default `openai/whisper-1`). The Nest
+`packages/ai` implements `TextCommandParser.parseText`,
+`AudioTranscriber.transcribeAudio`, and `ReceiptParser.parseReceipt` with
+OpenRouter as the default provider (`https://openrouter.ai/api/v1`). Chat
+parsing uses `OPENROUTER_MODEL` (default `openai/gpt-4o-mini`). Voice
+transcription uses the same API key against OpenRouter's `/audio/transcriptions`
+endpoint (`OPENROUTER_TRANSCRIBE_MODEL`, default `openai/whisper-1`). Receipt
+vision uses chat completions with an image part
+(`OPENROUTER_VISION_MODEL`, default `openai/gpt-4o-mini`). The Nest
 `ai-intake` module injects those adapters and is the only write path for
 input-session traces.
 
@@ -182,4 +184,6 @@ temporary alias only; requests still go to OpenRouter, not `api.openai.com`.
 6. Add voice transcription. `POST /ai-intake/voice` transcribes audio in memory,
    parses the transcript, stores an `InputSession` with `mediaDeletedAt`, and
    never writes the recording.
-7. Add receipt OCR.
+7. Add receipt OCR. `POST /ai-intake/receipt` sends the photo to an OpenRouter
+   vision model, maps the result to `ParsedFinanceCommand`, stores an
+   `InputSession` with `mediaDeletedAt`, and never writes the image.

@@ -17,12 +17,13 @@ Live endpoints:
 
 - `POST /ai-intake/text` returning a parsed text finance command proposal; it does not create ledger entries.
 - `POST /ai-intake/voice` accepting in-memory audio, transcribing it, storing an `InputSession` trace, and returning a proposal. Raw audio is never persisted.
+- `POST /ai-intake/receipt` accepting an in-memory receipt photo, running OpenRouter vision extraction, storing an `InputSession` trace, and returning a proposal. Raw images are never persisted.
 - `GET /ai-intake/sessions` listing capture traces (transcript, hash, deletion timestamp). No media bytes.
 - `GET /rules`, `POST /rules`, `PATCH /rules/:id`, `DELETE /rules/:id`
 - `GET /review-items`, `POST /review-items/:id/approve`, `POST /review-items/:id/reject`
 - Ledger `PATCH`/`DELETE` and date-range filters.
 
-Not yet implemented: receipt OCR, confirmed text-command auto-execution without the client save step, and Notion sync.
+Not yet implemented: confirmed text-command auto-execution without the client save step, and Notion sync.
 
 ## Web route map
 
@@ -36,11 +37,11 @@ Live routes:
 - `/settings/accounts` — persistent account list/create/edit and deactivate/reactivate management.
 - `/settings/categories` — persistent category list/create/edit management.
 - `/settings` — settings hub linking to account and category management.
-- `/capture` — live text and voice capture. Voice uses `POST /ai-intake/voice`, shows the transcript, and saves posted or needs-review ledger entries.
+- `/capture` — live text, voice, and receipt capture. Voice uses `POST /ai-intake/voice`. Receipts use `POST /ai-intake/receipt`, show extracted facts for correction, and save posted or needs-review ledger entries.
 - `/review` — live review inbox for `NEEDS_REVIEW` entries.
 - `/rules` — live automation rules.
 
-Design/demo-only routes still present for future phases: receipt-oriented capture only.
+Design/demo-only routes still present for future phases: none for capture; receipt capture is live.
 
 ## Delivery notes
 
@@ -48,4 +49,4 @@ Design/demo-only routes still present for future phases: receipt-oriented captur
 - Categories are editable only; there is no delete affordance because the current schema has no category active flag.
 - Monthly breakdown uses the existing analytics route and now partitions both income and expense category totals.
 - The web UI uses existing semantic tokens, `.surface-card`, `.field`, and the current shell rather than a second styling system.
-- Live AI intake uses OpenRouter (`OPENROUTER_API_KEY`, default chat model `openai/gpt-4o-mini`, transcription `openai/whisper-1`). Text and voice both call `https://openrouter.ai/api/v1`.
+- Live AI intake uses OpenRouter (`OPENROUTER_API_KEY`, default chat model `openai/gpt-4o-mini`, transcription `openai/whisper-1`, vision `openai/gpt-4o-mini` via `OPENROUTER_VISION_MODEL`). Text, voice, and receipts all call `https://openrouter.ai/api/v1`.

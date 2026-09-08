@@ -5,6 +5,7 @@ export type {
   EnvReader,
 } from "./ai-runtime-config.js";
 export { OpenRouterAudioTranscriber } from "./openrouter-audio-transcriber.js";
+export { OpenRouterReceiptParser } from "./openrouter-receipt-parser.js";
 export { OpenRouterTextCommandParser } from "./openrouter-text-command-parser.js";
 export {
   OPENROUTER_BASE_URL,
@@ -12,6 +13,7 @@ export {
   OPENROUTER_DEFAULT_CHAT_MODEL,
   OPENROUTER_DEFAULT_HTTP_REFERER,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+  OPENROUTER_DEFAULT_VISION_MODEL,
   audioFormatFromMimeOrFilename,
   buildOpenRouterHeaders,
 } from "./openrouter.js";
@@ -19,6 +21,10 @@ export type {
   AudioTranscriber,
   AudioTranscriptionInput,
 } from "./audio-transcriber.js";
+export type {
+  ParseReceiptInput,
+  ReceiptParser,
+} from "./receipt-parser.js";
 export type {
   ParseTextCommandInput,
   ParserAccountOption,

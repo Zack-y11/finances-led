@@ -7,6 +7,7 @@ import type {
   InputSessionTrace,
   ParseTextCommandRequest,
   ParsedFinanceCommand,
+  ReceiptIntakeResult,
   UpdateAccount,
   UpdateAutomationRule,
   UpdateCategory,
@@ -303,6 +304,26 @@ export function createFinanceApiClient({
         } as unknown as Blob);
       }
       return request<VoiceIntakeResult>("/ai-intake/voice", {
+        method: "POST",
+        body: form,
+      });
+    },
+    async parseReceiptCommand(
+      file: { uri: string; name: string; type: string } | Blob,
+      filename = "receipt-capture.jpg",
+    ): Promise<ReceiptIntakeResult> {
+      const form = new FormData();
+      if (typeof Blob !== "undefined" && file instanceof Blob) {
+        form.append("image", file, filename);
+      } else {
+        const nativeFile = file as { uri: string; name: string; type: string };
+        form.append("image", {
+          uri: nativeFile.uri,
+          name: nativeFile.name,
+          type: nativeFile.type,
+        } as unknown as Blob);
+      }
+      return request<ReceiptIntakeResult>("/ai-intake/receipt", {
         method: "POST",
         body: form,
       });

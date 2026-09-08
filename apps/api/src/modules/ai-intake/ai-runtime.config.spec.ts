@@ -2,12 +2,15 @@ import {
   OPENROUTER_BASE_URL,
   OPENROUTER_DEFAULT_CHAT_MODEL,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+  OPENROUTER_DEFAULT_VISION_MODEL,
   OpenRouterAudioTranscriber,
+  OpenRouterReceiptParser,
   OpenRouterTextCommandParser,
   resolveAiRuntimeConfig,
 } from '@finance/ai';
 
 import { createAudioTranscriber } from './audio-transcriber.provider.js';
+import { createReceiptParser } from './receipt-parser.provider.js';
 import { createTextCommandParser } from './text-command-parser.provider.js';
 
 type FetchCall = {
@@ -71,6 +74,7 @@ describe('OpenRouter AI runtime', () => {
         baseUrl: OPENROUTER_BASE_URL,
         chatModel: OPENROUTER_DEFAULT_CHAT_MODEL,
         transcribeModel: OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+        visionModel: OPENROUTER_DEFAULT_VISION_MODEL,
       }),
     );
     expect(runtime?.baseUrl).not.toContain('api.openai.com');
@@ -96,6 +100,7 @@ describe('OpenRouter AI runtime', () => {
       OPENROUTER_MODEL: 'anthropic/claude-sonnet-4',
       OPENAI_MODEL: 'gpt-4o-mini',
       OPENROUTER_TRANSCRIBE_MODEL: 'openai/whisper-large-v3',
+      OPENROUTER_VISION_MODEL: 'openai/gpt-4o',
       OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
       OPENROUTER_HTTP_REFERER: 'https://ledger.example',
       OPENROUTER_APP_TITLE: 'Ledger',
@@ -107,6 +112,7 @@ describe('OpenRouter AI runtime', () => {
       baseUrl: 'https://openrouter.ai/api/v1',
       chatModel: 'anthropic/claude-sonnet-4',
       transcribeModel: 'openai/whisper-large-v3',
+      visionModel: 'openai/gpt-4o',
       httpReferer: 'https://ledger.example',
       appTitle: 'Ledger',
     });
@@ -116,9 +122,11 @@ describe('OpenRouter AI runtime', () => {
     const config = { get: () => undefined };
     const parser = createTextCommandParser(config as never);
     const transcriber = createAudioTranscriber(config as never);
+    const receiptParser = createReceiptParser(config as never);
 
     expect(parser).not.toBeInstanceOf(OpenRouterTextCommandParser);
     expect(transcriber).not.toBeInstanceOf(OpenRouterAudioTranscriber);
+    expect(receiptParser).not.toBeInstanceOf(OpenRouterReceiptParser);
     return expect(
       parser.parseText({
         text: 'hi',
@@ -217,5 +225,65 @@ describe('OpenRouter AI runtime', () => {
     expect(body.input_audio.data).toBe(
       Buffer.from('fake-audio').toString('base64'),
     );
+  });
+
+  it('sends receipt images to OpenRouter chat completions as vision content', async () => {
+    const fetchStub = stubFetch({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              intent: 'create_ledger_entry',
+              data: {
+                type: 'expense',
+                amount: 14.5,
+                currency: 'USD',
+                merchant: 'Blue Bottle Coffee',
+                account: 'BAC',
+                category: 'Food',
+                occurredAt: '2026-09-04',
+              },
+              confidence: 0.92,
+            }),
+          },
+        },
+      ],
+    });
+    restores.push(fetchStub.restore);
+
+    const parser = new OpenRouterReceiptParser({
+      apiKey: 'or-key',
+      model: 'openai/gpt-4o-mini',
+    });
+    const image = Buffer.from('fake-receipt');
+    const result = await parser.parseReceipt({
+      image,
+      mimeType: 'image/jpeg',
+      filename: 'receipt.jpg',
+      referenceDate: '2026-09-04',
+      accounts: [{ name: 'BAC', currency: 'USD' }],
+      categories: [{ name: 'Food', kind: 'expense' }],
+    });
+
+    expect(result.intent).toBe('create_ledger_entry');
+    expect(result.data.merchant).toBe('Blue Bottle Coffee');
+    expect(fetchStub.calls[0]?.url).toBe(
+      'https://openrouter.ai/api/v1/chat/completions',
+    );
+    expect(fetchStub.calls[0]?.url).not.toContain('api.openai.com');
+    const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
+      model: string;
+      messages: Array<{
+        content: string | Array<{ type: string; image_url?: { url: string } }>;
+      }>;
+    };
+    expect(body.model).toBe('openai/gpt-4o-mini');
+    const userContent = body.messages[1]?.content;
+    expect(Array.isArray(userContent)).toBe(true);
+    const imagePart = Array.isArray(userContent)
+      ? userContent.find((part) => part.type === 'image_url')
+      : undefined;
+    expect(imagePart?.image_url?.url).toMatch(/^data:image\/jpeg;base64,/);
+    expect(image.equals(Buffer.from('fake-receipt'))).toBe(true);
   });
 });

@@ -39,6 +39,13 @@
         {
           "microphonePermission": "Ledger AI records short voice notes in app cache, transcribes them, and deletes the audio."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Ledger AI reads a receipt photo from your library, extracts totals, and deletes the cached copy.",
+          "cameraPermission": "Ledger AI captures a receipt photo in app cache, extracts totals, and deletes the image."
+        }
       ]
     ],
     "experiments": {

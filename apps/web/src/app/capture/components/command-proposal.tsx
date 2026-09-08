@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { createLedgerEntry, money, type LedgerOptions } from "@/lib/api";
 import { nativeSelectClassName } from "@/lib/utils";
 
@@ -27,13 +28,16 @@ export function CommandProposal({
   result: ParsedFinanceCommand;
   options: LedgerOptions | null;
   note?: string;
-  inputMethod: "text" | "voice";
+  inputMethod: "text" | "voice" | "receipt";
   inputSessionId?: string;
   onDiscard: () => void;
   onSaved: (message: string) => void;
 }) {
   const [accountId, setAccountId] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [merchant, setMerchant] = useState(result.data.merchant ?? "");
+  const [amount, setAmount] = useState(String(result.data.amount));
+  const [occurredAt, setOccurredAt] = useState(result.data.occurredAt);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,13 +71,19 @@ export function CommandProposal({
     setSaving(true);
     setError(null);
     try {
+      const parsedAmount = Number(amount);
+      if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+        setError("Enter a positive amount before saving.");
+        setSaving(false);
+        return;
+      }
       const dateStr =
-        result.data.occurredAt || new Date().toISOString().slice(0, 10);
+        occurredAt || new Date().toISOString().slice(0, 10);
       await createLedgerEntry({
         type: result.data.type,
-        amount: result.data.amount,
+        amount: parsedAmount,
         currency: result.data.currency || "USD",
-        merchant: result.data.merchant || undefined,
+        merchant: merchant.trim() || undefined,
         accountId: selectedAccountId,
         categoryId: selectedCategoryId,
         occurredAt: `${dateStr}T12:00:00.000Z`,
@@ -124,14 +134,12 @@ export function CommandProposal({
             </p>
           ) : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
-            <Detail label="Amount" value={money(result.data.amount)} />
+            <Detail label="Amount" value={money(Number(amount) || 0)} />
             <Detail label="Type" value={result.data.type} />
             <Detail label="Category" value={result.data.category} />
             <Detail label="Account" value={result.data.account} />
-            {result.data.merchant ? (
-              <Detail label="Merchant" value={result.data.merchant} />
-            ) : null}
-            <Detail label="Date" value={result.data.occurredAt} />
+            {merchant ? <Detail label="Merchant" value={merchant} /> : null}
+            <Detail label="Date" value={occurredAt} />
             <Detail label="Intent" value={result.intent} />
             <Detail label="Currency" value={result.data.currency} />
           </div>
@@ -140,8 +148,43 @@ export function CommandProposal({
       {error ? <p className="text-sm text-danger">{error}</p> : null}
       <div className="grid gap-4 border-t border-border pt-5">
         <h3 className="text-sm font-semibold text-ink">
-          Confirm account and category
+          {inputMethod === "receipt"
+            ? "Correct extracted facts"
+            : "Confirm account and category"}
         </h3>
+        {inputMethod === "receipt" ? (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="text-xs font-medium text-muted">
+              Merchant
+              <Input
+                className="mt-1"
+                onChange={(event) => setMerchant(event.target.value)}
+                value={merchant}
+              />
+            </label>
+            <label className="text-xs font-medium text-muted">
+              Amount
+              <Input
+                className="mt-1"
+                inputMode="decimal"
+                min="0.01"
+                onChange={(event) => setAmount(event.target.value)}
+                step="0.01"
+                type="number"
+                value={amount}
+              />
+            </label>
+            <label className="text-xs font-medium text-muted">
+              Date
+              <Input
+                className="mt-1"
+                onChange={(event) => setOccurredAt(event.target.value)}
+                type="date"
+                value={occurredAt}
+              />
+            </label>
+          </div>
+        ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-medium text-muted">
             Account

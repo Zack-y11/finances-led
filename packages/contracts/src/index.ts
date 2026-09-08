@@ -189,6 +189,15 @@ export const voiceIntakeResultSchema = z.object({
   parseError: z.string().optional(),
 });
 
+export const parseReceiptCommandRequestSchema = z.object({
+  referenceDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    .optional(),
+});
+
+export const receiptIntakeResultSchema = voiceIntakeResultSchema;
+
 export const inputSessionTraceSchema = z.object({
   id: z.string().uuid(),
   modality: inputSessionModalitySchema,
@@ -251,7 +260,11 @@ export type ParseTextCommandRequest = z.infer<
 export type ParseVoiceCommandRequest = z.infer<
   typeof parseVoiceCommandRequestSchema
 >;
+export type ParseReceiptCommandRequest = z.infer<
+  typeof parseReceiptCommandRequestSchema
+>;
 export type VoiceIntakeResult = z.infer<typeof voiceIntakeResultSchema>;
+export type ReceiptIntakeResult = z.infer<typeof receiptIntakeResultSchema>;
 export type InputSessionTrace = z.infer<typeof inputSessionTraceSchema>;
 export type InputSessionModality = z.infer<typeof inputSessionModalitySchema>;
 export type InputSessionStatus = z.infer<typeof inputSessionStatusSchema>;

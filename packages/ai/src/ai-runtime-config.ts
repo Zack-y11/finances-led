@@ -4,6 +4,7 @@ import {
   OPENROUTER_DEFAULT_CHAT_MODEL,
   OPENROUTER_DEFAULT_HTTP_REFERER,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+  OPENROUTER_DEFAULT_VISION_MODEL,
 } from "./openrouter.js";
 
 export type AiProviderName = "openrouter";
@@ -18,6 +19,7 @@ export type AiRuntimeConfig = {
   baseUrl: string;
   chatModel: string;
   transcribeModel: string;
+  visionModel: string;
   httpReferer: string;
   appTitle: string;
 };
@@ -55,6 +57,12 @@ export function resolveAiRuntimeConfig(env: EnvReader): AiRuntimeConfig | null {
       readEnv(env, "OPENROUTER_TRANSCRIBE_MODEL") ??
       readEnv(env, "OPENAI_TRANSCRIBE_MODEL") ??
       OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+    visionModel:
+      readEnv(env, "OPENROUTER_VISION_MODEL") ??
+      readEnv(env, "OPENROUTER_MODEL") ??
+      readEnv(env, "AI_MODEL") ??
+      readEnv(env, "OPENAI_MODEL") ??
+      OPENROUTER_DEFAULT_VISION_MODEL,
     httpReferer:
       readEnv(env, "OPENROUTER_HTTP_REFERER") ??
       OPENROUTER_DEFAULT_HTTP_REFERER,
