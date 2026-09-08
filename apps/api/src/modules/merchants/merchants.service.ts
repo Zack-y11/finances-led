@@ -59,6 +59,12 @@ export class MerchantsService {
     }
     await this.assertOwnedCategory(input.defaultCategoryId);
 
+    if (await this.findByKey(prepared.key)) {
+      throw new ConflictException(
+        'A merchant or alias with that normalized name already exists',
+      );
+    }
+
     try {
       return await this.prisma.db.$transaction(async (tx) => {
         const merchant = await tx.merchant.create({
@@ -104,6 +110,15 @@ export class MerchantsService {
         : prepareMerchantName(existing.displayName);
     if (!nextName) {
       throw new ConflictException('Merchant name is empty after normalization');
+    }
+
+    if (input.displayName !== undefined) {
+      const collision = await this.findByKey(nextName.key);
+      if (collision && collision.id !== id) {
+        throw new ConflictException(
+          'A merchant or alias with that normalized name already exists',
+        );
+      }
     }
 
     try {
@@ -161,10 +176,15 @@ export class MerchantsService {
   }
 
   async addAlias(id: string, input: CreateMerchantAlias) {
-    await this.findOwned(id);
+    const merchant = await this.findOwned(id);
     const prepared = prepareMerchantName(input.alias);
     if (!prepared) {
       throw new ConflictException('Alias is empty after normalization');
+    }
+    if (prepared.key === merchant.normalizedKey) {
+      throw new ConflictException(
+        'Alias must differ from the merchant normalized name',
+      );
     }
 
     const collision = await this.findByKey(prepared.key);
@@ -214,7 +234,19 @@ export class MerchantsService {
       this.findOwned(sourceMerchantId),
     ]);
 
-    return this.prisma.db.$transaction(async (tx) => {
+    await this.prisma.db.$transaction(async (tx) => {
+      const adoptedDefaultCategoryId =
+        !target.defaultCategory && source.defaultCategory
+          ? source.defaultCategory.id
+          : undefined;
+
+      if (adoptedDefaultCategoryId) {
+        await tx.merchant.update({
+          where: { id: target.id },
+          data: { defaultCategoryId: adoptedDefaultCategoryId },
+        });
+      }
+
       const aliases = await tx.merchantAlias.findMany({
         where: { merchantId: source.id, userId: this.userId },
       });
@@ -277,6 +309,7 @@ export class MerchantsService {
             sourceMerchantId: source.id,
             sourceDisplayName: source.displayName,
             targetDisplayName: target.displayName,
+            ...(adoptedDefaultCategoryId ? { adoptedDefaultCategoryId } : {}),
           },
         },
       });
@@ -340,15 +373,34 @@ export class MerchantsService {
     key: string;
   }) {
     try {
-      return await this.prisma.db.merchant.create({
-        data: {
-          userId: this.userId,
-          displayName: prepared.displayName,
-          normalizedKey: prepared.key,
-        },
-        include: {
-          defaultCategory: { select: { id: true, name: true } },
-        },
+      return await this.prisma.db.$transaction(async (tx) => {
+        const merchant = await tx.merchant.create({
+          data: {
+            userId: this.userId,
+            displayName: prepared.displayName,
+            normalizedKey: prepared.key,
+          },
+          include: {
+            defaultCategory: { select: { id: true, name: true } },
+          },
+        });
+
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'Merchant',
+            entityId: merchant.id,
+            action: 'CREATE',
+            reason: `Created merchant "${merchant.displayName}" from an incoming entry.`,
+            metadata: {
+              displayName: merchant.displayName,
+              normalizedKey: merchant.normalizedKey,
+              source: 'automatic_normalization',
+            },
+          },
+        });
+
+        return merchant;
       });
     } catch (error) {
       if (
@@ -364,7 +416,11 @@ export class MerchantsService {
 
   private async findByKey(normalizedKey: string) {
     const alias = await this.prisma.db.merchantAlias.findFirst({
-      where: { userId: this.userId, normalizedKey },
+      where: {
+        userId: this.userId,
+        normalizedKey,
+        merchant: { is: { userId: this.userId } },
+      },
       include: {
         merchant: {
           include: {

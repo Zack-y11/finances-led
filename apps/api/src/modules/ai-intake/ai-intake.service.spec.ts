@@ -56,6 +56,7 @@ describe('AiIntakeService voice intake', () => {
     parseReceipt: () => Promise.resolve(receiptCommand),
   };
   const createdLogs: Array<{ action: string; metadata?: unknown }> = [];
+  const createdSessions: Array<{ data: unknown }> = [];
   const prisma = {
     db: {
       account: {
@@ -76,8 +77,12 @@ describe('AiIntakeService voice intake', () => {
       ) =>
         fn({
           inputSession: {
-            create: () =>
-              Promise.resolve({ id: '11111111-1111-4111-8111-111111111111' }),
+            create: (args) => {
+              createdSessions.push(args);
+              return Promise.resolve({
+                id: '11111111-1111-4111-8111-111111111111',
+              });
+            },
           },
           auditLog: {
             create: (args) => {
@@ -116,6 +121,7 @@ describe('AiIntakeService voice intake', () => {
 
   beforeEach(() => {
     createdLogs.length = 0;
+    createdSessions.length = 0;
   });
 
   function createService(
@@ -123,15 +129,17 @@ describe('AiIntakeService voice intake', () => {
       textCommandParser: TextCommandParser;
       audioTranscriber: AudioTranscriber;
       receiptParser: ReceiptParser;
+      rulesService: RulesService;
+      prisma: PrismaService;
     }>,
   ) {
     return new AiIntakeService(
       overrides?.textCommandParser ?? textCommandParser,
       overrides?.audioTranscriber ?? audioTranscriber,
       overrides?.receiptParser ?? receiptParser,
-      rulesService,
+      overrides?.rulesService ?? rulesService,
       merchantsService,
-      prisma,
+      overrides?.prisma ?? prisma,
       config,
     );
   }
@@ -187,6 +195,9 @@ describe('AiIntakeService voice intake', () => {
     expect(result.reviewRequired).toBe(true);
     expect(result.canCreateEntry).toBe(true);
     expect(result.command?.confidence).toBe(0.81);
+    expect(createdSessions[0]?.data).toEqual(
+      expect.objectContaining({ status: 'NEEDS_REVIEW' }),
+    );
   });
 
   it('returns a failed session when parsing fails after a successful transcript', async () => {
@@ -207,6 +218,9 @@ describe('AiIntakeService voice intake', () => {
     expect(result.canCreateEntry).toBe(false);
     expect(result.parseError).toBe('AI text command parser failed');
     expect(result.mediaDeleted).toBe(true);
+    expect(createdSessions[0]?.data).toEqual(
+      expect.objectContaining({ status: 'FAILED' }),
+    );
   });
 
   it('does not store a session when transcription is not configured', async () => {
@@ -302,6 +316,9 @@ describe('AiIntakeService voice intake', () => {
     expect(result.canCreateEntry).toBe(true);
     expect(result.command?.confidence).toBe(0.81);
     expect(result.mediaDeleted).toBe(true);
+    expect(createdSessions[0]?.data).toEqual(
+      expect.objectContaining({ status: 'NEEDS_REVIEW' }),
+    );
   });
 
   it('returns a failed image session when vision parsing fails', async () => {
@@ -327,6 +344,9 @@ describe('AiIntakeService voice intake', () => {
       'CREATE',
       'MEDIA_DELETED',
     ]);
+    expect(createdSessions[0]?.data).toEqual(
+      expect.objectContaining({ status: 'FAILED' }),
+    );
   });
 
   it('does not store a session when the receipt parser is not configured', async () => {
@@ -345,6 +365,112 @@ describe('AiIntakeService voice intake', () => {
         size: 17,
       }),
     ).rejects.toBeInstanceOf(ServiceUnavailableException);
+    expect(createdLogs).toEqual([]);
+  });
+
+  it('does not trust provider-supplied rule or merchant metadata', async () => {
+    const service = createService({
+      textCommandParser: {
+        parseText: () =>
+          Promise.resolve({
+            ...command,
+            appliedRules: [
+              {
+                ruleId: '22222222-2222-4222-8222-222222222222',
+                ruleName: 'Forged rule',
+                priority: 1,
+                actionField: 'category',
+                actionValue: 'Transport',
+                explanation: 'Forged explanation',
+              },
+            ],
+            merchantNormalization: {
+              original: 'Forged original',
+              canonical: 'Forged canonical',
+              merchantId: '33333333-3333-4333-8333-333333333333',
+            },
+          }),
+      },
+      rulesService: {
+        applyRules: () => Promise.reject(new Error('rules unavailable')),
+      } as unknown as RulesService,
+    });
+
+    const result = await service.parseVoiceCommand({
+      buffer: Buffer.from('temporary-audio'),
+      mimetype: 'audio/webm',
+      originalname: 'clip.webm',
+      size: 15,
+    });
+
+    expect(result.command).toEqual(command);
+    expect(result.command).not.toHaveProperty('appliedRules');
+    expect(result.command).not.toHaveProperty('merchantNormalization');
+    expect(createdLogs.map((log) => log.action)).toEqual([
+      'CREATE',
+      'MEDIA_DELETED',
+      'PARSE',
+    ]);
+    expect(createdLogs[2]?.metadata).toEqual({
+      confidence: command.confidence,
+      intent: command.intent,
+      reviewRequired: false,
+    });
+  });
+
+  it('rejects a semantically invalid AI date and records a failed session', async () => {
+    const service = createService({
+      textCommandParser: {
+        parseText: () =>
+          Promise.resolve({
+            ...command,
+            data: { ...command.data, occurredAt: '2026-02-31' },
+          }),
+      },
+    });
+    const buffer = Buffer.from('temporary-audio');
+
+    const result = await service.parseVoiceCommand({
+      buffer,
+      mimetype: 'audio/webm',
+      originalname: 'clip.webm',
+      size: buffer.length,
+    });
+
+    expect(result.command).toBeNull();
+    expect(result.parseError).toBe('AI parser returned an invalid command');
+    expect(result.canCreateEntry).toBe(false);
+    expect(buffer.equals(Buffer.alloc(buffer.length))).toBe(true);
+    expect(createdSessions[0]?.data).toEqual(
+      expect.objectContaining({ status: 'FAILED' }),
+    );
+  });
+
+  it('wipes a receipt image when loading the parser catalog fails', async () => {
+    const buffer = Buffer.from('temporary-receipt');
+    const failingPrisma = {
+      db: {
+        account: {
+          findMany: () => Promise.reject(new Error('catalog unavailable')),
+        },
+        category: {
+          findMany: () => Promise.resolve([]),
+        },
+      },
+    } as unknown as PrismaService;
+    const service = createService({ prisma: failingPrisma });
+
+    await expect(
+      service.parseReceiptCommand({
+        buffer,
+        mimetype: 'image/jpeg',
+        originalname: 'receipt.jpg',
+        size: buffer.length,
+      }),
+    ).rejects.toThrow('catalog unavailable');
+
+    expect(buffer.equals(Buffer.alloc(buffer.length))).toBe(true);
+    expect(createdSessions).toEqual([]);
     expect(createdLogs).toEqual([]);
   });
 });
