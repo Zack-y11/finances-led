@@ -68,6 +68,7 @@ Write an audit event when the system:
 - Appends an entry to a group
 - Auto-categorizes an entry
 - Applies a user rule
+- Normalizes a merchant name
 - Marks an entry as needing review
 - Deletes or confirms deletion of raw media
 - Syncs an entry to Notion
@@ -93,6 +94,18 @@ Metadata: { groupName: "Gasto semanal - Julio", confidence: 0.92 }
 LedgerEntry AUTO_CATEGORIZE
 Reason: Merchant rule matched Starbucks.
 Metadata: { ruleId: "...", category: "Food" }
+```
+
+```txt
+InputSession RULE_APPLIED
+Reason: When merchant contains "Starbucks", set category to "Food" (rule "Starbucks Dining", priority 1).
+Metadata: { appliedRules: [{ ruleId, ruleName, priority, actionField, actionValue, explanation }] }
+```
+
+```txt
+LedgerEntry MERCHANT_NORMALIZED
+Reason: Merchant "STARBUCKS #1842" was normalized to "Starbucks".
+Metadata: { original: "STARBUCKS #1842", canonical: "Starbucks", merchantId: "..." }
 ```
 
 ```txt

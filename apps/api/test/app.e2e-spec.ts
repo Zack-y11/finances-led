@@ -37,6 +37,9 @@ describe('Ledger endpoints (e2e)', () => {
   let voiceEntryId: string | undefined;
   const receiptSessionIds: string[] = [];
   let receiptEntryId: string | undefined;
+  const phase6EntryIds: string[] = [];
+  const phase6RuleIds: string[] = [];
+  const phase6MerchantIds: string[] = [];
 
   const fixtureId = randomUUID();
   const createInput = () => ({
@@ -1286,8 +1289,204 @@ describe('Ledger endpoints (e2e)', () => {
       .expect(200);
     expect(emptyBreakdownResponse.body).toEqual({ expenses: [], income: [] });
   });
+
+  it('applies the highest-priority matching rule and explains it on parse', async () => {
+    const high = await request(app.getHttpServer())
+      .post('/rules')
+      .send({
+        name: `Phase6 Starbucks Transport ${fixtureId}`,
+        conditionField: 'merchant',
+        conditionOp: 'contains',
+        conditionValue: 'Starbucks',
+        actionField: 'category',
+        actionValue: 'Transport',
+        priority: 1,
+        isEnabled: true,
+      })
+      .expect(201);
+    const low = await request(app.getHttpServer())
+      .post('/rules')
+      .send({
+        name: `Phase6 Starbucks Utilities ${fixtureId}`,
+        conditionField: 'merchant',
+        conditionOp: 'contains',
+        conditionValue: 'Starbucks',
+        actionField: 'category',
+        actionValue: 'Utilities',
+        priority: 9,
+        isEnabled: true,
+      })
+      .expect(201);
+    phase6RuleIds.push(high.body.id, low.body.id);
+
+    const parsed = await request(app.getHttpServer())
+      .post('/ai-intake/text')
+      .send({
+        text: 'I spent $3.19 at Starbucks with BAC today',
+        referenceDate: '2026-07-14',
+      })
+      .expect(201);
+
+    expect(parsed.body.data.category).toBe('Transport');
+    expect(parsed.body.appliedRules).toEqual([
+      expect.objectContaining({
+        ruleId: high.body.id,
+        actionField: 'category',
+        actionValue: 'Transport',
+      }),
+    ]);
+    expect(parsed.body.appliedRules[0].explanation).toContain('priority 1');
+
+    const voice = await request(app.getHttpServer())
+      .post('/ai-intake/voice')
+      .field('referenceDate', '2026-07-14')
+      .attach('audio', Buffer.from('phase6-voice-bytes'), {
+        filename: 'clip.webm',
+        contentType: 'audio/webm',
+      })
+      .expect(201);
+    voiceSessionIds.push(voice.body.inputSessionId);
+    expect(voice.body.command.appliedRules).toEqual([
+      expect.objectContaining({
+        ruleId: high.body.id,
+        actionValue: 'Transport',
+      }),
+    ]);
+
+    const audits = await prisma.auditLog.findMany({
+      where: {
+        entityType: 'InputSession',
+        entityId: voice.body.inputSessionId,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+    expect(audits.map((entry) => entry.action)).toEqual([
+      'CREATE',
+      'MEDIA_DELETED',
+      'PARSE',
+      'RULE_APPLIED',
+    ]);
+
+    await request(app.getHttpServer())
+      .delete(`/rules/${high.body.id}`)
+      .expect(200);
+    await request(app.getHttpServer())
+      .delete(`/rules/${low.body.id}`)
+      .expect(200);
+  });
+
+  it('normalizes merchant aliases onto a canonical merchant record', async () => {
+    const created = await request(app.getHttpServer())
+      .post('/merchants')
+      .send({
+        displayName: `Phase6 Beans ${fixtureId}`,
+        defaultCategoryId: categoryId,
+      })
+      .expect(201);
+    phase6MerchantIds.push(created.body.id);
+
+    await request(app.getHttpServer())
+      .post(`/merchants/${created.body.id}/aliases`)
+      .send({ alias: `P6BEANS ${fixtureId}` })
+      .expect(201);
+
+    const entry = await request(app.getHttpServer())
+      .post('/ledger-entries')
+      .send({
+        ...createInput(),
+        merchant: `P6BEANS ${fixtureId} #88`,
+        accountId,
+        categoryId,
+      })
+      .expect(201);
+    phase6EntryIds.push(entry.body.id);
+
+    expect(entry.body.merchant).toBe(`Phase6 Beans ${fixtureId}`);
+    expect(entry.body.merchantId).toBe(created.body.id);
+
+    const audits = await prisma.auditLog.findMany({
+      where: { entityType: 'LedgerEntry', entityId: entry.body.id },
+    });
+    expect(audits.map((item) => item.action)).toEqual(
+      expect.arrayContaining(['CREATE', 'MERCHANT_NORMALIZED']),
+    );
+  });
+
+  it('detects recurring posted transactions for a normalized merchant', async () => {
+    const merchantName = `Phase6 Claro ${fixtureId}`;
+    const dates = [
+      '2026-02-08T12:00:00.000Z',
+      '2026-03-08T12:00:00.000Z',
+      '2026-04-08T12:00:00.000Z',
+      '2026-05-08T12:00:00.000Z',
+    ];
+    for (const occurredAt of dates) {
+      const entry = await request(app.getHttpServer())
+        .post('/ledger-entries')
+        .send({
+          type: 'expense',
+          amount: 12.5,
+          currency: 'USD',
+          merchant: merchantName,
+          occurredAt,
+          accountId,
+          categoryId,
+          inputMethod: 'manual',
+        })
+        .expect(201);
+      phase6EntryIds.push(entry.body.id);
+    }
+
+    const response = await request(app.getHttpServer())
+      .get('/recurring-patterns')
+      .expect(200);
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          merchant: merchantName,
+          cadence: 'monthly',
+          occurrenceCount: 4,
+          type: 'expense',
+        }),
+      ]),
+    );
+  });
+
   afterAll(async () => {
     if (prisma) {
+      if (phase6EntryIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'LedgerEntry',
+            entityId: { in: phase6EntryIds },
+          },
+        });
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: phase6EntryIds } },
+        });
+      }
+      if (phase6RuleIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'AutomationRule',
+            entityId: { in: phase6RuleIds },
+          },
+        });
+        await prisma.automationRule.deleteMany({
+          where: { id: { in: phase6RuleIds } },
+        });
+      }
+      if (phase6MerchantIds.length) {
+        await prisma.auditLog.deleteMany({
+          where: {
+            entityType: 'Merchant',
+            entityId: { in: phase6MerchantIds },
+          },
+        });
+        await prisma.merchant.deleteMany({
+          where: { id: { in: phase6MerchantIds } },
+        });
+      }
       if (analyticsEntryIds.length) {
         await prisma.ledgerEntry.deleteMany({
           where: { id: { in: analyticsEntryIds } },

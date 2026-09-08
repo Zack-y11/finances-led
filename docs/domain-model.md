@@ -79,46 +79,60 @@ Category `kind` controls whether it applies to income, expense, or both.
 
 ## Merchant
 
-Merchants are currently stored as free text on ledger entries. A future
-`Merchant` table should be added when the app needs normalized merchant names,
-default categories, or merchant-specific analytics.
+Merchants are user-owned canonical payees. Ledger entries still store a display
+`merchant` string for history, plus an optional `merchantId` pointing at the
+canonical record.
 
-Recommended future shape:
+Current shape:
 
 ```txt
 merchants
 - id
 - user_id
-- name
-- normalized_name
+- display_name
+- normalized_key
 - default_category_id
+
+merchant_aliases
+- id
+- merchant_id
+- user_id
+- alias
+- normalized_key
 ```
+
+Incoming names are normalized deterministically (case, punctuation, store
+numbers, Inc/LLC suffixes) and matched against `normalized_key` or an alias
+before rules run. Users can add aliases, set a default category, and merge
+duplicate merchants.
 
 ## Rule
 
-Rules are future deterministic automations. They should be user-owned,
-explainable, and ordered by priority.
+Rules are user-owned deterministic automations. They are explainable and ordered
+by priority (1 is highest). The first matching rule wins per action field.
 
-Recommended future shape:
+Current shape:
 
 ```txt
-rules
+automation_rules
 - id
 - user_id
-- condition_type     merchant | phrase | source | amount_range
+- name
+- condition_field    merchant | note | amount
+- condition_op       contains | equals | less_than | greater_than
 - condition_value
-- action_type        set_category | set_account | set_group
+- action_field       category | account
 - action_value
 - priority
-- active
+- is_enabled
 ```
 
 Example rules:
 
 ```txt
-merchant = Starbucks -> category = Food
+merchant contains Starbucks -> category = Food
 phrase contains bus -> category = Transport
-source = BAC and phrase contains salario -> category = Salary
+amount greater than 50 -> account = Cash
 ```
 
 ## Input Session
@@ -153,6 +167,7 @@ Audit logs explain important state changes:
 - `AUTO_CATEGORIZE`
 - `MARK_NEEDS_REVIEW`
 - `RULE_APPLIED`
+- `MERCHANT_NORMALIZED`
 - `MEDIA_DELETED`
 
 Audit metadata can include parser confidence, input method, applied rule ids,

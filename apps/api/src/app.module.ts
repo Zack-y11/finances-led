@@ -12,6 +12,7 @@ import { LedgerModule } from './modules/ledger/ledger.module.js';
 import { AiIntakeModule } from './modules/ai-intake/ai-intake.module.js';
 import { RulesModule } from './modules/rules/rules.module.js';
 import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module.js';
+import { MerchantsModule } from './modules/merchants/merchants.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module.js
     AiIntakeModule,
     RulesModule,
     ReviewInboxModule,
+    MerchantsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

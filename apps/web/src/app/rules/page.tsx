@@ -8,20 +8,24 @@ import { Card, cardVariants } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
+import { RecurringPatternsCard } from "@/components/ui/recurring-patterns-card";
 import {
   createAutomationRule,
   deleteAutomationRule,
   getAutomationRules,
   getLedgerOptions,
+  getRecurringPatterns,
   updateAutomationRule,
   type AutomationRule,
   type LedgerOptions,
+  type RecurringPattern,
 } from "@/lib/api";
 import { cn, nativeSelectClassName } from "@/lib/utils";
 
 export default function RulesPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
   const [rules, setRules] = useState<AutomationRule[]>([]);
+  const [recurring, setRecurring] = useState<RecurringPattern[]>([]);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,12 +43,14 @@ export default function RulesPage() {
   async function load() {
     setLoading(true);
     try {
-      const [rulesData, optsData] = await Promise.all([
+      const [rulesData, optsData, recurringData] = await Promise.all([
         getAutomationRules(),
         getLedgerOptions(),
+        getRecurringPatterns().catch(() => [] as RecurringPattern[]),
       ]);
       setRules(rulesData);
       setOptions(optsData);
+      setRecurring(recurringData);
       if (optsData.categories.length > 0 && !actionValue) {
         setActionValue(optsData.categories[0].name);
       }
@@ -58,12 +64,14 @@ export default function RulesPage() {
   useEffect(() => {
     void (async () => {
       try {
-        const [rulesData, optsData] = await Promise.all([
+        const [rulesData, optsData, recurringData] = await Promise.all([
           getAutomationRules(),
           getLedgerOptions(),
+          getRecurringPatterns().catch(() => [] as RecurringPattern[]),
         ]);
         setRules(rulesData);
         setOptions(optsData);
+        setRecurring(recurringData);
         if (optsData.categories.length > 0) {
           setActionValue((prev) => (prev ? prev : optsData.categories[0].name));
         }
@@ -140,7 +148,12 @@ export default function RulesPage() {
       <section className="rounded-xl border border-border bg-surface p-4 text-sm text-muted">
         <strong className="text-ink">Rule Evaluation Engine</strong>
         <p className="mt-1 leading-6">
-          Rules run in priority order. When an incoming text note matches a condition (e.g. <em>merchant contains Starbucks</em>), the system automatically applies your chosen category or account.
+          Rules run in priority order (1 is highest). The first matching rule
+          wins for each field, so a later category rule cannot overwrite an
+          earlier one. When an incoming merchant or note matches a condition
+          (e.g. <em>merchant contains Starbucks</em>), the system applies your
+          chosen category or account and writes a <code>RULE_APPLIED</code>{" "}
+          audit explanation.
         </p>
       </section>
 
@@ -284,6 +297,8 @@ export default function RulesPage() {
           </div>
         </form>
       ) : null}
+
+      <RecurringPatternsCard patterns={recurring} />
 
       <Card className="overflow-hidden gap-0">
         <div className="border-b border-border px-5 py-4 flex items-center justify-between">

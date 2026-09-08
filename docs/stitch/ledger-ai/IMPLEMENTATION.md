@@ -20,6 +20,8 @@ Live endpoints:
 - `POST /ai-intake/receipt` accepting an in-memory receipt photo, running OpenRouter vision extraction, storing an `InputSession` trace, and returning a proposal. Raw images are never persisted.
 - `GET /ai-intake/sessions` listing capture traces (transcript, hash, deletion timestamp). No media bytes.
 - `GET /rules`, `POST /rules`, `PATCH /rules/:id`, `DELETE /rules/:id`
+- `GET /merchants`, `POST /merchants`, `PATCH /merchants/:id`, `POST /merchants/:id/aliases`, `POST /merchants/:id/merge`
+- `GET /recurring-patterns`
 - `GET /review-items`, `POST /review-items/:id/approve`, `POST /review-items/:id/reject`
 - Ledger `PATCH`/`DELETE` and date-range filters.
 
@@ -39,7 +41,8 @@ Live routes:
 - `/settings` — settings hub linking to account and category management.
 - `/capture` — live text, voice, and receipt capture. Voice uses `POST /ai-intake/voice`. Receipts use `POST /ai-intake/receipt`, show extracted facts for correction, and save posted or needs-review ledger entries.
 - `/review` — live review inbox for `NEEDS_REVIEW` entries.
-- `/rules` — live automation rules.
+- `/rules` — live automation rules and detected recurring patterns.
+- `/settings/merchants` — canonical merchants, aliases, default categories, and merge.
 
 Design/demo-only routes still present for future phases: none for capture; receipt capture is live.
 

@@ -37,6 +37,7 @@ import {
   TextCommandParserNotConfiguredError,
 } from './text-command-parser.provider.js';
 import { RulesService } from '../rules/rules.service.js';
+import { MerchantsService } from '../merchants/merchants.service.js';
 import {
   assertAudioFile,
   discardAudioBuffer,
@@ -67,6 +68,7 @@ export class AiIntakeService {
     @Inject(RECEIPT_PARSER)
     private readonly receiptParser: ReceiptParser,
     private readonly rulesService: RulesService,
+    private readonly merchantsService: MerchantsService,
     private readonly prisma: PrismaService,
     config: ConfigService,
   ) {
@@ -288,15 +290,45 @@ export class AiIntakeService {
 
     const parsedData = result.data;
     try {
+      const resolved = await this.merchantsService.resolveForProposal(
+        parsedData.data.merchant,
+      );
+      if (resolved.merchant) {
+        parsedData.data.merchant = resolved.merchant;
+      }
+
       const evaluated = await this.rulesService.applyRules({
         merchant: parsedData.data.merchant,
+        note: parsedData.data.note,
         amount: parsedData.data.amount,
-        category: parsedData.data.category,
+        category: resolved.defaultCategoryName ?? parsedData.data.category,
         account: parsedData.data.account,
       });
 
-      parsedData.data.category = evaluated.category || parsedData.data.category;
-      parsedData.data.account = evaluated.account || parsedData.data.account;
+      parsedData.data.category =
+        evaluated.result.category || parsedData.data.category;
+      parsedData.data.account =
+        evaluated.result.account || parsedData.data.account;
+
+      return {
+        command: {
+          ...parsedData,
+          ...(evaluated.applied.length > 0
+            ? { appliedRules: evaluated.applied }
+            : {}),
+          ...(resolved.changed && resolved.original && resolved.merchant
+            ? {
+                merchantNormalization: {
+                  original: resolved.original,
+                  canonical: resolved.merchant,
+                  ...(resolved.merchantId
+                    ? { merchantId: resolved.merchantId }
+                    : {}),
+                },
+              }
+            : {}),
+        },
+      };
     } catch {
       // Rules engine failure should not block AI intake response
     }
@@ -375,9 +407,48 @@ export class AiIntakeService {
               confidence: input.parsed.command.confidence,
               intent: input.parsed.command.intent,
               reviewRequired: reviewRequired(input.parsed.command.confidence),
+              ...(input.parsed.command.appliedRules?.length
+                ? { appliedRules: input.parsed.command.appliedRules }
+                : {}),
+              ...(input.parsed.command.merchantNormalization
+                ? {
+                    merchantNormalization:
+                      input.parsed.command.merchantNormalization,
+                  }
+                : {}),
             },
           },
         });
+
+        if (input.parsed.command.appliedRules?.length) {
+          await tx.auditLog.create({
+            data: {
+              userId: this.userId,
+              entityType: 'InputSession',
+              entityId: created.id,
+              action: 'RULE_APPLIED',
+              reason: input.parsed.command.appliedRules
+                .map((rule) => rule.explanation)
+                .join(' '),
+              metadata: {
+                appliedRules: input.parsed.command.appliedRules,
+              },
+            },
+          });
+        }
+
+        if (input.parsed.command.merchantNormalization) {
+          await tx.auditLog.create({
+            data: {
+              userId: this.userId,
+              entityType: 'InputSession',
+              entityId: created.id,
+              action: 'MERCHANT_NORMALIZED',
+              reason: `Merchant "${input.parsed.command.merchantNormalization.original}" was normalized to "${input.parsed.command.merchantNormalization.canonical}".`,
+              metadata: input.parsed.command.merchantNormalization,
+            },
+          });
+        }
       }
 
       return created;
