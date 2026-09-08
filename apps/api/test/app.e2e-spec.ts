@@ -1376,10 +1376,11 @@ describe('Ledger endpoints (e2e)', () => {
   });
 
   it('normalizes merchant aliases onto a canonical merchant record', async () => {
+    const token = fixtureId.replaceAll('-', '').slice(0, 12);
     const created = await request(app.getHttpServer())
       .post('/merchants')
       .send({
-        displayName: `Phase6 Beans ${fixtureId}`,
+        displayName: `Phase6 Beans ${token}`,
         defaultCategoryId: categoryId,
       })
       .expect(201);
@@ -1387,21 +1388,21 @@ describe('Ledger endpoints (e2e)', () => {
 
     await request(app.getHttpServer())
       .post(`/merchants/${created.body.id}/aliases`)
-      .send({ alias: `P6BEANS ${fixtureId}` })
+      .send({ alias: `P6BEANS ${token}` })
       .expect(201);
 
     const entry = await request(app.getHttpServer())
       .post('/ledger-entries')
       .send({
         ...createInput(),
-        merchant: `P6BEANS ${fixtureId} #88`,
+        merchant: `P6BEANS ${token} #88`,
         accountId,
         categoryId,
       })
       .expect(201);
     phase6EntryIds.push(entry.body.id);
 
-    expect(entry.body.merchant).toBe(`Phase6 Beans ${fixtureId}`);
+    expect(entry.body.merchant).toBe(created.body.displayName);
     expect(entry.body.merchantId).toBe(created.body.id);
 
     const audits = await prisma.auditLog.findMany({
@@ -1413,7 +1414,8 @@ describe('Ledger endpoints (e2e)', () => {
   });
 
   it('detects recurring posted transactions for a normalized merchant', async () => {
-    const merchantName = `Phase6 Claro ${fixtureId}`;
+    const token = fixtureId.replaceAll('-', '').slice(0, 12);
+    const merchantName = `Phase6 Claro ${token}`;
     const dates = [
       '2026-02-08T12:00:00.000Z',
       '2026-03-08T12:00:00.000Z',
