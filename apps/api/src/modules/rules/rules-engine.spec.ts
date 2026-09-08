@@ -21,6 +21,14 @@ describe('prepareMerchantName', () => {
     expect(prepareMerchantName('Uber')?.key).toBe('uber');
     expect(prepareMerchantName('Uber Eats')?.key).toBe('uber eats');
   });
+
+  it('title-cases mixed alphanumeric tokens used as uniqueness suffixes', () => {
+    expect(prepareMerchantName('Phase6 Claro d93b3fcd2c7b')).toEqual({
+      original: 'Phase6 Claro d93b3fcd2c7b',
+      displayName: 'Phase6 Claro D93b3fcd2c7b',
+      key: 'phase6 claro d93b3fcd2c7b',
+    });
+  });
 });
 
 describe('applyAutomationRules', () => {

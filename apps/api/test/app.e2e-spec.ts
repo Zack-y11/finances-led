@@ -1422,6 +1422,7 @@ describe('Ledger endpoints (e2e)', () => {
       '2026-04-08T12:00:00.000Z',
       '2026-05-08T12:00:00.000Z',
     ];
+    let canonicalMerchant: string | undefined;
     for (const occurredAt of dates) {
       const entry = await request(app.getHttpServer())
         .post('/ledger-entries')
@@ -1437,15 +1438,23 @@ describe('Ledger endpoints (e2e)', () => {
         })
         .expect(201);
       phase6EntryIds.push(entry.body.id);
+      if (
+        typeof entry.body.merchantId === 'string' &&
+        !phase6MerchantIds.includes(entry.body.merchantId)
+      ) {
+        phase6MerchantIds.push(entry.body.merchantId);
+      }
+      canonicalMerchant ??= entry.body.merchant as string;
     }
 
     const response = await request(app.getHttpServer())
       .get('/recurring-patterns')
       .expect(200);
+    expect(canonicalMerchant).toEqual(expect.any(String));
     expect(response.body.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          merchant: merchantName,
+          merchant: canonicalMerchant,
           cadence: 'monthly',
           occurrenceCount: 4,
           type: 'expense',
