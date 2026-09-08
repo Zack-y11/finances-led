@@ -52,10 +52,7 @@ import {
 
 type PrismaCategoryKind = 'INCOME' | 'EXPENSE' | 'BOTH';
 type PrismaInputSessionStatus =
-  | 'PROCESSED'
-  | 'NEEDS_REVIEW'
-  | 'FAILED'
-  | 'CONFIRMED';
+  'PROCESSED' | 'NEEDS_REVIEW' | 'FAILED' | 'CONFIRMED';
 type PrismaInputSessionModality = 'TEXT' | 'VOICE' | 'IMAGE' | 'MANUAL';
 
 @Injectable()
@@ -137,7 +134,8 @@ export class AiIntakeService {
       mediaHash,
       mediaMimeType,
       mediaByteLength,
-      createReason: 'Voice capture was transcribed without retaining raw audio.',
+      createReason:
+        'Voice capture was transcribed without retaining raw audio.',
       deleteReason: 'Raw voice audio was discarded after transcription.',
       parseReason:
         'Voice transcript was parsed into a finance command proposal.',
@@ -200,8 +198,7 @@ export class AiIntakeService {
       createReason:
         'Receipt capture was parsed without retaining the raw photo.',
       deleteReason: 'Raw receipt image was discarded after vision extraction.',
-      parseReason:
-        'Receipt image was parsed into a finance command proposal.',
+      parseReason: 'Receipt image was parsed into a finance command proposal.',
       deleteMetadata: {
         mediaHash,
         mediaDeleted: true,
@@ -277,9 +274,7 @@ export class AiIntakeService {
     };
   }
 
-  private async normalizeParsedCommand(
-    command: ParsedFinanceCommand,
-  ): Promise<{
+  private async normalizeParsedCommand(command: ParsedFinanceCommand): Promise<{
     command: ParsedFinanceCommand | null;
     parseError?: string;
   }> {

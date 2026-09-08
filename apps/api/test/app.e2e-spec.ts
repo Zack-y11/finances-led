@@ -1,7 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createPrismaClient, type PrismaClient } from '@finance/database';
-import type { AudioTranscriber, ReceiptParser, TextCommandParser } from '@finance/ai';
+import type {
+  AudioTranscriber,
+  ReceiptParser,
+  TextCommandParser,
+} from '@finance/ai';
 import { randomUUID } from 'node:crypto';
 import request from 'supertest';
 import { AppModule } from './../src/app.module.js';

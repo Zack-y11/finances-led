@@ -245,8 +245,7 @@ describe('AiIntakeService voice intake', () => {
 
     expect(result).toEqual({
       inputSessionId: '11111111-1111-4111-8111-111111111111',
-      transcript:
-        'Receipt from Blue Bottle Coffee: USD 14.50 on 2026-09-04',
+      transcript: 'Receipt from Blue Bottle Coffee: USD 14.50 on 2026-09-04',
       command: receiptCommand,
       mediaDeleted: true,
       reviewRequired: false,
@@ -317,7 +316,8 @@ describe('AiIntakeService voice intake', () => {
   it('does not store a session when the receipt parser is not configured', async () => {
     const service = createService({
       receiptParser: {
-        parseReceipt: () => Promise.reject(new ReceiptParserNotConfiguredError()),
+        parseReceipt: () =>
+          Promise.reject(new ReceiptParserNotConfiguredError()),
       },
     });
 

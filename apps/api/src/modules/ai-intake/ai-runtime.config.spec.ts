@@ -274,9 +274,7 @@ describe('OpenRouter AI runtime', () => {
     const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
       model: string;
       messages: Array<{
-        content:
-          | string
-          | Array<{ type: string; image_url?: { url: string } }>;
+        content: string | Array<{ type: string; image_url?: { url: string } }>;
       }>;
     };
     expect(body.model).toBe('openai/gpt-4o-mini');
@@ -285,9 +283,7 @@ describe('OpenRouter AI runtime', () => {
     const imagePart = Array.isArray(userContent)
       ? userContent.find((part) => part.type === 'image_url')
       : undefined;
-    expect(imagePart?.image_url?.url).toMatch(
-      /^data:image\/jpeg;base64,/,
-    );
+    expect(imagePart?.image_url?.url).toMatch(/^data:image\/jpeg;base64,/);
     expect(image.equals(Buffer.from('fake-receipt'))).toBe(true);
   });
 });
