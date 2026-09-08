@@ -79,12 +79,12 @@ describe('MerchantsService merge', () => {
         delete: merchantDelete,
       },
       merchantAlias: {
-        findMany: async () => [],
-        findFirst: async () => null,
-        create: async () => ({}),
+        findMany: () => [],
+        findFirst: () => null,
+        create: () => ({}),
       },
       ledgerEntry: {
-        updateMany: async () => ({ count: 2 }),
+        updateMany: () => ({ count: 2 }),
       },
       auditLog: { create: auditCreate },
     };
