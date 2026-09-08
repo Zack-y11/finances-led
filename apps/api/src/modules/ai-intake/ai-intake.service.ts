@@ -55,6 +55,10 @@ type PrismaCategoryKind = 'INCOME' | 'EXPENSE' | 'BOTH';
 type PrismaInputSessionStatus =
   'PROCESSED' | 'NEEDS_REVIEW' | 'FAILED' | 'CONFIRMED';
 type PrismaInputSessionModality = 'TEXT' | 'VOICE' | 'IMAGE' | 'MANUAL';
+type ParserCatalog = {
+  accounts: Array<{ name: string; currency: string }>;
+  categories: Array<{ name: string; kind: CategoryKind }>;
+};
 
 @Injectable()
 export class AiIntakeService {
@@ -159,32 +163,37 @@ export class AiIntakeService {
     const mediaHash = hashImageBuffer(image.buffer);
     const mediaByteLength = image.buffer.length;
     const mediaMimeType = image.mimetype;
-    const catalog = await this.loadParserCatalog();
     let parsed: {
       command: ParsedFinanceCommand | null;
       parseError?: string;
+    } = {
+      command: null,
+      parseError: 'AI receipt parser failed',
     };
 
     try {
-      const command = await this.receiptParser.parseReceipt({
-        image: image.buffer,
-        mimeType: image.mimetype,
-        filename: image.originalname,
-        referenceDate: referenceDate ?? currentDate(),
-        accounts: catalog.accounts,
-        categories: catalog.categories,
-      });
-      parsed = await this.normalizeParsedCommand(command);
-    } catch (error) {
-      if (error instanceof ReceiptParserNotConfiguredError) {
-        throw new ServiceUnavailableException(
-          'AI receipt parser is not configured',
-        );
+      const catalog = await this.loadParserCatalog();
+      try {
+        const command = await this.receiptParser.parseReceipt({
+          image: image.buffer,
+          mimeType: image.mimetype,
+          filename: image.originalname,
+          referenceDate: referenceDate ?? currentDate(),
+          accounts: catalog.accounts,
+          categories: catalog.categories,
+        });
+        parsed = await this.normalizeParsedCommand(command);
+      } catch (error) {
+        if (error instanceof ReceiptParserNotConfiguredError) {
+          throw new ServiceUnavailableException(
+            'AI receipt parser is not configured',
+          );
+        }
+        parsed = {
+          command: null,
+          parseError: 'AI receipt parser failed',
+        };
       }
-      parsed = {
-        command: null,
-        parseError: 'AI receipt parser failed',
-      };
     } finally {
       discardImageBuffer(image.buffer);
     }
@@ -250,10 +259,7 @@ export class AiIntakeService {
     }
   }
 
-  private async loadParserCatalog(): Promise<{
-    accounts: Array<{ name: string; currency: string }>;
-    categories: Array<{ name: string; kind: CategoryKind }>;
-  }> {
+  private async loadParserCatalog(): Promise<ParserCatalog> {
     const [accounts, categories] = await Promise.all([
       this.prisma.db.account.findMany({
         where: { userId: this.userId, isActive: true },
@@ -276,7 +282,7 @@ export class AiIntakeService {
     };
   }
 
-  private async normalizeParsedCommand(command: ParsedFinanceCommand): Promise<{
+  private async normalizeParsedCommand(command: unknown): Promise<{
     command: ParsedFinanceCommand | null;
     parseError?: string;
   }> {
@@ -288,7 +294,22 @@ export class AiIntakeService {
       };
     }
 
-    const parsedData = result.data;
+    // The provider may return a structurally valid object, but rule and
+    // merchant metadata are backend-owned facts. Never let the provider forge
+    // explanations or normalization records that will be shown or audited.
+    const parsedData = {
+      intent: result.data.intent,
+      data: { ...result.data.data },
+      confidence: result.data.confidence,
+    };
+
+    if (!isValidCalendarDate(parsedData.data.occurredAt)) {
+      return {
+        command: null,
+        parseError: 'AI parser returned an invalid command',
+      };
+    }
+
     try {
       const resolved = await this.merchantsService.resolveForProposal(
         parsedData.data.merchant,
@@ -364,7 +385,11 @@ export class AiIntakeService {
           mediaMimeType: input.mediaMimeType,
           mediaByteLength: input.mediaByteLength,
           mediaDeletedAt: new Date(),
-          status: input.parsed.command ? 'PROCESSED' : 'FAILED',
+          status: input.parsed.command
+            ? reviewRequired(input.parsed.command.confidence)
+              ? 'NEEDS_REVIEW'
+              : 'PROCESSED'
+            : 'FAILED',
         },
       });
 
@@ -458,6 +483,13 @@ export class AiIntakeService {
 
 function currentDate(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function isValidCalendarDate(value: string): boolean {
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return (
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+  );
 }
 
 function receiptTranscript(command: ParsedFinanceCommand | null): string {
