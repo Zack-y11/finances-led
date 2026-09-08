@@ -2,7 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, cardVariants } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
   createAutomationRule,
@@ -13,6 +17,7 @@ import {
   type AutomationRule,
   type LedgerOptions,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 export default function RulesPage() {
   const [builderOpen, setBuilderOpen] = useState(false);
@@ -122,14 +127,13 @@ export default function RulesPage() {
         title="Automation rules"
         description="Explicit user input always overrides automation. Enabled rules automatically format category and account defaults on incoming AI text commands."
         action={
-          <button
-            className="button-primary"
+          <Button
             onClick={() => setBuilderOpen(!builderOpen)}
             type="button"
           >
             <Icon className="size-4" name="plus" />
             {builderOpen ? "Close Rule Builder" : "New Automation Rule"}
-          </button>
+          </Button>
         }
       />
 
@@ -147,7 +151,13 @@ export default function RulesPage() {
       ) : null}
 
       {builderOpen ? (
-        <form className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6" onSubmit={handleCreate}>
+        <form
+          className={cn(
+            cardVariants(),
+            "grid gap-4 p-5 sm:grid-cols-2 sm:p-6",
+          )}
+          onSubmit={handleCreate}
+        >
           <div className="sm:col-span-2">
             <h2 className="text-lg font-semibold text-ink">
               Create Automation Rule
@@ -159,8 +169,8 @@ export default function RulesPage() {
 
           <label className="sm:col-span-2 text-xs font-medium text-muted">
             Rule Name
-            <input
-              className="field mt-1"
+            <Input
+              className="mt-1"
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Starbucks Dining Rule"
               required
@@ -171,7 +181,7 @@ export default function RulesPage() {
           <label className="text-xs font-medium text-muted">
             When Field
             <select
-              className="field mt-1"
+              className={cn(nativeSelectClassName, "mt-1")}
               onChange={(e) => setConditionField(e.target.value as "merchant" | "note" | "amount")}
               value={conditionField}
             >
@@ -184,7 +194,7 @@ export default function RulesPage() {
           <label className="text-xs font-medium text-muted">
             Condition Operator
             <select
-              className="field mt-1"
+              className={cn(nativeSelectClassName, "mt-1")}
               onChange={(e) => setConditionOp(e.target.value as "contains" | "equals" | "less_than" | "greater_than")}
               value={conditionOp}
             >
@@ -197,8 +207,8 @@ export default function RulesPage() {
 
           <label className="text-xs font-medium text-muted">
             Condition Value
-            <input
-              className="field mt-1"
+            <Input
+              className="mt-1"
               onChange={(e) => setConditionValue(e.target.value)}
               placeholder="e.g. Starbucks or 50.00"
               required
@@ -208,8 +218,8 @@ export default function RulesPage() {
 
           <label className="text-xs font-medium text-muted">
             Priority Order
-            <input
-              className="field mt-1"
+            <Input
+              className="mt-1"
               min="1"
               onChange={(e) => setPriority(e.target.value)}
               required
@@ -221,7 +231,7 @@ export default function RulesPage() {
           <label className="text-xs font-medium text-muted">
             Then Set Field
             <select
-              className="field mt-1"
+              className={cn(nativeSelectClassName, "mt-1")}
               onChange={(e) => {
                 const val = e.target.value as "category" | "account";
                 setActionField(val);
@@ -241,7 +251,7 @@ export default function RulesPage() {
           <label className="text-xs font-medium text-muted">
             Target Value
             <select
-              className="field mt-1"
+              className={cn(nativeSelectClassName, "mt-1")}
               onChange={(e) => setActionValue(e.target.value)}
               value={actionValue}
             >
@@ -260,21 +270,22 @@ export default function RulesPage() {
           </label>
 
           <div className="sm:col-span-2 flex items-center justify-end gap-3 pt-2">
-            <button
-              className="button-secondary text-xs"
+            <Button
               onClick={() => setBuilderOpen(false)}
+              size="sm"
               type="button"
+              variant="secondary"
             >
               Cancel
-            </button>
-            <button className="button-primary text-xs" disabled={saving} type="submit">
+            </Button>
+            <Button disabled={saving} size="sm" type="submit">
               {saving ? "Saving Rule..." : "Save Automation Rule ✓"}
-            </button>
+            </Button>
           </div>
         </form>
       ) : null}
 
-      <section className="surface-card overflow-hidden">
+      <Card className="overflow-hidden gap-0">
         <div className="border-b border-border px-5 py-4 flex items-center justify-between">
           <div>
             <h2 className="font-semibold text-ink">Configured Rules</h2>
@@ -299,9 +310,9 @@ export default function RulesPage() {
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-action-soft px-2 py-0.5 text-[11px] font-semibold text-action">
+                    <Badge className="text-[11px]">
                       Priority #{rule.priority}
-                    </span>
+                    </Badge>
                     <h3 className="font-semibold text-ink">{rule.name}</h3>
                   </div>
                   <p className="mt-1 text-sm text-muted">
@@ -310,28 +321,30 @@ export default function RulesPage() {
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    className={`button-secondary text-xs ${
-                      rule.isEnabled ? "text-success" : "text-muted"
-                    }`}
+                  <Button
+                    className={rule.isEnabled ? "text-success" : "text-muted"}
                     onClick={() => handleToggleRule(rule)}
+                    size="sm"
                     type="button"
+                    variant="secondary"
                   >
                     {rule.isEnabled ? "Enabled ✓" : "Disabled"}
-                  </button>
-                  <button
-                    className="button-secondary text-xs text-danger"
+                  </Button>
+                  <Button
+                    className="text-danger"
                     onClick={() => handleDeleteRule(rule.id)}
+                    size="sm"
                     type="button"
+                    variant="secondary"
                   >
                     Delete
-                  </button>
+                  </Button>
                 </div>
               </article>
             ))}
           </div>
         )}
-      </section>
+      </Card>
     </div>
   );
 }

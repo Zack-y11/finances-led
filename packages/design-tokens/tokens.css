@@ -1,0 +1,50 @@
+/**
+ * Ledger AI design tokens (CSS custom properties).
+ * shadcn bridge: --background←--canvas, --foreground←--text,
+ * --primary←--action, --muted←--surface-muted, --destructive←--danger.
+ * Custom Ledger tokens (--review, --action-soft, etc.) are kept alongside.
+ */
+:root {
+  --canvas: #f9fafb;
+  --surface: #ffffff;
+  --surface-muted: #f3f4f5;
+  --text: #1f2937;
+  --text-muted: #44474c;
+  --action: #3b82f6;
+  --action-soft: #d8e2ff;
+  --success: #10b981;
+  --success-soft: #d1fae5;
+  --danger: #ba1a1a;
+  --danger-soft: #ffebe9;
+  --review: #b45309;
+  --review-soft: #fef3c7;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+
+  /* Glass surface treatment */
+  --glass-fill: rgb(255 255 255 / 88%);
+  --glass-border: rgb(229 231 235 / 85%);
+  --glass-blur: 14px;
+  --glass-saturate: 120%;
+
+  /* shadcn semantic aliases (Ledger → shadcn) */
+  --background: var(--canvas);
+  --foreground: var(--text);
+  --card: var(--surface);
+  --card-foreground: var(--text);
+  --popover: var(--surface);
+  --popover-foreground: var(--text);
+  --primary: var(--action);
+  --primary-foreground: #ffffff;
+  --secondary: var(--surface-muted);
+  --secondary-foreground: var(--text);
+  --muted: var(--surface-muted);
+  --muted-foreground: var(--text-muted);
+  --accent: var(--action-soft);
+  --accent-foreground: var(--action);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--border-strong);
+  --ring: var(--action);
+  --radius: 0.5rem;
+}

@@ -1,3 +1,4 @@
+import { createFinanceApiClient } from "@finance/api-client";
 import type {
   CreateLedgerEntry,
   ParsedFinanceCommand,
@@ -22,7 +23,9 @@ async function readError(response: Response): Promise<string> {
   const body = (await response.json().catch(() => null)) as {
     message?: string | string[];
   } | null;
-  const message = Array.isArray(body?.message) ? body.message[0] : body?.message;
+  const message = Array.isArray(body?.message)
+    ? body.message[0]
+    : body?.message;
   return message ?? "The request could not be completed.";
 }
 
@@ -101,6 +104,10 @@ export function matchOptionId(
     (option) => option.name.toLowerCase() === name?.toLowerCase(),
   );
   return match?.id ?? "";
+}
+
+export function getFinanceApi() {
+  return createFinanceApiClient({ baseUrl });
 }
 
 export type { ParsedFinanceCommand, VoiceIntakeResult };

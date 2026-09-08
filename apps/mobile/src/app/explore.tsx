@@ -1,21 +1,28 @@
-import { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useMemo, useState } from 'react';
+import { View } from 'react-native';
 
-import { GlassSurface } from "@/components/ui/glass-surface";
-import { LedgerScreen } from "@/components/ui/ledger-screen";
-import { currency, mobileTransactions } from "@/constants/fixtures";
-import { Colors, Fonts, Spacing } from "@/constants/theme";
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { LedgerScreen } from '@/components/ui/ledger-screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { Text } from '@/components/ui/text';
+import { currency, mobileTransactions } from '@/constants/fixtures';
+import { Colors } from '@/constants/theme';
+import { cn } from '@/lib/utils';
 
 export default function LedgerScreenRoute() {
-  const [query, setQuery] = useState("");
-  const [type, setType] = useState<"all" | "income" | "expense">("all");
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState<'all' | 'income' | 'expense'>('all');
   const entries = useMemo(
     () =>
       mobileTransactions.filter(
         (entry) =>
-          (type === "all" || entry.type === type) &&
+          (type === 'all' || entry.type === type) &&
           [entry.merchant, entry.category]
-            .join(" ")
+            .join(' ')
             .toLowerCase()
             .includes(query.toLowerCase()),
       ),
@@ -23,91 +30,98 @@ export default function LedgerScreenRoute() {
   );
   return (
     <LedgerScreen>
-      <View>
-        <Text style={styles.eyebrow}>TRANSACTIONS</Text>
-        <Text style={styles.title}>Your financial record.</Text>
-        <Text style={styles.copy}>
-          Search and review every event in the ledger.
-        </Text>
-      </View>
+      <ScreenHeader
+        eyebrow="TRANSACTIONS"
+        title="Your financial record."
+        copy="Search and review every event in the ledger."
+      />
       <GlassSurface>
-        <TextInput
+        <Label nativeID="search-entries">Search</Label>
+        <Input
           accessibilityLabel="Search entries"
+          aria-labelledby="search-entries"
+          className="mt-2"
           onChangeText={setQuery}
           placeholder="Search entries"
-          placeholderTextColor={Colors.light.textSecondary}
-          style={styles.search}
           value={query}
         />
-        <View style={styles.filters}>
-          {(["all", "expense", "income"] as const).map((value) => (
-            <Pressable
+        <View className="mt-3 flex-row gap-2">
+          {(['all', 'expense', 'income'] as const).map((value) => (
+            <Button
               key={value}
+              size="sm"
+              variant={type === value ? 'secondary' : 'ghost'}
+              className={cn(
+                'rounded-full',
+                type === value && 'bg-action-soft',
+              )}
               onPress={() => setType(value)}
-              style={[styles.filter, type === value && styles.filterActive]}
             >
               <Text
-                style={[
-                  styles.filterText,
-                  type === value && styles.filterTextActive,
-                ]}
+                className={cn(
+                  'text-xs font-bold',
+                  type === value ? 'text-action' : 'text-muted-foreground',
+                )}
               >
-                {value === "all"
-                  ? "All"
-                  : value === "expense"
-                    ? "Expenses"
-                    : "Income"}
+                {value === 'all'
+                  ? 'All'
+                  : value === 'expense'
+                    ? 'Expenses'
+                    : 'Income'}
               </Text>
-            </Pressable>
+            </Button>
           ))}
         </View>
-        <View style={styles.list}>
+        <View className="mt-3">
           {entries.map((item) => (
-            <View key={item.id} style={styles.entry}>
+            <View
+              key={item.id}
+              className="border-border flex-row items-center gap-3 border-t py-3"
+            >
               <View
-                style={[
-                  styles.entryIcon,
-                  {
-                    backgroundColor:
-                      item.type === "income"
-                        ? Colors.light.successSoft
-                        : Colors.light.dangerSoft,
-                  },
-                ]}
+                className="h-9 w-9 items-center justify-center rounded-[10px]"
+                style={{
+                  backgroundColor:
+                    item.type === 'income'
+                      ? Colors.light.successSoft
+                      : Colors.light.dangerSoft,
+                }}
               >
                 <Text
                   style={{
                     color:
-                      item.type === "income"
+                      item.type === 'income'
                         ? Colors.light.success
                         : Colors.light.danger,
                   }}
                 >
-                  {item.type === "income" ? "↑" : "↓"}
+                  {item.type === 'income' ? '↑' : '↓'}
                 </Text>
               </View>
-              <View style={styles.entryText}>
-                <Text style={styles.entryTitle}>{item.merchant}</Text>
-                <Text style={styles.entryMeta}>
+              <View className="flex-1">
+                <Text className="text-foreground text-sm font-bold">
+                  {item.merchant}
+                </Text>
+                <Text className="text-muted-foreground mt-0.5 text-xs">
                   {item.category} · {item.date}
                 </Text>
               </View>
-              <View style={styles.amountColumn}>
-                {item.status === "review" ? (
-                  <Text style={styles.review}>Review</Text>
+              <View className="items-end">
+                {item.status === 'review' ? (
+                  <Badge variant="review" className="mb-0.5">
+                    <Text>Review</Text>
+                  </Badge>
                 ) : null}
                 <Text
-                  style={[
-                    styles.amount,
-                    {
-                      color:
-                        item.type === "income"
-                          ? Colors.light.success
-                          : Colors.light.text,
-                    },
-                  ]}
+                  className="mt-0.5 text-sm font-bold"
+                  style={{
+                    color:
+                      item.type === 'income'
+                        ? Colors.light.success
+                        : Colors.light.text,
+                  }}
                 >
-                  {item.type === "income" ? "+" : "−"}
+                  {item.type === 'income' ? '+' : '−'}
                   {currency(item.amount)}
                 </Text>
               </View>
@@ -118,67 +132,3 @@ export default function LedgerScreenRoute() {
     </LedgerScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  eyebrow: {
-    color: Colors.light.action,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-  },
-  title: {
-    color: Colors.light.text,
-    fontSize: 28,
-    fontWeight: "700",
-    lineHeight: 34,
-    marginTop: 4,
-  },
-  copy: {
-    color: Colors.light.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  search: {
-    backgroundColor: Colors.light.background,
-    borderColor: Colors.light.border,
-    borderWidth: 1,
-    borderRadius: 8,
-    color: Colors.light.text,
-    fontSize: 14,
-    minHeight: 44,
-    paddingHorizontal: 12,
-  },
-  filters: { flexDirection: "row", gap: 8, marginTop: 12 },
-  filter: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
-  filterActive: { backgroundColor: Colors.light.actionSoft },
-  filterText: {
-    color: Colors.light.textSecondary,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  filterTextActive: { color: Colors.light.action },
-  list: { marginTop: Spacing.three },
-  entry: {
-    alignItems: "center",
-    borderTopColor: Colors.light.border,
-    borderTopWidth: 1,
-    flexDirection: "row",
-    gap: 12,
-    paddingVertical: 12,
-  },
-  entryIcon: {
-    alignItems: "center",
-    borderRadius: 10,
-    height: 36,
-    justifyContent: "center",
-    width: 36,
-  },
-  entryText: { flex: 1 },
-  entryTitle: { color: Colors.light.text, fontSize: 14, fontWeight: "700" },
-  entryMeta: { color: Colors.light.textSecondary, fontSize: 12, marginTop: 3 },
-  amountColumn: { alignItems: "flex-end" },
-  amount: { fontSize: 14, fontWeight: "700", marginTop: 2 },
-  review: { color: Colors.light.review, fontSize: 10, fontWeight: "700" },
-});

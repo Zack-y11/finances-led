@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
 import {
@@ -130,7 +133,7 @@ export default function ReviewPage() {
       ) : null}
 
       <section className="grid gap-6 xl:grid-cols-[minmax(17rem,.8fr)_minmax(0,1.2fr)]">
-        <div className="surface-card overflow-hidden">
+        <Card className="overflow-hidden gap-0">
           <div className="border-b border-border px-5 py-4">
             <h2 className="font-semibold text-ink">Review Queue</h2>
             <p className="mt-1 text-sm text-muted">
@@ -144,9 +147,9 @@ export default function ReviewPage() {
             <div className="p-6 text-center text-sm text-muted">
               <p className="font-semibold text-ink">All caught up!</p>
               <p className="mt-1">No transactions are currently awaiting review.</p>
-              <Link className="button-primary text-xs mt-4 inline-flex" href="/capture">
-                Create new capture →
-              </Link>
+              <Button asChild className="mt-4" size="sm">
+                <Link href="/capture">Create new capture →</Link>
+              </Button>
             </div>
           ) : (
             <div className="divide-y divide-border">
@@ -181,9 +184,9 @@ export default function ReviewPage() {
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        <article className="surface-card overflow-hidden">
+        <Card className="overflow-hidden gap-0">
           {selected ? (
             <>
               <div className="flex items-center justify-between border-b border-border bg-surface-muted px-5 py-4 sm:px-6">
@@ -195,9 +198,7 @@ export default function ReviewPage() {
                     {selected.merchant}
                   </h2>
                 </div>
-                <span className="rounded-full bg-review-soft px-2.5 py-1 text-xs font-semibold text-review">
-                  Needs Review
-                </span>
+                <Badge variant="review">Needs Review</Badge>
               </div>
 
               <div className="grid gap-6 p-5 sm:p-6">
@@ -228,22 +229,24 @@ export default function ReviewPage() {
                 </section>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                  <button
-                    className="button-secondary text-xs text-danger"
+                  <Button
+                    className="text-danger"
                     disabled={acting}
                     onClick={() => handleReject(selected.id)}
+                    size="sm"
                     type="button"
+                    variant="secondary"
                   >
                     {acting ? "Processing..." : "Reject & Ignore"}
-                  </button>
-                  <button
-                    className="button-primary text-xs"
+                  </Button>
+                  <Button
                     disabled={acting}
                     onClick={() => handleApprove(selected.id)}
+                    size="sm"
                     type="button"
                   >
                     {acting ? "Posting..." : "Approve & Post to Ledger ✓"}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </>
@@ -252,7 +255,7 @@ export default function ReviewPage() {
               Select an item from the review queue to inspect proposal details.
             </div>
           )}
-        </article>
+        </Card>
       </section>
     </div>
   );
@@ -274,14 +277,14 @@ function Metric({
         ? "bg-review-soft text-review"
         : "bg-action-soft text-action";
   return (
-    <div className="surface-card min-w-36 flex-1 p-4">
+    <Card className="min-w-36 flex-1 p-4">
       <p className="text-xs font-medium text-muted">{label}</p>
       <div className="mt-2 flex items-baseline gap-2">
         <span className={`text-2xl font-bold ${toneClasses.split(" ")[1]}`}>
           {value}
         </span>
       </div>
-    </div>
+    </Card>
   );
 }
 

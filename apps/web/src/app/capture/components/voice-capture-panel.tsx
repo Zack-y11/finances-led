@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { VoiceIntakeResult } from "@finance/contracts";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { parseVoiceCommand } from "@/lib/api";
 
@@ -192,10 +194,7 @@ export function VoiceCapturePanel({
   };
 
   return (
-    <section
-      className="surface-card overflow-hidden"
-      data-testid="voice-capture-panel"
-    >
+    <Card className="gap-0 overflow-hidden" data-testid="voice-capture-panel">
       <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
           <Icon className="text-action" name="mic" />
@@ -221,27 +220,24 @@ export function VoiceCapturePanel({
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             {state === "recording" ? (
-              <button
-                className="button-primary"
+              <Button
                 disabled={disabled || uploading}
                 onClick={stopRecording}
                 type="button"
               >
                 Stop recording
-              </button>
+              </Button>
             ) : (
-              <button
-                className="button-primary"
+              <Button
                 disabled={disabled || uploading}
                 onClick={() => void startRecording()}
                 type="button"
               >
                 {clip ? "Re-record" : "Start recording"}
-              </button>
+              </Button>
             )}
             {clip ? (
-              <button
-                className="button-primary"
+              <Button
                 disabled={disabled || uploading}
                 onClick={() =>
                   void transcribe(
@@ -254,16 +250,16 @@ export function VoiceCapturePanel({
                 type="button"
               >
                 {uploading ? "Transcribing…" : "Transcribe and discard audio"}
-              </button>
+              </Button>
             ) : null}
-            <button
-              className="button-secondary"
+            <Button
               disabled={disabled || uploading || state === "recording"}
               onClick={() => fileInputRef.current?.click()}
               type="button"
+              variant="outline"
             >
               Upload audio file
-            </button>
+            </Button>
           </div>
           <input
             accept="audio/*,video/webm,.webm,.m4a,.mp3,.wav,.ogg"
@@ -278,7 +274,7 @@ export function VoiceCapturePanel({
           />
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
 

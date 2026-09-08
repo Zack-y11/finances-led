@@ -4,9 +4,15 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import type { ParsedFinanceCommand, VoiceIntakeResult } from "@finance/contracts";
+import type {
+  ParsedFinanceCommand,
+  VoiceIntakeResult,
+} from "@finance/contracts";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
+import { Textarea } from "@/components/ui/textarea";
 import {
   getInputSessions,
   getLedgerOptions,
@@ -37,13 +43,17 @@ function CapturePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [result, setResult] = useState<ParsedFinanceCommand | null>(null);
-  const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(null);
+  const [voiceResult, setVoiceResult] = useState<VoiceIntakeResult | null>(
+    null,
+  );
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [sessions, setSessions] = useState<InputSessionTrace[]>([]);
 
   const refreshSessions = () => {
     void getInputSessions()
-      .then((data) => setSessions(data.filter((session) => session.modality === "voice")))
+      .then((data) =>
+        setSessions(data.filter((session) => session.modality === "voice")),
+      )
       .catch(() => null);
   };
 
@@ -94,48 +104,57 @@ function CapturePageContent() {
         title="Quick capture"
         description="Type or speak a natural financial note in English or Spanish. The backend transcribes, parses, and validates before any ledger write."
       />
-      <div className="flex items-center gap-2 text-sm text-ink rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3">
+      <div className="flex items-center gap-2 rounded-xl border border-action/20 bg-action-soft/40 px-4 py-3 text-sm text-ink">
         <Icon className="size-4 text-action" name="sparkles" />
         <span>
           <strong>Live AI Connected:</strong> Text and voice use OpenRouter in
           real time. Raw audio is discarded after transcription.
         </span>
       </div>
-      <div
-        aria-label="Capture mode"
-        className="flex gap-2"
-        role="tablist"
-      >
-        <Link
-          aria-selected={mode === "text"}
-          className={mode === "text" ? "button-primary" : "button-secondary"}
-          href="/capture"
-          role="tab"
-          scroll={false}
+      <div aria-label="Capture mode" className="flex gap-2" role="tablist">
+        <Button
+          asChild
+          size="sm"
+          variant={mode === "text" ? "default" : "outline"}
         >
-          Text command
-        </Link>
-        <Link
-          aria-selected={mode === "voice"}
-          className={mode === "voice" ? "button-primary" : "button-secondary"}
-          href="/capture?mode=voice"
-          role="tab"
-          scroll={false}
+          <Link
+            aria-selected={mode === "text"}
+            href="/capture"
+            role="tab"
+            scroll={false}
+          >
+            Text command
+          </Link>
+        </Button>
+        <Button
+          asChild
+          size="sm"
+          variant={mode === "voice" ? "default" : "outline"}
         >
-          Voice capture
-        </Link>
+          <Link
+            aria-selected={mode === "voice"}
+            href="/capture?mode=voice"
+            role="tab"
+            scroll={false}
+          >
+            Voice capture
+          </Link>
+        </Button>
       </div>
       {mode === "text" ? (
-        <section className="surface-card overflow-hidden">
+        <Card className="gap-0 overflow-hidden">
           <div className="border-b border-border bg-surface-muted/60 px-5 py-4 sm:px-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-ink">
               <Icon className="text-action" name="sparkles" />
               Tell Ledger AI what happened
             </div>
           </div>
-          <form className="grid gap-5 p-5 sm:p-6" onSubmit={(event) => void handleSubmit(event)}>
-            <textarea
-              className="field min-h-35 resize-y"
+          <form
+            className="grid gap-5 p-5 sm:p-6"
+            onSubmit={(event) => void handleSubmit(event)}
+          >
+            <Textarea
+              className="min-h-35 resize-y"
               onChange={(event) => {
                 setText(event.target.value);
                 setError(null);
@@ -147,18 +166,17 @@ function CapturePageContent() {
               <p className="text-sm text-muted">
                 Try: “Gaste 3.19 en Starbucks con BAC.”
               </p>
-              <button
-                className="button-primary"
+              <Button
                 disabled={!text.trim() || loading}
                 suppressHydrationWarning
                 type="submit"
               >
                 {loading ? "Parsing with AI…" : "Preview interpretation"}{" "}
                 <Icon className="size-4" name="arrow-right" />
-              </button>
+              </Button>
             </div>
           </form>
-        </section>
+        </Card>
       ) : (
         <VoiceCapturePanel
           disabled={loading}
@@ -167,19 +185,21 @@ function CapturePageContent() {
         />
       )}
       {voiceResult ? (
-        <section className="surface-card border-success/40 bg-success-soft/20 p-5 sm:p-6">
-          <p className="font-semibold text-ink">Audio discarded after transcription</p>
+        <Card className="border-success/40 bg-success-soft/20 p-5 sm:p-6">
+          <p className="font-semibold text-ink">
+            Audio discarded after transcription
+          </p>
           <p className="mt-1 text-sm leading-6 text-muted">
             Transcript: “{voiceResult.transcript}”. Session{" "}
-            <code className="rounded bg-surface px-1.5 py-0.5 text-xs font-mono">
+            <code className="rounded bg-surface px-1.5 py-0.5 font-mono text-xs">
               {voiceResult.inputSessionId.slice(0, 8)}
             </code>{" "}
             stores the hash and deletion timestamp only.
           </p>
-        </section>
+        </Card>
       ) : null}
       {error ? (
-        <section className="surface-card border-danger/30 p-5 sm:p-6">
+        <Card className="border-danger/30 p-5 sm:p-6">
           <div className="flex items-start gap-3 text-danger">
             <Icon className="size-5 shrink-0" name="shield" />
             <div>
@@ -187,10 +207,10 @@ function CapturePageContent() {
               <p className="mt-1 text-sm text-muted">{error}</p>
             </div>
           </div>
-        </section>
+        </Card>
       ) : null}
       {success ? (
-        <section className="surface-card border-success/40 bg-success-soft/20 p-5 sm:p-6">
+        <Card className="border-success/40 bg-success-soft/20 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-white">
@@ -198,11 +218,11 @@ function CapturePageContent() {
               </span>
               <p className="font-semibold text-ink">{success}</p>
             </div>
-            <Link className="button-primary text-xs" href="/ledger">
-              View in Ledger →
-            </Link>
+            <Button asChild size="sm">
+              <Link href="/ledger">View in Ledger →</Link>
+            </Button>
           </div>
-        </section>
+        </Card>
       ) : null}
       {result ? (
         <CommandProposal
@@ -226,7 +246,7 @@ function CapturePageContent() {
         />
       ) : null}
       {sessions.length ? (
-        <section className="surface-card p-5 sm:p-6">
+        <Card className="p-5 sm:p-6">
           <h2 className="font-semibold text-ink">Recent voice traces</h2>
           <p className="mt-1 text-sm text-muted">
             These records prove capture happened without keeping the audio.
@@ -242,7 +262,9 @@ function CapturePageContent() {
                     {session.transcriptText || "No transcript"}
                   </p>
                   <span className="text-xs font-semibold text-success">
-                    {session.mediaDeletedAt ? "Audio deleted" : "No media stored"}
+                    {session.mediaDeletedAt
+                      ? "Audio deleted"
+                      : "No media stored"}
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted">
@@ -252,7 +274,7 @@ function CapturePageContent() {
               </div>
             ))}
           </div>
-        </section>
+        </Card>
       ) : null}
       <section className="grid gap-4 sm:grid-cols-3">
         <CaptureCard
@@ -285,12 +307,12 @@ function CaptureCard({
   copy: string;
 }) {
   return (
-    <div className="surface-card p-5">
+    <Card className="p-5">
       <span className="flex size-9 items-center justify-center rounded-lg bg-action-soft text-action">
         <Icon className="size-4" name={icon} />
       </span>
       <h2 className="mt-4 font-semibold text-ink">{title}</h2>
       <p className="mt-1 text-sm leading-5 text-muted">{copy}</p>
-    </div>
+    </Card>
   );
 }

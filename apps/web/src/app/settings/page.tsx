@@ -1,8 +1,12 @@
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
 import { PageHeading } from "@/components/ui/page-heading";
 import { DemoNotice } from "@/components/ui/demo-notice";
+import { Switch } from "@/components/ui/switch";
 
 export default function SettingsPage() {
   return (
@@ -17,12 +21,11 @@ export default function SettingsPage() {
         <SettingsCard title="Profile" icon="settings">
           <label>
             Display name
-            <input className="field" readOnly defaultValue="Alex Morgan" />
+            <Input readOnly defaultValue="Alex Morgan" />
           </label>
           <label>
             Email
-            <input
-              className="field"
+            <Input
               readOnly
               defaultValue="alex@example.com"
               type="email"
@@ -60,14 +63,14 @@ export default function SettingsPage() {
                 Available after a future secure integration.
               </p>
             </div>
-            <button
+            <Button
               aria-disabled="true"
-              className="button-secondary"
               disabled
               type="button"
+              variant="secondary"
             >
               Connection unavailable
-            </button>
+            </Button>
           </div>
           <div className="mt-4 flex flex-wrap gap-4">
             <Link
@@ -99,7 +102,7 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="surface-card p-5 sm:p-6">
+    <Card className="p-5 sm:p-6">
       <div className="flex items-center gap-3">
         <span className="flex size-10 items-center justify-center rounded-xl bg-action-soft text-action">
           <Icon name={icon} />
@@ -107,7 +110,7 @@ function SettingsCard({
         <h2 className="text-lg font-semibold text-ink">{title}</h2>
       </div>
       <div className="mt-5 grid gap-4">{children}</div>
-    </section>
+    </Card>
   );
 }
 function Toggle({
@@ -125,15 +128,12 @@ function Toggle({
         <p className="font-semibold text-ink">{title}</p>
         <p className="mt-1 text-sm leading-5 text-muted">{copy}</p>
       </div>
-      <span
-        className={
-          enabled
-            ? "mt-1 inline-flex h-6 w-11 items-center justify-end rounded-full bg-action p-1"
-            : "mt-1 inline-flex h-6 w-11 items-center rounded-full bg-border p-1"
-        }
-      >
-        <span className="size-4 rounded-full bg-white" />
-      </span>
+      <Switch
+        aria-label={title}
+        checked={enabled}
+        className="mt-1"
+        disabled
+      />
     </div>
   );
 }

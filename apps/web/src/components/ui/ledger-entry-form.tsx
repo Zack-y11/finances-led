@@ -6,11 +6,15 @@ import {
 } from "@finance/contracts";
 import { FormEvent, useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { cardVariants } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   appendEntryToGroup,
   createLedgerEntry,
   type LedgerOptions,
 } from "@/lib/api";
+import { cn, nativeSelectClassName } from "@/lib/utils";
 
 type EntryType = "income" | "expense" | "adjustment";
 
@@ -79,7 +83,10 @@ export function LedgerEntryForm({
 
   return (
     <form
-      className="surface-card grid gap-4 p-5 sm:grid-cols-2 sm:p-6"
+      className={cn(
+        cardVariants(),
+        "grid gap-4 p-5 sm:grid-cols-2 sm:p-6",
+      )}
       onSubmit={submit}
     >
       <div className="sm:col-span-2">
@@ -93,7 +100,7 @@ export function LedgerEntryForm({
       <label>
         Type
         <select
-          className="field"
+          className={nativeSelectClassName}
           onChange={(event) => setType(event.target.value as EntryType)}
           value={type}
         >
@@ -104,8 +111,7 @@ export function LedgerEntryForm({
       </label>
       <label>
         Amount
-        <input
-          className="field"
+        <Input
           min="0.01"
           name="amount"
           placeholder="0.00"
@@ -116,16 +122,11 @@ export function LedgerEntryForm({
       </label>
       <label>
         Merchant
-        <input
-          className="field"
-          name="merchant"
-          placeholder="Where did it happen?"
-        />
+        <Input name="merchant" placeholder="Where did it happen?" />
       </label>
       <label>
         Date
-        <input
-          className="field"
+        <Input
           defaultValue={localDateValue()}
           name="date"
           required
@@ -135,7 +136,7 @@ export function LedgerEntryForm({
       <label>
         Account
         <select
-          className="field"
+          className={nativeSelectClassName}
           disabled={!options?.accounts.length}
           name="accountId"
           required
@@ -150,7 +151,7 @@ export function LedgerEntryForm({
       <label>
         Category
         <select
-          className="field"
+          className={nativeSelectClassName}
           disabled={!categories.length}
           key={type}
           name="categoryId"
@@ -165,7 +166,7 @@ export function LedgerEntryForm({
       </label>
       <label className="sm:col-span-2">
         Note
-        <input className="field" name="note" placeholder="Optional detail" />
+        <Input name="note" placeholder="Optional detail" />
       </label>
       {error ? (
         <p
@@ -176,21 +177,15 @@ export function LedgerEntryForm({
         </p>
       ) : null}
       <div className="flex gap-3 sm:col-span-2">
-        <button
-          className="button-primary"
+        <Button
           disabled={saving || !options?.accounts.length || !categories.length}
           type="submit"
         >
-          {saving ? "Saving&" : groupId ? "Add entry" : "Save transaction"}
-        </button>
-        <button
-          className="button-secondary"
-          disabled={saving}
-          onClick={onCancel}
-          type="button"
-        >
+          {saving ? "Saving…" : groupId ? "Add entry" : "Save transaction"}
+        </Button>
+        <Button disabled={saving} onClick={onCancel} type="button" variant="secondary">
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

@@ -1,48 +1,40 @@
-import { StyleSheet, Text, View } from "react-native";
+import { View } from 'react-native';
 
-import { GlassSurface } from "@/components/ui/glass-surface";
-import { LedgerScreen } from "@/components/ui/ledger-screen";
-import { Colors, Fonts, Spacing } from "@/constants/theme";
+import { Badge } from '@/components/ui/badge';
+import { GlassSurface } from '@/components/ui/glass-surface';
+import { LedgerScreen } from '@/components/ui/ledger-screen';
+import { ScreenHeader } from '@/components/ui/screen-header';
+import { Text } from '@/components/ui/text';
 
 const rules = [
-  { name: "Starbucks → Dining", usage: "Applied 12 times", active: true },
-  { name: "Uber → Transport", usage: "Applied 8 times", active: true },
-  { name: "Salary → BAC Checking", usage: "Applied 2 times", active: false },
+  { name: 'Starbucks → Dining', usage: 'Applied 12 times', active: true },
+  { name: 'Uber → Transport', usage: 'Applied 8 times', active: true },
+  { name: 'Salary → BAC Checking', usage: 'Applied 2 times', active: false },
 ];
 
 export default function RulesScreen() {
   return (
     <LedgerScreen>
-      <View>
-        <Text style={styles.eyebrow}>AUTOMATION RULES</Text>
-        <Text style={styles.title}>Make repeated choices once.</Text>
-        <Text style={styles.copy}>
-          Rules are clear, visible, and ready to explain each suggested action.
-        </Text>
-      </View>
-      <View style={styles.list}>
+      <ScreenHeader
+        eyebrow="AUTOMATION RULES"
+        title="Make repeated choices once."
+        copy="Rules are clear, visible, and ready to explain each suggested action."
+      />
+      <View className="gap-2">
         {rules.map((rule) => (
           <GlassSurface key={rule.name}>
-            <View style={styles.row}>
-              <View style={styles.grow}>
-                <Text style={styles.ruleName}>{rule.name}</Text>
-                <Text style={styles.ruleUsage}>{rule.usage}</Text>
+            <View className="flex-row items-center gap-3">
+              <View className="flex-1">
+                <Text className="text-foreground text-base font-bold">
+                  {rule.name}
+                </Text>
+                <Text className="text-muted-foreground mt-1 text-[13px]">
+                  {rule.usage}
+                </Text>
               </View>
-              <Text
-                style={[
-                  styles.status,
-                  {
-                    backgroundColor: rule.active
-                      ? Colors.light.successSoft
-                      : Colors.light.background,
-                    color: rule.active
-                      ? Colors.light.success
-                      : Colors.light.textSecondary,
-                  },
-                ]}
-              >
-                {rule.active ? "Active" : "Paused"}
-              </Text>
+              <Badge variant={rule.active ? 'success' : 'secondary'}>
+                <Text>{rule.active ? 'Active' : 'Paused'}</Text>
+              </Badge>
             </View>
           </GlassSurface>
         ))}
@@ -50,39 +42,3 @@ export default function RulesScreen() {
     </LedgerScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  eyebrow: {
-    color: Colors.light.action,
-    fontFamily: Fonts.sans,
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 0.8,
-  },
-  title: {
-    color: Colors.light.text,
-    fontSize: 28,
-    fontWeight: "700",
-    lineHeight: 34,
-    marginTop: 4,
-  },
-  copy: {
-    color: Colors.light.textSecondary,
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 8,
-  },
-  list: { gap: Spacing.two },
-  row: { alignItems: "center", flexDirection: "row", gap: 12 },
-  grow: { flex: 1 },
-  ruleName: { color: Colors.light.text, fontSize: 16, fontWeight: "700" },
-  ruleUsage: { color: Colors.light.textSecondary, fontSize: 13, marginTop: 5 },
-  status: {
-    borderRadius: 999,
-    fontSize: 11,
-    fontWeight: "700",
-    overflow: "hidden",
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-});
