@@ -15,10 +15,12 @@ export function ReceiptCapturePanel({
   disabled,
   onError,
   onParsed,
+  onSelectionChange,
 }: {
   disabled?: boolean;
   onError: (message: string) => void;
   onParsed: (result: ReceiptIntakeResult) => void;
+  onSelectionChange?: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -43,12 +45,14 @@ export function ReceiptCapturePanel({
   }, []);
 
   const resetSelection = () => {
+    onSelectionChange?.();
     revokePreview();
     setFile(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const selectFile = (next: File) => {
+    onSelectionChange?.();
     onError("");
     revokePreview();
     const objectUrl = URL.createObjectURL(next);
@@ -67,9 +71,7 @@ export function ReceiptCapturePanel({
       onParsed(parsed);
     } catch (err) {
       onError(
-        err instanceof Error
-          ? err.message
-          : "Failed to parse receipt capture",
+        err instanceof Error ? err.message : "Failed to parse receipt capture",
       );
     } finally {
       setUploading(false);
@@ -87,8 +89,8 @@ export function ReceiptCapturePanel({
       <div className="grid gap-5 p-5 sm:p-6">
         <p className="text-sm leading-6 text-muted">
           The photo stays in this browser until extraction finishes. The API
-          stores only the extracted facts, parse payload, and a deletion audit
-          — never the image.
+          stores only the extracted facts, parse payload, and a deletion audit —
+          never the image.
         </p>
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-action/30 bg-action-soft/20 px-6 py-8">
           {previewUrl ? (
@@ -129,11 +131,7 @@ export function ReceiptCapturePanel({
               </Button>
             ) : null}
             {file && !uploading ? (
-              <Button
-                onClick={resetSelection}
-                type="button"
-                variant="ghost"
-              >
+              <Button onClick={resetSelection} type="button" variant="ghost">
                 Discard photo
               </Button>
             ) : null}

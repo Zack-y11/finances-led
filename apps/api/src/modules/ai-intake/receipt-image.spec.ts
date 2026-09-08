@@ -9,7 +9,7 @@ import {
 
 describe('receipt image helpers', () => {
   it('accepts jpeg receipts and hashes the original bytes', () => {
-    const buffer = Buffer.from('fake-jpeg-bytes');
+    const buffer = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
     const file = assertImageFile({
       buffer,
       mimetype: 'image/jpeg',
@@ -23,7 +23,9 @@ describe('receipt image helpers', () => {
   });
 
   it('infers png mime type from the filename when the browser omits it', () => {
-    const buffer = Buffer.from('png-bytes');
+    const buffer = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     const file = assertImageFile({
       buffer,
       mimetype: 'application/octet-stream',
@@ -53,6 +55,33 @@ describe('receipt image helpers', () => {
         size: 12,
       }),
     ).toThrow(BadRequestException);
+  });
+
+  it('rejects spoofed image metadata and clears rejected upload buffers', () => {
+    const buffer = Buffer.from('not-an-image');
+
+    expect(() =>
+      assertImageFile({
+        buffer,
+        mimetype: 'text/plain',
+        originalname: 'notes.txt',
+        size: buffer.length,
+      }),
+    ).toThrow(BadRequestException);
+    expect(buffer.equals(Buffer.alloc(buffer.length))).toBe(true);
+
+    const mismatchedMetadata = Buffer.from('receipt-bytes');
+    expect(() =>
+      assertImageFile({
+        buffer: mismatchedMetadata,
+        mimetype: 'image/jpeg',
+        originalname: 'receipt.jpg',
+        size: mismatchedMetadata.length + 1,
+      }),
+    ).toThrow(BadRequestException);
+    expect(
+      mismatchedMetadata.equals(Buffer.alloc(mismatchedMetadata.length)),
+    ).toBe(true);
   });
 
   it('overwrites the in-memory image buffer after processing', () => {
