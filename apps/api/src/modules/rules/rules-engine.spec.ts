@@ -105,6 +105,34 @@ describe('applyAutomationRules', () => {
     );
     expect(applied).toHaveLength(2);
   });
+
+  it('matches normalized merchant equality and decimal amounts', () => {
+    const merchantRule = {
+      ...starbucksFood,
+      conditionOp: 'equals' as const,
+      conditionValue: 'STARBUCKS #1842',
+    };
+    const amountRule = {
+      ...amountAccount,
+      conditionOp: 'equals' as const,
+      conditionValue: '3.10',
+    };
+
+    expect(
+      applyAutomationRules({ merchant: 'Starbucks', amount: 3.1 }, [
+        merchantRule,
+        amountRule,
+      ]),
+    ).toEqual(
+      expect.objectContaining({
+        result: expect.objectContaining({ category: 'Food', account: 'Cash' }),
+        applied: expect.arrayContaining([
+          expect.objectContaining({ ruleId: starbucksFood.id }),
+          expect.objectContaining({ ruleId: amountAccount.id }),
+        ]),
+      }),
+    );
+  });
 });
 
 describe('detectRecurringPatterns', () => {
@@ -151,6 +179,52 @@ describe('detectRecurringPatterns', () => {
         occurrenceCount: 4,
         medianAmount: 12.5,
         type: 'expense',
+        nextExpectedAt: '2026-08-08T00:00:00.000Z',
+      }),
+    ]);
+  });
+
+  it('combines legacy entries without merchant ids with canonical history', () => {
+    const patterns = detectRecurringPatterns([
+      {
+        id: 'legacy-1',
+        type: 'EXPENSE',
+        amount: 42,
+        merchant: 'Internet Provider',
+        merchantId: null,
+        occurredAt: new Date('2026-01-08T12:00:00.000Z'),
+      },
+      {
+        id: 'canonical-2',
+        type: 'EXPENSE',
+        amount: 42,
+        merchant: 'Internet Provider',
+        merchantId: 'merchant-1',
+        occurredAt: new Date('2026-02-08T12:00:00.000Z'),
+      },
+      {
+        id: 'canonical-3',
+        type: 'EXPENSE',
+        amount: 42,
+        merchant: 'INTERNET PROVIDER',
+        merchantId: 'merchant-1',
+        occurredAt: new Date('2026-03-08T12:00:00.000Z'),
+      },
+      {
+        id: 'legacy-4',
+        type: 'EXPENSE',
+        amount: 42,
+        merchant: 'Internet Provider',
+        merchantId: null,
+        occurredAt: new Date('2026-04-08T12:00:00.000Z'),
+      },
+    ]);
+
+    expect(patterns).toEqual([
+      expect.objectContaining({
+        cadence: 'monthly',
+        occurrenceCount: 4,
+        sampleEntryIds: ['legacy-1', 'canonical-2', 'canonical-3', 'legacy-4'],
       }),
     ]);
   });
