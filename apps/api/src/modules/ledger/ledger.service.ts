@@ -16,6 +16,7 @@ import {
 import { Prisma } from '@finance/database';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
+import { MerchantsService } from '../merchants/merchants.service.js';
 
 @Injectable()
 export class LedgerService {
@@ -23,6 +24,7 @@ export class LedgerService {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly merchantsService: MerchantsService,
     config: ConfigService,
   ) {
     this.userId = config.getOrThrow<string>('DEV_USER_ID');
@@ -44,6 +46,9 @@ export class LedgerService {
 
     const occurredAt = new Date(input.occurredAt);
     const monthKey = input.occurredAt.slice(0, 7);
+    const resolvedMerchant = await this.merchantsService.resolveForWrite(
+      input.merchant,
+    );
 
     if (input.inputSessionId) {
       const session = await this.prisma.db.inputSession.findFirst({
@@ -62,7 +67,8 @@ export class LedgerService {
           type: input.type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT',
           amount: input.amount,
           currency: input.currency,
-          merchant: input.merchant,
+          merchant: resolvedMerchant.merchant,
+          merchantId: resolvedMerchant.merchantId,
           note: input.note,
           occurredAt,
           monthKey,
@@ -92,6 +98,29 @@ export class LedgerService {
           },
         },
       });
+
+      if (
+        resolvedMerchant.changed &&
+        resolvedMerchant.original &&
+        resolvedMerchant.merchant
+      ) {
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'LedgerEntry',
+            entityId: entry.id,
+            action: 'MERCHANT_NORMALIZED',
+            reason: `Merchant "${resolvedMerchant.original}" was normalized to "${resolvedMerchant.merchant}".`,
+            metadata: {
+              original: resolvedMerchant.original,
+              canonical: resolvedMerchant.merchant,
+              ...(resolvedMerchant.merchantId
+                ? { merchantId: resolvedMerchant.merchantId }
+                : {}),
+            },
+          },
+        });
+      }
 
       if (status === 'NEEDS_REVIEW') {
         await tx.auditLog.create({
@@ -253,6 +282,10 @@ export class LedgerService {
     const monthKey = input.occurredAt
       ? input.occurredAt.slice(0, 7)
       : existing.monthKey;
+    const resolvedMerchant =
+      input.merchant !== undefined
+        ? await this.merchantsService.resolveForWrite(input.merchant)
+        : null;
 
     return this.prisma.db.$transaction(async (tx) => {
       const updated = await tx.ledgerEntry.update({
@@ -268,7 +301,12 @@ export class LedgerService {
           ...(input.currency !== undefined
             ? { currency: input.currency.toUpperCase() }
             : {}),
-          ...(input.merchant !== undefined ? { merchant: input.merchant } : {}),
+          ...(input.merchant !== undefined
+            ? {
+                merchant: resolvedMerchant?.merchant ?? null,
+                merchantId: resolvedMerchant?.merchantId ?? null,
+              }
+            : {}),
           ...(input.accountId !== undefined
             ? { accountId: input.accountId }
             : {}),
@@ -295,6 +333,29 @@ export class LedgerService {
           },
         },
       });
+
+      if (
+        resolvedMerchant?.changed &&
+        resolvedMerchant.original &&
+        resolvedMerchant.merchant
+      ) {
+        await tx.auditLog.create({
+          data: {
+            userId: this.userId,
+            entityType: 'LedgerEntry',
+            entityId: id,
+            action: 'MERCHANT_NORMALIZED',
+            reason: `Merchant "${resolvedMerchant.original}" was normalized to "${resolvedMerchant.merchant}".`,
+            metadata: {
+              original: resolvedMerchant.original,
+              canonical: resolvedMerchant.merchant,
+              ...(resolvedMerchant.merchantId
+                ? { merchantId: resolvedMerchant.merchantId }
+                : {}),
+            },
+          },
+        });
+      }
 
       return updated;
     });

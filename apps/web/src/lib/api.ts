@@ -112,6 +112,29 @@ export type AutomationRule = {
   createdAt: string;
 };
 
+export type RecurringPattern = {
+  merchant: string;
+  merchantId: string | null;
+  type: "income" | "expense";
+  cadence: "weekly" | "biweekly" | "monthly";
+  medianAmount: number;
+  occurrenceCount: number;
+  lastOccurredAt: string;
+  nextExpectedAt: string;
+  active: boolean;
+  sampleEntryIds: string[];
+};
+
+export type Merchant = {
+  id: string;
+  displayName: string;
+  normalizedKey: string;
+  defaultCategory: { id: string; name: string } | null;
+  aliases: Array<{ id: string; alias: string; normalizedKey: string }>;
+  entryCount: number;
+  createdAt: string;
+};
+
 export type ReviewMetrics = {
   pending: number;
   highConfidence: number;
@@ -502,6 +525,51 @@ export async function deleteAutomationRule(
   return request<{ success: boolean; id: string }>(`/rules/${id}`, {
     method: "DELETE",
   });
+}
+export async function getMerchants(): Promise<Merchant[]> {
+  return request<Merchant[]>("/merchants");
+}
+export async function createMerchant(input: {
+  displayName: string;
+  defaultCategoryId?: string;
+}): Promise<Merchant> {
+  return request<Merchant>("/merchants", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+export async function updateMerchant(
+  id: string,
+  input: { displayName?: string; defaultCategoryId?: string | null },
+): Promise<Merchant> {
+  return request<Merchant>(`/merchants/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+export async function addMerchantAlias(
+  id: string,
+  alias: string,
+): Promise<Merchant> {
+  return request<Merchant>(`/merchants/${id}/aliases`, {
+    method: "POST",
+    body: JSON.stringify({ alias }),
+  });
+}
+export async function mergeMerchants(
+  targetId: string,
+  sourceMerchantId: string,
+): Promise<Merchant> {
+  return request<Merchant>(`/merchants/${targetId}/merge`, {
+    method: "POST",
+    body: JSON.stringify({ sourceMerchantId }),
+  });
+}
+export async function getRecurringPatterns(): Promise<RecurringPattern[]> {
+  const payload = await request<{ data: RecurringPattern[] }>(
+    "/recurring-patterns",
+  );
+  return payload.data;
 }
 export async function getReviewItems(
   status?: string,

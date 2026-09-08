@@ -26,6 +26,7 @@
     "@finance/ai": "workspace:*",
     "@finance/contracts": "workspace:*",
     "@finance/database": "workspace:*",
+    "@finance/rules": "workspace:*",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",

@@ -81,13 +81,15 @@ the photo.
 
 Goal: make the system learn from repeated behavior.
 
-- User-owned rules
-- Rule priority
-- Merchant normalization
-- Recurring transaction detection
+- User-owned rules — **done**
+- Rule priority — **done** (priority 1 wins per field; later matches cannot overwrite)
+- Merchant normalization — **done** (canonical merchant records, aliases, default category)
+- Recurring transaction detection — **done** (weekly / biweekly / monthly from posted history)
 - Budget alerts
 - Monthly close prediction
-- Rule explanation in audit logs
+- Rule explanation in audit logs — **done** (`RULE_APPLIED` and `MERCHANT_NORMALIZED`)
+
+Current slice: user-owned rules remain the categorization engine. Incoming merchants are normalized onto a `Merchant` record before rules run, aliases such as `STARBUCKS #1842` collapse to a canonical name, and posted history is scanned for recurring cadences. The backend never auto-posts future recurrences. Remaining Phase 6 work is budget alerts and monthly close prediction.
 
 Done when common transactions require less correction over time.
 

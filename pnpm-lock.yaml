@@ -48,6 +48,9 @@ importers:
       '@finance/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@finance/rules':
+        specifier: workspace:*
+        version: link:../../packages/rules
       '@nestjs/common':
         specifier: ^11.0.1
         version: 11.1.28(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -429,6 +432,12 @@ importers:
         version: 7.0.2
 
   packages/design-tokens:
+    devDependencies:
+      typescript:
+        specifier: latest
+        version: 7.0.2
+
+  packages/rules:
     devDependencies:
       typescript:
         specifier: latest
@@ -12321,7 +12330,9 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

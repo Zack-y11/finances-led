@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
 import { PageHeading } from "@/components/ui/page-heading";
+import { RecurringPatternsCard } from "@/components/ui/recurring-patterns-card";
 import { TransactionList } from "@/components/ui/transaction-list";
 import {
   currentMonth,
@@ -26,10 +27,12 @@ import {
   getMonthlyBreakdown,
   getMonthlySummary,
   getNetHistory,
+  getRecurringPatterns,
   money,
   type AnalyticsBreakdown,
   type AnalyticsSummary,
   type LedgerEntry,
+  type RecurringPattern,
 } from "@/lib/api";
 
 const month = currentMonth();
@@ -67,6 +70,7 @@ export function DashboardView() {
   const [breakdown, setBreakdown] = useState<AnalyticsBreakdown>();
   const [history, setHistory] = useState<AnalyticsSummary[]>([]);
   const [recent, setRecent] = useState<LedgerEntry[]>([]);
+  const [recurring, setRecurring] = useState<RecurringPattern[]>([]);
   const [error, setError] = useState<string>();
 
   useEffect(() => {
@@ -76,14 +80,18 @@ export function DashboardView() {
       getMonthlyBreakdown(month),
       getNetHistory(),
       getLedgerEntries({ pageSize: 4 }),
+      getRecurringPatterns().catch(() => [] as RecurringPattern[]),
     ])
-      .then(([nextSummary, nextBreakdown, nextHistory, nextRecent]) => {
-        if (!active) return;
-        setSummary(nextSummary);
-        setBreakdown(nextBreakdown);
-        setHistory(nextHistory);
-        setRecent(nextRecent.data);
-      })
+      .then(
+        ([nextSummary, nextBreakdown, nextHistory, nextRecent, nextRecurring]) => {
+          if (!active) return;
+          setSummary(nextSummary);
+          setBreakdown(nextBreakdown);
+          setHistory(nextHistory);
+          setRecent(nextRecent.data);
+          setRecurring(nextRecurring);
+        },
+      )
       .catch((reason) => {
         if (!active) return;
         setError(
@@ -224,6 +232,7 @@ export function DashboardView() {
           title="Income breakdown"
         />
       </section>
+      <RecurringPatternsCard patterns={recurring.slice(0, 5)} />
       <Card className="p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>

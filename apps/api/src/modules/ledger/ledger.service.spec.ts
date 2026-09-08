@@ -5,6 +5,7 @@ import { jest } from '@jest/globals';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { LedgerService } from './ledger.service.js';
+import { MerchantsService } from '../merchants/merchants.service.js';
 
 describe('LedgerService confidence policy', () => {
   const accountId = '11111111-1111-4111-8111-111111111111';
@@ -40,10 +41,31 @@ describe('LedgerService confidence policy', () => {
       ),
   };
   const prisma = { db } as unknown as PrismaService;
+  const merchantsService = {
+    resolveForWrite: jest
+      .fn<
+        (raw?: string | null) => Promise<{
+          original: string | null;
+          merchant: string | null;
+          merchantId: string | null;
+          defaultCategoryName: string | null;
+          changed: boolean;
+        }>
+      >()
+      .mockImplementation((raw) =>
+        Promise.resolve({
+          original: raw ?? null,
+          merchant: raw ?? null,
+          merchantId: null,
+          defaultCategoryName: null,
+          changed: false,
+        }),
+      ),
+  } as unknown as MerchantsService;
   const config = {
     getOrThrow: () => userId,
   } as unknown as ConfigService;
-  const service = new LedgerService(prisma, config);
+  const service = new LedgerService(prisma, merchantsService, config);
   const baseInput: CreateLedgerEntry = {
     type: 'expense',
     amount: 3.19,

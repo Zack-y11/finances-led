@@ -85,6 +85,12 @@ export default function SettingsPage() {
             >
               Manage categories →
             </Link>
+            <Link
+              className="text-sm font-semibold text-action hover:underline"
+              href="/settings/merchants"
+            >
+              Manage merchants →
+            </Link>
           </div>
         </SettingsCard>
       </section>
