@@ -118,5 +118,5 @@ The first strong MVP is:
 5. Entry groups and sub-events.
 6. Audit logs for created and appended entries.
 
-Voice, receipt OCR, advanced rules, and Notion sync come after the core model is
-stable.
+Voice and receipt capture are live. Advanced rules and Notion sync come after
+the core model is stable.

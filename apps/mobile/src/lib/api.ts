@@ -2,6 +2,7 @@ import { createFinanceApiClient } from "@finance/api-client";
 import type {
   CreateLedgerEntry,
   ParsedFinanceCommand,
+  ReceiptIntakeResult,
   VoiceIntakeResult,
 } from "@finance/contracts";
 
@@ -61,6 +62,38 @@ export async function parseVoiceCommand(
   return response.json() as Promise<VoiceIntakeResult>;
 }
 
+export async function parseReceiptCommand(
+  file: { uri: string; name: string; type: string } | Blob,
+  filename = "receipt-capture.jpg",
+): Promise<ReceiptIntakeResult> {
+  const form = new FormData();
+  if (file instanceof Blob) {
+    form.append("image", file, filename);
+  } else {
+    form.append("image", {
+      uri: file.uri,
+      name: file.name,
+      type: file.type,
+    } as unknown as Blob);
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/ai-intake/receipt`, {
+      method: "POST",
+      body: form,
+    });
+  } catch {
+    throw new ApiError(
+      "Unable to reach the finance API. Check that it is running and try again.",
+    );
+  }
+  if (!response.ok) {
+    throw new ApiError(await readError(response), response.status);
+  }
+  return response.json() as Promise<ReceiptIntakeResult>;
+}
+
 export async function createLedgerEntry(
   input: CreateLedgerEntry,
 ): Promise<unknown> {
@@ -110,4 +143,4 @@ export function getFinanceApi() {
   return createFinanceApiClient({ baseUrl });
 }
 
-export type { ParsedFinanceCommand, VoiceIntakeResult };
+export type { ParsedFinanceCommand, ReceiptIntakeResult, VoiceIntakeResult };

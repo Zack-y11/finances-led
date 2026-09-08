@@ -67,8 +67,8 @@ The first useful product is:
 - Entry groups and sub-events
 - Audit log for created and appended entries
 
-Voice, receipt OCR, advanced rules, and Notion sync come after the financial
-model is stable.
+Voice and receipt capture are live. Advanced rules and Notion sync come after
+the financial model is stable.
 
 ## Example Commands
 

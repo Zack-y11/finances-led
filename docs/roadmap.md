@@ -72,6 +72,8 @@ Goal: extract expense details from receipts.
 - Store input session trace
 - Allow user correction
 
+Current slice: web and mobile can photograph or upload a receipt, `POST /ai-intake/receipt` runs an OpenRouter vision parse, stores an `InputSession` trace with `IMAGE` modality, writes `MEDIA_DELETED` audit logs, and never persists the photo. High-confidence proposals can post to the ledger after the user corrects extracted fields; uncertain ones go to the review inbox.
+
 Done when receipt capture creates or proposes ledger entries without retaining
 the photo.
 

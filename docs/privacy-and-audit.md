@@ -40,10 +40,11 @@ Do not store long term:
 6. Audit log records the resulting command and deletion status.
 ```
 
-The first version sends text and short voice clips to OpenRouter
-(`https://openrouter.ai/api/v1`) for parsing and transcription. Raw audio is
-not retained after the request. For a future stricter privacy mode, support
-local or self-hosted transcription and OCR.
+The first version sends text, short voice clips, and receipt photos to
+OpenRouter (`https://openrouter.ai/api/v1`) for parsing, transcription, and
+vision extraction. Raw audio and receipt images are not retained after the
+request. For a future stricter privacy mode, support local or self-hosted
+transcription and OCR.
 
 ## Input Session Policy
 
@@ -98,6 +99,12 @@ Metadata: { ruleId: "...", category: "Food" }
 InputSession MEDIA_DELETED
 Reason: Raw voice audio was discarded after transcription.
 Metadata: { mediaHash: "...", mediaDeleted: true, durableAudioStored: false }
+```
+
+```txt
+InputSession MEDIA_DELETED
+Reason: Raw receipt image was discarded after vision extraction.
+Metadata: { mediaHash: "...", mediaDeleted: true, durableImageStored: false }
 ```
 
 ## Security Notes

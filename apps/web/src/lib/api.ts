@@ -8,6 +8,7 @@ import type {
   CreateLedgerEntry,
   ParsedFinanceCommand,
   ParseTextCommandRequest,
+  ReceiptIntakeResult,
   UpdateAccount,
   UpdateAutomationRule,
   UpdateCategory,
@@ -16,7 +17,7 @@ import type {
   InputSessionTrace,
 } from "@finance/contracts";
 
-export type { InputSessionTrace, VoiceIntakeResult };
+export type { InputSessionTrace, ReceiptIntakeResult, VoiceIntakeResult };
 
 const baseUrl = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
@@ -414,6 +415,42 @@ export async function parseVoiceCommand(
     );
   }
   return response.json() as Promise<VoiceIntakeResult>;
+}
+
+export async function parseReceiptCommand(
+  image: Blob,
+  filename = "receipt-capture.jpg",
+  referenceDate?: string,
+): Promise<ReceiptIntakeResult> {
+  const form = new FormData();
+  form.append("image", image, filename);
+  if (referenceDate) form.append("referenceDate", referenceDate);
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/ai-intake/receipt`, {
+      method: "POST",
+      body: form,
+      cache: "no-store",
+    });
+  } catch {
+    throw new ApiError(
+      "Unable to reach the finance API. Check that it is running and try again.",
+    );
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const message = Array.isArray(body?.message)
+      ? body.message[0]
+      : body?.message;
+    throw new ApiError(
+      message ?? "The request could not be completed.",
+      response.status,
+    );
+  }
+  return response.json() as Promise<ReceiptIntakeResult>;
 }
 
 export async function getInputSessions(): Promise<InputSessionTrace[]> {
