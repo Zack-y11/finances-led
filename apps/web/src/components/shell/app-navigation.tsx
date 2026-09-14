@@ -12,6 +12,7 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/groups", label: "Groups", icon: "groups" },
   { href: "/review", label: "Review Inbox", icon: "inbox" },
   { href: "/rules", label: "Rules", icon: "rule" },
+  { href: "/budgets", label: "Budgets", icon: "chart" },
   {
     href: "/settings/merchants",
     label: "Merchants",
