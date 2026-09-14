@@ -26,6 +26,11 @@ export const analyticsMonthQuerySchema = z.object({
   month: monthKeySchema,
 });
 
+export const monthlyClosePredictionQuerySchema = z.object({
+  month: monthKeySchema,
+  asOf: dateStringSchema.optional(),
+});
+
 export const inputMethodSchema = z.enum(["manual", "text", "voice", "receipt"]);
 
 export const entryGroupTypeSchema = z.enum(["income", "expense", "mixed"]);
@@ -363,6 +368,46 @@ export const budgetAlertSchema = z.object({
 
 export const budgetAlertDtoSchema = budgetAlertSchema;
 
+const monthlyClosePredictionMoneySchema = z.number().finite();
+
+export const recurringStillDueSchema = z.object({
+  merchant: z.string().trim().min(1),
+  type: z.enum(["income", "expense"]),
+  cadence: recurringCadenceSchema,
+  amount: z.number().nonnegative(),
+  expectedDate: dateStringSchema,
+});
+
+export const monthlyClosePredictionSchema = z.object({
+  month: monthKeySchema,
+  asOf: dateStringSchema,
+  daysInMonth: z.number().int().min(28).max(31),
+  elapsedDays: z.number().int().min(0).max(31),
+  remainingDays: z.number().int().min(0).max(31),
+  actual: z.object({
+    income: monthlyClosePredictionMoneySchema,
+    expenses: monthlyClosePredictionMoneySchema,
+    net: monthlyClosePredictionMoneySchema,
+  }),
+  projectedRemaining: z.object({
+    income: monthlyClosePredictionMoneySchema,
+    expenses: monthlyClosePredictionMoneySchema,
+    net: monthlyClosePredictionMoneySchema,
+  }),
+  forecast: z.object({
+    income: monthlyClosePredictionMoneySchema,
+    expenses: monthlyClosePredictionMoneySchema,
+    net: monthlyClosePredictionMoneySchema,
+  }),
+  assumptions: z.object({
+    averageDailySpend: z.number().nonnegative(),
+    projectedVariableSpend: z.number().nonnegative(),
+    recurringIncomeStillDue: z.number().nonnegative(),
+    recurringExpensesStillDue: z.number().nonnegative(),
+    recurringStillDue: z.array(recurringStillDueSchema),
+  }),
+});
+
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
 export type AppliedRuleExplanation = z.infer<
@@ -406,6 +451,12 @@ export type InputSessionStatus = z.infer<typeof inputSessionStatusSchema>;
 export type TransactionType = z.infer<typeof transactionTypeSchema>;
 export type LedgerEntriesQuery = z.infer<typeof ledgerEntriesQuerySchema>;
 export type AnalyticsMonthQuery = z.infer<typeof analyticsMonthQuerySchema>;
+export type MonthlyClosePredictionQuery = z.infer<
+  typeof monthlyClosePredictionQuerySchema
+>;
+export type MonthlyClosePrediction = z.infer<
+  typeof monthlyClosePredictionSchema
+>;
 export type EntryGroupType = z.infer<typeof entryGroupTypeSchema>;
 export type AccountType = z.infer<typeof accountTypeSchema>;
 export type CreateAccount = z.infer<typeof createAccountSchema>;

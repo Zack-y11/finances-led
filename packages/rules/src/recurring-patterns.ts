@@ -42,13 +42,14 @@ const MATCH_RATIO = 0.6;
 
 export function detectRecurringPatterns(
   entries: RecurringLedgerSnapshot[],
+  referenceDate = new Date(),
 ): RecurringPattern[] {
   const groups = groupEntries(entries);
 
   const patterns: RecurringPattern[] = [];
 
   for (const group of groups) {
-    const pattern = detectGroup(group);
+    const pattern = detectGroup(group, referenceDate);
     if (pattern) patterns.push(pattern);
   }
 
@@ -62,6 +63,7 @@ export function detectRecurringPatterns(
 
 function detectGroup(
   entries: RecurringLedgerSnapshot[],
+  referenceDate: Date,
 ): RecurringPattern | null {
   const sorted = [...entries].sort(
     (left, right) => left.occurredAt.getTime() - right.occurredAt.getTime(),
@@ -88,7 +90,7 @@ function detectGroup(
   if (!last) return null;
 
   const lastDay = utcDayNumber(last.occurredAt);
-  const today = utcDayNumber(new Date());
+  const today = utcDayNumber(referenceDate);
   const grace = Math.ceil(match.periodDays * 1.5) + 3;
 
   return {

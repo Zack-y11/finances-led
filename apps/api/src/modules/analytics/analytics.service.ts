@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { detectRecurringPatterns } from '@finance/rules';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
+import {
+  projectMonthlyClose,
+  type PredictionLedgerEntry,
+} from './monthly-close-prediction.js';
 
 type MonthlyTotals = {
   incomeCents: number;
@@ -120,6 +125,58 @@ export class AnalyticsService {
     );
   }
 
+  async monthlyClosePrediction(month: string, requestedAsOf?: string) {
+    const asOf = this.asOfDate(month, requestedAsOf);
+    const entries = await this.prisma.db.ledgerEntry.findMany({
+      where: {
+        userId: this.userId,
+        status: 'POSTED',
+        type: { in: ['INCOME', 'EXPENSE'] },
+        occurredAt: { lte: this.endOfDay(asOf) },
+      },
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        merchant: true,
+        merchantId: true,
+        occurredAt: true,
+      },
+      orderBy: { occurredAt: 'asc' },
+    });
+    const snapshots = entries.map<PredictionLedgerEntry>((entry) => ({
+      type: entry.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+      amountCents: this.cents(entry.amount),
+      merchant: entry.merchant,
+      merchantId: entry.merchantId,
+      occurredAt: entry.occurredAt,
+    }));
+    const recurringPatterns = detectRecurringPatterns(
+      entries.flatMap((entry) =>
+        entry.merchant
+          ? [
+              {
+                id: entry.id,
+                type: entry.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+                amount: Number(entry.amount),
+                merchant: entry.merchant,
+                merchantId: entry.merchantId,
+                occurredAt: entry.occurredAt,
+              },
+            ]
+          : [],
+      ),
+      asOf,
+    );
+
+    return projectMonthlyClose({
+      month,
+      asOf,
+      entries: snapshots,
+      recurringPatterns,
+    });
+  }
+
   private totalsFromRows(
     rows: Array<{
       type: 'INCOME' | 'EXPENSE' | 'ADJUSTMENT';
@@ -147,5 +204,32 @@ export class AnalyticsService {
 
   private cents(value: { toString(): string } | null): number {
     return Math.round(Number(value?.toString() ?? 0) * 100);
+  }
+
+  private asOfDate(month: string, requestedAsOf?: string): Date {
+    const [yearText, monthText] = month.split('-');
+    const year = Number(yearText);
+    const monthNumber = Number(monthText);
+    const startDay = Date.UTC(year, monthNumber - 1, 1);
+    const daysInMonth = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+    const endDay = startDay + (daysInMonth - 1) * 86_400_000;
+    const requestedDay = requestedAsOf
+      ? Date.parse(`${requestedAsOf}T00:00:00.000Z`)
+      : Date.now();
+    return new Date(Math.min(Math.max(requestedDay, startDay), endDay));
+  }
+
+  private endOfDay(date: Date): Date {
+    return new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        23,
+        59,
+        59,
+        999,
+      ),
+    );
   }
 }
