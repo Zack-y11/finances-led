@@ -4,6 +4,7 @@ import type {
   CreateAccount,
   CreateAutomationRule,
   CreateCategory,
+  CreateBudget as ContractCreateBudget,
   CreateEntryGroup,
   CreateLedgerEntry,
   ParsedFinanceCommand,
@@ -12,6 +13,7 @@ import type {
   UpdateAccount,
   UpdateAutomationRule,
   UpdateCategory,
+  UpdateBudget as ContractUpdateBudget,
   UpdateLedgerEntry,
   VoiceIntakeResult,
   InputSessionTrace,
@@ -146,6 +148,45 @@ export type ReviewItemsResponse = {
   metrics: ReviewMetrics;
 };
 
+export type Budget = {
+  id: string;
+  name: string;
+  period: "monthly";
+  amount: number;
+  alertThreshold: number;
+  categoryId: string | null;
+  accountId: string | null;
+  category: ApiRelated | null;
+  account: ApiRelated | null;
+  createdAt: string;
+  updatedAt: string;
+  evaluation: BudgetEvaluation;
+};
+
+export type BudgetEvaluationStatus = "on_track" | "approaching" | "exceeded";
+
+export type BudgetEvaluation = {
+  budgetId: string;
+  budgetName?: string;
+  month: string;
+  budgetAmount: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+  status: BudgetEvaluationStatus;
+  categoryId: string | null;
+  accountId: string | null;
+  category: ApiRelated | null;
+  account: ApiRelated | null;
+};
+
+export type BudgetAlert = BudgetEvaluation;
+
+export type CreateBudgetInput = ContractCreateBudget;
+export type UpdateBudgetInput = ContractUpdateBudget;
+export type CreateBudget = CreateBudgetInput;
+export type UpdateBudget = UpdateBudgetInput;
+
 function numberValue(value: unknown): number {
   const parsed = typeof value === "number" ? value : Number(value);
   return Number.isFinite(parsed) ? parsed : 0;
@@ -209,6 +250,87 @@ function normalizeGroup(value: Record<string, unknown>): EntryGroup {
       typeof value.description === "string" ? value.description : null,
     total: numberValue(value.total),
     createdAt: String(value.createdAt ?? ""),
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function related(value: unknown): ApiRelated | null {
+  if (!isRecord(value) || typeof value.id !== "string") return null;
+  return { id: value.id, name: String(value.name ?? "Unknown") };
+}
+
+function normalizeBudgetEvaluation(
+  value: Record<string, unknown>,
+  budget?: Record<string, unknown>,
+): BudgetEvaluation {
+  const limit = numberValue(value.limitAmount ?? budget?.amount);
+  const rawLevel = value.alertLevel ?? value.level;
+  const status: BudgetEvaluationStatus =
+    rawLevel === "exceeded"
+      ? "exceeded"
+      : rawLevel === "approaching"
+        ? "approaching"
+        : "on_track";
+  return {
+    budgetId: String(value.budgetId ?? budget?.id ?? ""),
+    budgetName:
+      typeof value.budgetName === "string"
+        ? value.budgetName
+        : budget && typeof budget.name === "string"
+          ? budget.name
+          : undefined,
+    month: String(value.monthKey ?? ""),
+    budgetAmount: limit,
+    spent: numberValue(value.spent),
+    remaining: numberValue(
+      value.remainingAmount ?? limit - numberValue(value.spent),
+    ),
+    percentage: limit > 0 ? numberValue(value.utilization) * 100 : 0,
+    status,
+    categoryId:
+      typeof (value.categoryId ?? budget?.categoryId) === "string"
+        ? String(value.categoryId ?? budget?.categoryId)
+        : null,
+    accountId:
+      typeof (value.accountId ?? budget?.accountId) === "string"
+        ? String(value.accountId ?? budget?.accountId)
+        : null,
+    category: related(value.category ?? budget?.category),
+    account: related(value.account ?? budget?.account),
+  };
+}
+
+function normalizeBudget(value: Record<string, unknown>): Budget {
+  const evaluation = isRecord(value.evaluation)
+    ? normalizeBudgetEvaluation(value.evaluation, value)
+    : normalizeBudgetEvaluation(
+        {
+          budgetId: value.id,
+          monthKey: "",
+          spent: 0,
+          limitAmount: value.amount,
+          remainingAmount: value.amount,
+          utilization: 0,
+          alertLevel: null,
+        },
+        value,
+      );
+  return {
+    id: String(value.id),
+    name: String(value.name),
+    period: "monthly",
+    amount: numberValue(value.amount),
+    alertThreshold: numberValue(value.alertThreshold),
+    categoryId: typeof value.categoryId === "string" ? value.categoryId : null,
+    accountId: typeof value.accountId === "string" ? value.accountId : null,
+    category: related(value.category),
+    account: related(value.account),
+    createdAt: String(value.createdAt),
+    updatedAt: String(value.updatedAt),
+    evaluation,
   };
 }
 
@@ -340,6 +462,44 @@ export async function updateCategory(
       body: JSON.stringify(input),
     }),
   );
+}
+export async function getBudgets(month?: string): Promise<Budget[]> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  return (await request<Record<string, unknown>[]>(`/budgets${query}`)).map(
+    normalizeBudget,
+  );
+}
+export async function createBudget(input: CreateBudgetInput): Promise<Budget> {
+  return normalizeBudget(
+    await request<Record<string, unknown>>("/budgets", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function updateBudget(
+  id: string,
+  input: UpdateBudgetInput,
+): Promise<Budget> {
+  return normalizeBudget(
+    await request<Record<string, unknown>>(`/budgets/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    }),
+  );
+}
+export async function deleteBudget(
+  id: string,
+): Promise<{ success: boolean; id: string }> {
+  return request<{ success: boolean; id: string }>(`/budgets/${id}`, {
+    method: "DELETE",
+  });
+}
+export async function getBudgetAlerts(month?: string): Promise<BudgetAlert[]> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  return (
+    await request<Record<string, unknown>[]>(`/budgets/alerts${query}`)
+  ).map((alert) => normalizeBudgetEvaluation(alert));
 }
 export async function getEntryGroups(): Promise<EntryGroup[]> {
   return (await request<Record<string, unknown>[]>("/entry-groups")).map(

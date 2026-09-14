@@ -85,11 +85,11 @@ Goal: make the system learn from repeated behavior.
 - Rule priority — **done** (priority 1 wins per field; later matches cannot overwrite)
 - Merchant normalization — **done** (canonical merchant records, aliases, default category)
 - Recurring transaction detection — **done** (weekly / biweekly / monthly from posted history)
-- Budget alerts
+- Budget alerts — **current slice** (monthly category/account budgets with deterministic posted-spend alerts)
 - Monthly close prediction
 - Rule explanation in audit logs — **done** (`RULE_APPLIED` and `MERCHANT_NORMALIZED`)
 
-Current slice: user-owned rules remain the categorization engine. Incoming merchants are normalized onto a `Merchant` record before rules run, aliases such as `STARBUCKS #1842` collapse to a canonical name, and posted history is scanned for recurring cadences. The backend never auto-posts future recurrences. Remaining Phase 6 work is budget alerts and monthly close prediction.
+Current slice: user-owned rules remain the categorization engine. Incoming merchants are normalized onto a `Merchant` record before rules run, aliases such as `STARBUCKS #1842` collapse to a canonical name, and posted history is scanned for recurring cadences. Monthly budgets can scope a category, an account, or both; the backend evaluates only posted expense ledger data in Postgres and raises approaching/exceeded alerts without creating or posting ledger entries. Budget changes and alert raises are audited. Remaining Phase 6 work is monthly close prediction.
 
 Done when common transactions require less correction over time.
 
