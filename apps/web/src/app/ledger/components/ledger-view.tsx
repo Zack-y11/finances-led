@@ -27,11 +27,13 @@ import {
   getLedgerEntries,
   getLedgerEntry,
   getLedgerOptions,
+  getMerchants,
   money,
   updateLedgerEntry,
   type LedgerEntry,
   type LedgerOptions,
   type LedgerPage,
+  type Merchant,
 } from "@/lib/api";
 import { cn, nativeSelectClassName } from "@/lib/utils";
 
@@ -59,11 +61,13 @@ export function LedgerView() {
   const accountId = searchParams.get("accountId") || "";
   const categoryId = searchParams.get("categoryId") || "";
   const groupId = searchParams.get("groupId") || "";
+  const merchantId = searchParams.get("merchantId") || "";
   const pageParam = Number(searchParams.get("page"));
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1;
   const [showForm, setShowForm] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
+  const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [result, setResult] = useState<LedgerPage>({
     data: [],
     pagination: { page: 1, pageSize: 20, total: 0, totalPages: 0 },
@@ -102,9 +106,14 @@ export function LedgerView() {
   useEffect(() => {
     let active = true;
     setOptionsError(undefined);
-    getLedgerOptions()
-      .then((nextOptions) => {
-        if (active) setOptions(nextOptions);
+    Promise.all([
+      getLedgerOptions(),
+      getMerchants().catch(() => [] as Merchant[]),
+    ])
+      .then(([nextOptions, nextMerchants]) => {
+        if (!active) return;
+        setOptions(nextOptions);
+        setMerchants(nextMerchants);
       })
       .catch((reason) => {
         if (!active) return;
@@ -130,6 +139,7 @@ export function LedgerView() {
       accountId: accountId || undefined,
       categoryId: categoryId || undefined,
       groupId: groupId || undefined,
+      merchantId: merchantId || undefined,
       page,
       pageSize: 20,
     })
@@ -155,6 +165,7 @@ export function LedgerView() {
     categoryId,
     endDate,
     groupId,
+    merchantId,
     page,
     query,
     reload,
@@ -287,7 +298,8 @@ export function LedgerView() {
               type !== "all" ||
               accountId ||
               categoryId ||
-              groupId ? (
+              groupId ||
+              merchantId ? (
                 <Button
                   onClick={clearAllFilters}
                   size="sm"
@@ -428,6 +440,28 @@ export function LedgerView() {
                 className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
               >
                 <span className="mb-1 block text-xs font-medium text-muted">
+                  Merchant
+                </span>
+                <select
+                  aria-label="Merchant"
+                  className={filterSelectClassName}
+                  onChange={(event) =>
+                    updateFilter("merchantId", event.target.value)
+                  }
+                  value={merchantId}
+                >
+                  <option value="">All merchants</option>
+                  {merchants.map((merchant) => (
+                    <option key={merchant.id} value={merchant.id}>
+                      {merchant.displayName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label
+                className={`order-3 sm:order-none 2xl:col-span-3 ${showFilters ? "" : "!hidden sm:!grid"}`}
+              >
+                <span className="mb-1 block text-xs font-medium text-muted">
                   Group
                 </span>
                 <select
@@ -491,7 +525,9 @@ export function LedgerView() {
             <Table className="min-w-[760px] border-collapse text-left">
               <TableHeader className="bg-surface-muted text-xs uppercase tracking-wide text-muted">
                 <TableRow className="hover:bg-transparent">
-                  <TableHead className="px-5 py-3 font-semibold">Date</TableHead>
+                  <TableHead className="px-5 py-3 font-semibold">
+                    Date
+                  </TableHead>
                   <TableHead className="px-5 py-3 font-semibold">
                     Description
                   </TableHead>
