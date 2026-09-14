@@ -107,6 +107,25 @@ Goal: make the dashboard genuinely useful for decisions.
 
 Done when the user can answer `where did my money go this month?`.
 
+### Current slice
+
+The web dashboard can pick a month and answer that question from the Postgres
+ledger, without duplicating aggregation in the Next.js app.
+
+Shipped in this slice:
+
+- Monthly net, income, and expenses with a prior-month delta
+- Category breakdown whose amounts reconcile with those monthly totals
+- Simple trend: this month vs prior month per category
+- One repeated-spending insight from existing `GET /recurring-patterns`
+- Filterable history by date range, category, account, merchant, type, and search
+
+Still later in Phase 7:
+
+- Budget vs actual
+- CSV export
+- Group-level analytics beyond existing group totals
+
 ## Phase 8: Optional Notion Sync
 
 Goal: mirror selected data to Notion without making Notion the source of truth.
