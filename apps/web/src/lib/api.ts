@@ -1,6 +1,12 @@
 "use client";
 
 import type {
+  AnalyticsBreakdown,
+  AnalyticsCategoryBreakdownItem,
+  AnalyticsMonthOverview,
+  AnalyticsNetHistoryItem,
+  AnalyticsRepeatedSpendingInsight,
+  AnalyticsSummary,
   CreateAccount,
   CreateAutomationRule,
   CreateCategory,
@@ -21,6 +27,12 @@ import type {
 } from "@finance/contracts";
 
 export type {
+  AnalyticsBreakdown,
+  AnalyticsCategoryBreakdownItem,
+  AnalyticsMonthOverview,
+  AnalyticsNetHistoryItem,
+  AnalyticsRepeatedSpendingInsight,
+  AnalyticsSummary,
   InputSessionTrace,
   MonthlyClosePrediction,
   ReceiptIntakeResult,
@@ -97,16 +109,6 @@ export type EntryGroup = {
 };
 
 export type EntryGroupDetail = EntryGroup & { ledgerEntries: LedgerEntry[] };
-export type AnalyticsSummary = {
-  month: string;
-  income: number;
-  expenses: number;
-  net: number;
-};
-export type AnalyticsBreakdown = {
-  expenses: Array<{ category: string; amount: number }>;
-  income: Array<{ category: string; amount: number }>;
-};
 export type AutomationRule = {
   id: string;
   name: string;
@@ -558,8 +560,15 @@ export async function getMonthlyBreakdown(
     `/analytics/monthly-breakdown?month=${encodeURIComponent(month)}`,
   );
 }
-export async function getNetHistory(): Promise<AnalyticsSummary[]> {
-  return request<AnalyticsSummary[]>("/analytics/net-history");
+export async function getMonthlyOverview(
+  month: string,
+): Promise<AnalyticsMonthOverview> {
+  return request<AnalyticsMonthOverview>(
+    `/analytics/monthly-overview?month=${encodeURIComponent(month)}`,
+  );
+}
+export async function getNetHistory(): Promise<AnalyticsNetHistoryItem[]> {
+  return request<AnalyticsNetHistoryItem[]>("/analytics/net-history");
 }
 export async function getMonthlyClosePrediction(
   month: string,
@@ -675,6 +684,19 @@ export const currentMonth = () => {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 };
+export function shiftMonth(month: string, delta: number) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const date = new Date(Date.UTC(year, monthNumber - 1 + delta, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+export function monthDateRange(month: string) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  return {
+    startDate: `${month}-01`,
+    endDate: `${month}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
 export async function getAutomationRules(): Promise<AutomationRule[]> {
   return request<AutomationRule[]>("/rules");
 }

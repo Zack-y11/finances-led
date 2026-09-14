@@ -1,4 +1,9 @@
 import type {
+  AnalyticsBreakdown,
+  AnalyticsMonthOverview,
+  AnalyticsNetHistoryItem,
+  AnalyticsRepeatedSpendingInsight,
+  AnalyticsSummary,
   CreateAccount,
   CreateAutomationRule,
   CreateCategory,
@@ -18,6 +23,14 @@ import type {
   UpdateMerchant,
   VoiceIntakeResult,
 } from "@finance/contracts";
+
+export type {
+  AnalyticsBreakdown,
+  AnalyticsMonthOverview,
+  AnalyticsNetHistoryItem,
+  AnalyticsRepeatedSpendingInsight,
+  AnalyticsSummary,
+};
 
 export class ApiError extends Error {
   constructor(
@@ -78,16 +91,6 @@ export type EntryGroup = {
   createdAt: string;
 };
 export type EntryGroupDetail = EntryGroup & { ledgerEntries: LedgerEntry[] };
-export type AnalyticsSummary = {
-  month: string;
-  income: number;
-  expenses: number;
-  net: number;
-};
-export type AnalyticsBreakdown = {
-  expenses: Array<{ category: string; amount: number }>;
-  income: Array<{ category: string; amount: number }>;
-};
 export type AutomationRule = {
   id: string;
   name: string;
@@ -307,7 +310,12 @@ export function createFinanceApiClient({
       request<AnalyticsBreakdown>(
         `/analytics/monthly-breakdown?month=${encodeURIComponent(month)}`,
       ),
-    getNetHistory: () => request<AnalyticsSummary[]>("/analytics/net-history"),
+    getMonthlyOverview: (month: string) =>
+      request<AnalyticsMonthOverview>(
+        `/analytics/monthly-overview?month=${encodeURIComponent(month)}`,
+      ),
+    getNetHistory: () =>
+      request<AnalyticsNetHistoryItem[]>("/analytics/net-history"),
     parseTextCommand: (input: ParseTextCommandRequest) =>
       request<ParsedFinanceCommand>("/ai-intake/text", {
         method: "POST",

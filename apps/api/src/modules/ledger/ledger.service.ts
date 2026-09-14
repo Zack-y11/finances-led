@@ -13,10 +13,10 @@ import {
   canCreateFromParsedCommand,
   ledgerStatusForConfidence,
 } from '@finance/contracts';
-import { Prisma } from '@finance/database';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { MerchantsService } from '../merchants/merchants.service.js';
+import { buildLedgerWhere } from './ledger-query.js';
 
 @Injectable()
 export class LedgerService {
@@ -165,56 +165,8 @@ export class LedgerService {
   }
 
   async findAll(query: LedgerEntriesQuery) {
-    const {
-      type,
-      month,
-      startDate,
-      endDate,
-      categoryId,
-      accountId,
-      groupId,
-      search,
-      page,
-      pageSize,
-    } = query;
-
-    const dateFilter: Prisma.LedgerEntryWhereInput =
-      startDate || endDate
-        ? {
-            occurredAt: {
-              ...(startDate
-                ? { gte: new Date(`${startDate}T00:00:00.000Z`) }
-                : {}),
-              ...(endDate ? { lte: new Date(`${endDate}T23:59:59.999Z`) } : {}),
-            },
-          }
-        : month
-          ? { monthKey: month }
-          : {};
-
-    const where: Prisma.LedgerEntryWhereInput = {
-      userId: this.userId,
-      ...dateFilter,
-      ...(type
-        ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
-        : {}),
-      ...(categoryId ? { categoryId } : {}),
-      ...(accountId ? { accountId } : {}),
-      ...(groupId ? { groupId } : {}),
-      ...(search
-        ? {
-            OR: [
-              {
-                merchant: {
-                  contains: search,
-                  mode: 'insensitive',
-                },
-              },
-              { note: { contains: search, mode: 'insensitive' } },
-            ],
-          }
-        : {}),
-    };
+    const { page, pageSize } = query;
+    const where = buildLedgerWhere(this.userId, query);
 
     const [data, total] = await Promise.all([
       this.prisma.db.ledgerEntry.findMany({

@@ -4,7 +4,7 @@ import type { MonthlyClosePrediction } from '@finance/contracts';
 import { jest } from '@jest/globals';
 import request from 'supertest';
 
-import { AnalyticsModule } from './analytics.module.js';
+import { AnalyticsController } from './analytics.controller.js';
 import { AnalyticsService } from './analytics.service.js';
 
 describe('AnalyticsController', () => {
@@ -28,11 +28,11 @@ describe('AnalyticsController', () => {
     } satisfies MonthlyClosePrediction;
     const monthlyClosePrediction = jest.fn(() => Promise.resolve(prediction));
     const moduleFixture = await Test.createTestingModule({
-      imports: [AnalyticsModule],
-    })
-      .overrideProvider(AnalyticsService)
-      .useValue({ monthlyClosePrediction })
-      .compile();
+      controllers: [AnalyticsController],
+      providers: [
+        { provide: AnalyticsService, useValue: { monthlyClosePrediction } },
+      ],
+    }).compile();
     const app: INestApplication = moduleFixture.createNestApplication();
     await app.init();
 

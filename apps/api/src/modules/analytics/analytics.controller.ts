@@ -29,6 +29,14 @@ export class AnalyticsController {
     return this.analyticsService.monthlyBreakdown(query.month);
   }
 
+  @Get('monthly-overview')
+  monthlyOverview(
+    @Query(new ZodValidationPipe(analyticsMonthQuerySchema))
+    query: AnalyticsMonthQuery,
+  ) {
+    return this.analyticsService.monthlyOverview(query.month);
+  }
+
   @Get('net-history')
   netHistory() {
     return this.analyticsService.netHistory();
