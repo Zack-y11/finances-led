@@ -1,10 +1,10 @@
-import { merchantKeyFromName } from './merchant-name.js';
+import { merchantKeyFromName } from "./merchant-name.js";
 
-export type RecurringCadence = 'weekly' | 'biweekly' | 'monthly';
+export type RecurringCadence = "weekly" | "biweekly" | "monthly";
 
 export type RecurringLedgerSnapshot = {
   id: string;
-  type: 'INCOME' | 'EXPENSE';
+  type: "INCOME" | "EXPENSE";
   amount: number;
   merchant: string;
   merchantId: string | null;
@@ -14,7 +14,7 @@ export type RecurringLedgerSnapshot = {
 export type RecurringPattern = {
   merchant: string;
   merchantId: string | null;
-  type: 'income' | 'expense';
+  type: "income" | "expense";
   cadence: RecurringCadence;
   medianAmount: number;
   occurrenceCount: number;
@@ -30,9 +30,9 @@ const CADENCE_WINDOWS: Array<{
   maxDays: number;
   periodDays: number;
 }> = [
-  { cadence: 'weekly', minDays: 5, maxDays: 9, periodDays: 7 },
-  { cadence: 'biweekly', minDays: 11, maxDays: 17, periodDays: 14 },
-  { cadence: 'monthly', minDays: 26, maxDays: 35, periodDays: 30 },
+  { cadence: "weekly", minDays: 5, maxDays: 9, periodDays: 7 },
+  { cadence: "biweekly", minDays: 11, maxDays: 17, periodDays: 14 },
+  { cadence: "monthly", minDays: 26, maxDays: 35, periodDays: 30 },
 ];
 
 const MIN_OCCURRENCES = 3;
@@ -43,20 +43,11 @@ const MATCH_RATIO = 0.6;
 export function detectRecurringPatterns(
   entries: RecurringLedgerSnapshot[],
 ): RecurringPattern[] {
-  const groups = new Map<string, RecurringLedgerSnapshot[]>();
-
-  for (const entry of entries) {
-    const merchantKey = merchantKeyFromName(entry.merchant);
-    if (!merchantKey) continue;
-    const groupKey = `${entry.merchantId ?? merchantKey}|${entry.type}`;
-    const group = groups.get(groupKey) ?? [];
-    group.push(entry);
-    groups.set(groupKey, group);
-  }
+  const groups = groupEntries(entries);
 
   const patterns: RecurringPattern[] = [];
 
-  for (const group of groups.values()) {
+  for (const group of groups) {
     const pattern = detectGroup(group);
     if (pattern) patterns.push(pattern);
   }
@@ -69,60 +60,119 @@ export function detectRecurringPatterns(
   );
 }
 
-function detectGroup(entries: RecurringLedgerSnapshot[]): RecurringPattern | null {
+function detectGroup(
+  entries: RecurringLedgerSnapshot[],
+): RecurringPattern | null {
   const sorted = [...entries].sort(
     (left, right) => left.occurredAt.getTime() - right.occurredAt.getTime(),
   );
-  if (sorted.length < MIN_OCCURRENCES) return null;
+  const occurrences = uniqueByDay(sorted);
+  if (occurrences.length < MIN_OCCURRENCES) return null;
 
-  const amounts = sorted.map((entry) => cents(entry.amount)).sort((a, b) => a - b);
+  const amounts = occurrences
+    .map((entry) => cents(entry.amount))
+    .sort((a, b) => a - b);
   const median = medianValue(amounts);
-  const similar = sorted.filter((entry) =>
+  const similar = occurrences.filter((entry) =>
     amountsAreSimilar(cents(entry.amount), median),
   );
   if (similar.length < MIN_OCCURRENCES) return null;
 
-  const uniqueDays = uniqueByDay(similar);
-  if (uniqueDays.length < MIN_OCCURRENCES) return null;
-
-  const intervals = dayIntervals(uniqueDays.map((entry) => entry.occurredAt));
+  const intervals = dayIntervals(similar.map((entry) => entry.occurredAt));
   if (intervals.length === 0) return null;
 
   const match = bestCadence(intervals);
   if (!match) return null;
 
-  const last = uniqueDays[uniqueDays.length - 1];
+  const last = similar[similar.length - 1];
   if (!last) return null;
 
   const lastDay = utcDayNumber(last.occurredAt);
-  const nextDay = lastDay + match.periodDays;
   const today = utcDayNumber(new Date());
   const grace = Math.ceil(match.periodDays * 1.5) + 3;
 
   return {
     merchant: last.merchant,
     merchantId: last.merchantId,
-    type: last.type === 'INCOME' ? 'income' : 'expense',
+    type: last.type === "INCOME" ? "income" : "expense",
     cadence: match.cadence,
     medianAmount: median / 100,
-    occurrenceCount: uniqueDays.length,
+    occurrenceCount: similar.length,
     lastOccurredAt: last.occurredAt.toISOString(),
-    nextExpectedAt: utcDateFromDayNumber(nextDay).toISOString(),
+    nextExpectedAt: nextExpectedDate(last.occurredAt, match).toISOString(),
     active: today - lastDay <= grace,
-    sampleEntryIds: uniqueDays.slice(-5).map((entry) => entry.id),
+    sampleEntryIds: similar.slice(-5).map((entry) => entry.id),
   };
 }
 
-function uniqueByDay(entries: RecurringLedgerSnapshot[]): RecurringLedgerSnapshot[] {
-  const seen = new Set<number>();
-  const unique: RecurringLedgerSnapshot[] = [];
+function uniqueByDay(
+  entries: RecurringLedgerSnapshot[],
+): RecurringLedgerSnapshot[] {
+  const byDay = new Map<number, RecurringLedgerSnapshot>();
   for (const entry of entries) {
     const day = utcDayNumber(entry.occurredAt);
-    if (seen.has(day)) continue;
-    seen.add(day);
-    unique.push(entry);
+    const current = byDay.get(day);
+    if (
+      !current ||
+      (!current.merchantId && entry.merchantId) ||
+      (current.merchantId === entry.merchantId &&
+        entry.occurredAt.getTime() > current.occurredAt.getTime())
+    ) {
+      byDay.set(day, entry);
+    }
   }
-  return unique;
+  return [...byDay.values()];
+}
+
+type MerchantGroup = {
+  entries: RecurringLedgerSnapshot[];
+  lookups: Set<string>;
+};
+
+function groupEntries(
+  entries: RecurringLedgerSnapshot[],
+): RecurringLedgerSnapshot[][] {
+  const groups = new Set<MerchantGroup>();
+  const groupsByLookup = new Map<string, MerchantGroup>();
+
+  for (const entry of entries) {
+    const merchantKey = merchantKeyFromName(entry.merchant);
+    if (!merchantKey) continue;
+
+    const lookups = [`key:${entry.type}:${merchantKey}`];
+    if (entry.merchantId) {
+      lookups.push(`id:${entry.type}:${entry.merchantId}`);
+    }
+
+    const matchingGroups = new Set(
+      lookups
+        .map((lookup) => groupsByLookup.get(lookup))
+        .filter((group): group is MerchantGroup => group !== undefined),
+    );
+    const group = matchingGroups.values().next().value ?? {
+      entries: [],
+      lookups: new Set<string>(),
+    };
+    groups.add(group);
+
+    for (const matchingGroup of matchingGroups) {
+      if (matchingGroup === group) continue;
+      group.entries.push(...matchingGroup.entries);
+      for (const lookup of matchingGroup.lookups) {
+        groupsByLookup.set(lookup, group);
+        group.lookups.add(lookup);
+      }
+      groups.delete(matchingGroup);
+    }
+
+    group.entries.push(entry);
+    for (const lookup of lookups) {
+      groupsByLookup.set(lookup, group);
+      group.lookups.add(lookup);
+    }
+  }
+
+  return [...groups].map((group) => group.entries);
 }
 
 function dayIntervals(dates: Date[]): number[] {
@@ -137,7 +187,9 @@ function dayIntervals(dates: Date[]): number[] {
   return intervals;
 }
 
-function bestCadence(intervals: number[]): (typeof CADENCE_WINDOWS)[number] | null {
+function bestCadence(
+  intervals: number[],
+): (typeof CADENCE_WINDOWS)[number] | null {
   let winner: (typeof CADENCE_WINDOWS)[number] | null = null;
   let winnerCount = 0;
 
@@ -188,4 +240,24 @@ function utcDayNumber(date: Date): number {
 
 function utcDateFromDayNumber(dayNumber: number): Date {
   return new Date(dayNumber * 86_400_000);
+}
+
+function nextExpectedDate(
+  lastOccurredAt: Date,
+  cadence: (typeof CADENCE_WINDOWS)[number],
+): Date {
+  if (cadence.cadence !== "monthly") {
+    return utcDateFromDayNumber(
+      utcDayNumber(lastOccurredAt) + cadence.periodDays,
+    );
+  }
+
+  const year = lastOccurredAt.getUTCFullYear();
+  const nextMonth = lastOccurredAt.getUTCMonth() + 1;
+  const day = lastOccurredAt.getUTCDate();
+  const daysInNextMonth = new Date(
+    Date.UTC(year, nextMonth + 1, 0),
+  ).getUTCDate();
+
+  return new Date(Date.UTC(year, nextMonth, Math.min(day, daysInNextMonth)));
 }

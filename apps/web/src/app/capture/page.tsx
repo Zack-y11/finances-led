@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -43,6 +43,7 @@ function CapturePageContent() {
     requestedMode === "voice" || requestedMode === "receipt"
       ? requestedMode
       : "text";
+  const modeRef = useRef<CaptureMode>(mode);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,22 +56,28 @@ function CapturePageContent() {
     useState<ReceiptIntakeResult | null>(null);
   const [options, setOptions] = useState<LedgerOptions | null>(null);
   const [sessions, setSessions] = useState<InputSessionTrace[]>([]);
+  const [captureStateMode, setCaptureStateMode] = useState<CaptureMode>(mode);
+  const [sessionsMode, setSessionsMode] = useState<CaptureMode>(mode);
 
   const refreshSessions = () => {
+    const modeAtRequest = mode;
     void getInputSessions()
-      .then((data) =>
+      .then((data) => {
+        if (modeRef.current !== modeAtRequest) return;
+        setSessionsMode(modeAtRequest);
         setSessions(
           data.filter((session) =>
-            mode === "receipt"
+            modeAtRequest === "receipt"
               ? session.modality === "image"
               : session.modality === "voice",
           ),
-        ),
-      )
+        );
+      })
       .catch(() => null);
   };
 
   useEffect(() => {
+    modeRef.current = mode;
     void getLedgerOptions()
       .then((data) => setOptions(data))
       .catch(() => null);
@@ -84,6 +91,7 @@ function CapturePageContent() {
     if (!text.trim() || loading) return;
 
     setLoading(true);
+    setCaptureStateMode("text");
     setError(null);
     setSuccess(null);
     setResult(null);
@@ -92,6 +100,7 @@ function CapturePageContent() {
 
     try {
       const parsed = await parseTextCommand({ text: text.trim() });
+      if (modeRef.current !== "text") return;
       setResult(parsed);
     } catch (err) {
       setError(
@@ -103,6 +112,8 @@ function CapturePageContent() {
   };
 
   const handleVoiceParsed = (parsed: VoiceIntakeResult) => {
+    if (modeRef.current !== "voice") return;
+    setCaptureStateMode("voice");
     setSuccess(null);
     setError(parsed.parseError ?? null);
     setVoiceResult(parsed);
@@ -112,6 +123,8 @@ function CapturePageContent() {
   };
 
   const handleReceiptParsed = (parsed: ReceiptIntakeResult) => {
+    if (modeRef.current !== "receipt") return;
+    setCaptureStateMode("receipt");
     setSuccess(null);
     setError(parsed.parseError ?? null);
     setReceiptResult(parsed);
@@ -120,7 +133,12 @@ function CapturePageContent() {
     refreshSessions();
   };
 
-  const mediaResult = receiptResult ?? voiceResult;
+  const mediaResult =
+    captureStateMode === mode ? (receiptResult ?? voiceResult) : null;
+  const visibleResult = captureStateMode === mode ? result : null;
+  const visibleError = captureStateMode === mode ? error : null;
+  const visibleSuccess = captureStateMode === mode ? success : null;
+  const visibleSessions = sessionsMode === mode ? sessions : [];
   const proposalNote = mediaResult?.transcript ?? text.trim();
   const proposalMethod: CaptureMode = receiptResult
     ? "receipt"
@@ -152,6 +170,9 @@ function CapturePageContent() {
           <Link
             aria-selected={mode === "text"}
             href="/capture"
+            onClick={() => {
+              modeRef.current = "text";
+            }}
             role="tab"
             scroll={false}
           >
@@ -166,6 +187,9 @@ function CapturePageContent() {
           <Link
             aria-selected={mode === "voice"}
             href="/capture?mode=voice"
+            onClick={() => {
+              modeRef.current = "voice";
+            }}
             role="tab"
             scroll={false}
           >
@@ -180,6 +204,9 @@ function CapturePageContent() {
           <Link
             aria-selected={mode === "receipt"}
             href="/capture?mode=receipt"
+            onClick={() => {
+              modeRef.current = "receipt";
+            }}
             role="tab"
             scroll={false}
           >
@@ -203,6 +230,7 @@ function CapturePageContent() {
               className="min-h-35 resize-y"
               onChange={(event) => {
                 setText(event.target.value);
+                setCaptureStateMode("text");
                 setError(null);
               }}
               placeholder="e.g. Spent 5.40 at Starbucks with cash"
@@ -226,14 +254,30 @@ function CapturePageContent() {
       ) : mode === "voice" ? (
         <VoiceCapturePanel
           disabled={loading}
-          onError={(message) => setError(message || null)}
+          onError={(message) => {
+            if (modeRef.current !== "voice") return;
+            setCaptureStateMode("voice");
+            setError(message || null);
+          }}
           onParsed={handleVoiceParsed}
         />
       ) : (
         <ReceiptCapturePanel
           disabled={loading}
-          onError={(message) => setError(message || null)}
+          onError={(message) => {
+            if (modeRef.current !== "receipt") return;
+            setCaptureStateMode("receipt");
+            setError(message || null);
+          }}
           onParsed={handleReceiptParsed}
+          onSelectionChange={() => {
+            setCaptureStateMode("receipt");
+            setSuccess(null);
+            setError(null);
+            setResult(null);
+            setVoiceResult(null);
+            setReceiptResult(null);
+          }}
         />
       )}
       {mediaResult ? (
@@ -253,25 +297,25 @@ function CapturePageContent() {
           </p>
         </Card>
       ) : null}
-      {error ? (
+      {visibleError ? (
         <Card className="border-danger/30 p-5 sm:p-6">
           <div className="flex items-start gap-3 text-danger">
             <Icon className="size-5 shrink-0" name="shield" />
             <div>
               <p className="font-semibold text-ink">Capture error</p>
-              <p className="mt-1 text-sm text-muted">{error}</p>
+              <p className="mt-1 text-sm text-muted">{visibleError}</p>
             </div>
           </div>
         </Card>
       ) : null}
-      {success ? (
+      {visibleSuccess ? (
         <Card className="border-success/40 bg-success-soft/20 p-5 sm:p-6">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-white">
                 ✓
               </span>
-              <p className="font-semibold text-ink">{success}</p>
+              <p className="font-semibold text-ink">{visibleSuccess}</p>
             </div>
             <Button asChild size="sm">
               <Link href="/ledger">View in Ledger →</Link>
@@ -279,18 +323,22 @@ function CapturePageContent() {
           </div>
         </Card>
       ) : null}
-      {result ? (
+      {visibleResult ? (
         <CommandProposal
           inputMethod={proposalMethod}
           inputSessionId={mediaResult?.inputSessionId}
           key={mediaResult?.inputSessionId ?? proposalNote}
           note={proposalNote}
           onDiscard={() => {
+            if (modeRef.current !== mode) return;
+            setCaptureStateMode(mode);
             setResult(null);
             setVoiceResult(null);
             setReceiptResult(null);
           }}
           onSaved={(message) => {
+            if (modeRef.current !== mode) return;
+            setCaptureStateMode(mode);
             setSuccess(message);
             setResult(null);
             setVoiceResult(null);
@@ -299,20 +347,22 @@ function CapturePageContent() {
             refreshSessions();
           }}
           options={options}
-          result={result}
+          result={visibleResult}
         />
       ) : null}
-      {sessions.length && mode !== "text" ? (
+      {visibleSessions.length && mode !== "text" ? (
         <Card className="p-5 sm:p-6">
           <h2 className="font-semibold text-ink">
-            {mode === "receipt" ? "Recent receipt traces" : "Recent voice traces"}
+            {mode === "receipt"
+              ? "Recent receipt traces"
+              : "Recent voice traces"}
           </h2>
           <p className="mt-1 text-sm text-muted">
             These records prove capture happened without keeping the{" "}
             {mode === "receipt" ? "photo" : "audio"}.
           </p>
           <div className="mt-4 grid gap-3">
-            {sessions.slice(0, 5).map((session) => (
+            {visibleSessions.slice(0, 5).map((session) => (
               <div
                 className="rounded-xl border border-border bg-surface-muted/70 px-4 py-3"
                 key={session.id}

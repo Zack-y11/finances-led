@@ -47,8 +47,10 @@ export function CommandProposal({
       (account) =>
         account.name.toLowerCase() === result.data.account?.toLowerCase(),
     );
-    return matchedAccount?.id || options.accounts[0]?.id || "";
-  }, [options, result.data.account]);
+    return inputMethod === "receipt"
+      ? matchedAccount?.id || ""
+      : matchedAccount?.id || options.accounts[0]?.id || "";
+  }, [inputMethod, options, result.data.account]);
 
   const suggestedCategoryId = useMemo(() => {
     if (!options) return "";
@@ -56,8 +58,10 @@ export function CommandProposal({
       (category) =>
         category.name.toLowerCase() === result.data.category?.toLowerCase(),
     );
-    return matchedCategory?.id || options.categories[0]?.id || "";
-  }, [options, result.data.category]);
+    return inputMethod === "receipt"
+      ? matchedCategory?.id || ""
+      : matchedCategory?.id || options.categories[0]?.id || "";
+  }, [inputMethod, options, result.data.category]);
 
   const selectedAccountId = accountId || suggestedAccountId;
   const selectedCategoryId = categoryId || suggestedCategoryId;
@@ -77,8 +81,12 @@ export function CommandProposal({
         setSaving(false);
         return;
       }
-      const dateStr =
-        occurredAt || new Date().toISOString().slice(0, 10);
+      const dateStr = occurredAt || new Date().toISOString().slice(0, 10);
+      if (inputMethod === "receipt" && !isValidCalendarDate(dateStr)) {
+        setError("Enter a valid receipt date in YYYY-MM-DD format.");
+        setSaving(false);
+        return;
+      }
       await createLedgerEntry({
         type: result.data.type,
         amount: parsedAmount,
@@ -131,6 +139,24 @@ export function CommandProposal({
             <p className="mt-3 rounded-lg bg-review-soft px-3 py-2 text-sm text-review">
               This will be saved to the review inbox instead of posting
               immediately.
+            </p>
+          ) : null}
+          {inputMethod === "receipt" &&
+          options &&
+          result.data.account &&
+          !suggestedAccountId ? (
+            <p className="mt-3 rounded-lg bg-danger-soft/60 px-3 py-2 text-sm text-danger">
+              The extracted account could not be matched. Choose the correct
+              account below before saving.
+            </p>
+          ) : null}
+          {inputMethod === "receipt" &&
+          options &&
+          result.data.category &&
+          !suggestedCategoryId ? (
+            <p className="mt-3 rounded-lg bg-danger-soft/60 px-3 py-2 text-sm text-danger">
+              The extracted category could not be matched. Choose the correct
+              category below before saving.
             </p>
           ) : null}
           <div className="mt-4 grid gap-3 sm:grid-cols-4">
@@ -280,5 +306,13 @@ function Detail({ label, value }: { label: string; value: string }) {
       </p>
       <p className="mt-1 text-sm font-semibold text-ink">{value}</p>
     </div>
+  );
+}
+
+function isValidCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return (
+    Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
   );
 }

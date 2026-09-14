@@ -11,12 +11,17 @@ import {
   parseReceiptCommandRequestSchema,
   parseTextCommandRequestSchema,
   parseVoiceCommandRequestSchema,
+  type ParseReceiptCommandRequest,
   type ParseTextCommandRequest,
 } from '@finance/contracts';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
 import { AiIntakeService } from './ai-intake.service.js';
-import { MAX_IMAGE_BYTES, type UploadedImage } from './receipt-image.js';
+import {
+  discardImageBuffer,
+  MAX_IMAGE_BYTES,
+  type UploadedImage,
+} from './receipt-image.js';
 import { MAX_AUDIO_BYTES, type UploadedAudio } from './voice-audio.js';
 
 @Controller('ai-intake')
@@ -59,9 +64,17 @@ export class AiIntakeController {
     @UploadedFile() file: UploadedImage | undefined,
     @Body() body: unknown,
   ) {
-    const fields = new ZodValidationPipe(
-      parseReceiptCommandRequestSchema,
-    ).transform(body ?? {});
+    let fields: ParseReceiptCommandRequest;
+    try {
+      fields = new ZodValidationPipe(
+        parseReceiptCommandRequestSchema,
+      ).transform(body ?? {});
+    } catch (error) {
+      // Body validation runs after Multer has materialized the in-memory file.
+      // Clear it when validation prevents the service from receiving the file.
+      if (file?.buffer) discardImageBuffer(file.buffer);
+      throw error;
+    }
     return this.aiIntakeService.parseReceiptCommand(file, fields.referenceDate);
   }
 

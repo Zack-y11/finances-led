@@ -76,7 +76,7 @@ export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
     items[1],
     { ...items[2], label: "Capture" },
     items[3],
-    items[8],
+    items[items.length - 1],
   ];
 
   return (
