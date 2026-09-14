@@ -287,7 +287,15 @@ describe('BudgetsService', () => {
       categoryId,
       accountId,
     });
-    expect(created).toBe(budget);
+    expect(created).toEqual(
+      expect.objectContaining({
+        id: budgetId,
+        name: 'Monthly groceries',
+        period: 'monthly',
+        amount: 100,
+        alertThreshold: 0.8,
+      }),
+    );
     expect(budgetCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {

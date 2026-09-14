@@ -90,7 +90,7 @@ export class BudgetsService {
     await this.assertScope(input.categoryId, input.accountId);
 
     try {
-      return await this.prisma.db.$transaction(async (tx) => {
+      const budget = await this.prisma.db.$transaction(async (tx) => {
         const budget = await tx.budget.create({
           data: {
             userId: this.userId,
@@ -117,6 +117,7 @@ export class BudgetsService {
 
         return budget;
       });
+      return this.serializeBudget(budget);
     } catch (error) {
       this.handleWriteError(error);
     }
@@ -131,7 +132,7 @@ export class BudgetsService {
     await this.assertScope(categoryId, accountId);
 
     try {
-      return await this.prisma.db.$transaction(async (tx) => {
+      const budget = await this.prisma.db.$transaction(async (tx) => {
         const result = await tx.budget.updateMany({
           where: { id, userId: this.userId },
           data: {
@@ -168,6 +169,7 @@ export class BudgetsService {
 
         return budget;
       });
+      return this.serializeBudget(budget);
     } catch (error) {
       this.handleWriteError(error);
     }
