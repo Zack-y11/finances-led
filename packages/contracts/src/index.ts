@@ -17,6 +17,7 @@ export const ledgerEntriesQuerySchema = z.object({
   categoryId: z.string().uuid().optional(),
   accountId: z.string().uuid().optional(),
   groupId: z.string().uuid().optional(),
+  merchantId: z.string().uuid().optional(),
   search: z.string().trim().min(1).max(500).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -408,6 +409,59 @@ export const monthlyClosePredictionSchema = z.object({
   }),
 });
 
+export const analyticsMoneyTotalsSchema = z.object({
+  income: z.number(),
+  expenses: z.number(),
+  net: z.number(),
+});
+
+export const analyticsSummarySchema = analyticsMoneyTotalsSchema.extend({
+  month: monthKeySchema,
+  priorMonth: monthKeySchema,
+  prior: analyticsMoneyTotalsSchema,
+  delta: analyticsMoneyTotalsSchema,
+});
+
+export const analyticsNetHistoryItemSchema = analyticsMoneyTotalsSchema.extend({
+  month: monthKeySchema,
+});
+
+export const analyticsCategoryBreakdownItemSchema = z.object({
+  categoryId: z.string().uuid().nullable(),
+  category: z.string(),
+  amount: z.number(),
+  priorAmount: z.number(),
+  delta: z.number(),
+  share: z.number(),
+});
+
+export const analyticsBreakdownSchema = z.object({
+  month: monthKeySchema,
+  priorMonth: monthKeySchema,
+  totals: analyticsMoneyTotalsSchema,
+  priorTotals: analyticsMoneyTotalsSchema,
+  expenses: z.array(analyticsCategoryBreakdownItemSchema),
+  income: z.array(analyticsCategoryBreakdownItemSchema),
+});
+
+export const analyticsRepeatedSpendingInsightSchema = z.object({
+  kind: z.literal("repeated_spending"),
+  merchant: z.string(),
+  merchantId: z.string().uuid().nullable(),
+  cadence: recurringCadenceSchema,
+  medianAmount: z.number(),
+  occurrenceCount: z.number().int().nonnegative(),
+  lastOccurredAt: z.string(),
+  monthOccurrenceCount: z.number().int().nonnegative(),
+  monthAmount: z.number(),
+});
+
+export const analyticsMonthOverviewSchema = z.object({
+  summary: analyticsSummarySchema,
+  breakdown: analyticsBreakdownSchema,
+  insight: analyticsRepeatedSpendingInsightSchema.nullable(),
+});
+
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
 export type AppliedRuleExplanation = z.infer<
@@ -428,6 +482,21 @@ export type BudgetEvaluation = z.infer<typeof budgetEvaluationSchema>;
 export type Budget = z.infer<typeof budgetSchema>;
 export type BudgetAlert = z.infer<typeof budgetAlertSchema>;
 export type BudgetAlertDto = z.infer<typeof budgetAlertDtoSchema>;
+export type AnalyticsMoneyTotals = z.infer<typeof analyticsMoneyTotalsSchema>;
+export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;
+export type AnalyticsNetHistoryItem = z.infer<
+  typeof analyticsNetHistoryItemSchema
+>;
+export type AnalyticsCategoryBreakdownItem = z.infer<
+  typeof analyticsCategoryBreakdownItemSchema
+>;
+export type AnalyticsBreakdown = z.infer<typeof analyticsBreakdownSchema>;
+export type AnalyticsRepeatedSpendingInsight = z.infer<
+  typeof analyticsRepeatedSpendingInsightSchema
+>;
+export type AnalyticsMonthOverview = z.infer<
+  typeof analyticsMonthOverviewSchema
+>;
 export type FinanceCommandIntent = z.infer<typeof financeCommandIntentSchema>;
 export type ParsedLedgerEntryCommandData = z.infer<
   typeof parsedLedgerEntryCommandDataSchema
