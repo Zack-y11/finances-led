@@ -6,14 +6,20 @@ import { AnalyticsService } from './analytics.service.js';
 describe('AnalyticsService', () => {
   const amount = (value: string) => ({ toString: () => value });
   let groupByResult: unknown[] = [];
+  let findManyResult: unknown[] = [];
   let categoryResult: unknown[] = [];
   let lastGroupByInput: unknown;
+  let lastFindManyInput: unknown;
   const prisma = {
     db: {
       ledgerEntry: {
         groupBy: (input: unknown) => {
           lastGroupByInput = input;
           return Promise.resolve(groupByResult);
+        },
+        findMany: (input: unknown) => {
+          lastFindManyInput = input;
+          return Promise.resolve(findManyResult);
         },
       },
       category: {
@@ -28,8 +34,10 @@ describe('AnalyticsService', () => {
 
   beforeEach(() => {
     groupByResult = [];
+    findManyResult = [];
     categoryResult = [];
     lastGroupByInput = undefined;
+    lastFindManyInput = undefined;
     service = new AnalyticsService(prisma, config);
   });
 
@@ -140,5 +148,46 @@ describe('AnalyticsService', () => {
       { month: '2026-06', income: 0, expenses: 50, net: -50 },
       { month: '2026-07', income: 1200, expenses: 486.42, net: 713.58 },
     ]);
+  });
+
+  it('projects a posted-entry monthly close with DEV_USER_ID scoping', async () => {
+    findManyResult = [
+      {
+        id: 'income-entry',
+        type: 'INCOME',
+        amount: amount('1000.00'),
+        merchant: 'Salary',
+        merchantId: null,
+        occurredAt: new Date('2026-07-05T12:00:00.000Z'),
+      },
+      {
+        id: 'expense-entry',
+        type: 'EXPENSE',
+        amount: amount('100.00'),
+        merchant: 'Groceries',
+        merchantId: null,
+        occurredAt: new Date('2026-07-05T12:00:00.000Z'),
+      },
+    ];
+
+    await expect(
+      service.monthlyClosePrediction('2026-07', '2026-07-10'),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        month: '2026-07',
+        asOf: '2026-07-10',
+        actual: { income: 1000, expenses: 100, net: 900 },
+        forecast: { income: 1000, expenses: 310, net: 690 },
+      }),
+    );
+    expect(lastFindManyInput).toEqual(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'configured-user-id',
+          status: 'POSTED',
+          type: { in: ['INCOME', 'EXPENSE'] },
+        }),
+      }),
+    );
   });
 });

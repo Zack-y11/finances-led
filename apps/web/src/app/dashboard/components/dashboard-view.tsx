@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { LoadingCard, StatusMessage } from "@/components/ui/demo-notice";
 import { Icon } from "@/components/ui/icon";
+import { MonthlyClosePredictionCard } from "@/components/ui/monthly-close-prediction-card";
 import { PageHeading } from "@/components/ui/page-heading";
 import { RecurringPatternsCard } from "@/components/ui/recurring-patterns-card";
 import { TransactionList } from "@/components/ui/transaction-list";
@@ -25,6 +26,7 @@ import {
   currentMonth,
   getLedgerEntries,
   getMonthlyBreakdown,
+  getMonthlyClosePrediction,
   getMonthlySummary,
   getNetHistory,
   getRecurringPatterns,
@@ -32,6 +34,7 @@ import {
   type AnalyticsBreakdown,
   type AnalyticsSummary,
   type LedgerEntry,
+  type MonthlyClosePrediction,
   type RecurringPattern,
 } from "@/lib/api";
 
@@ -67,6 +70,7 @@ type TooltipPayload = {
 
 export function DashboardView() {
   const [summary, setSummary] = useState<AnalyticsSummary>();
+  const [prediction, setPrediction] = useState<MonthlyClosePrediction>();
   const [breakdown, setBreakdown] = useState<AnalyticsBreakdown>();
   const [history, setHistory] = useState<AnalyticsSummary[]>([]);
   const [recent, setRecent] = useState<LedgerEntry[]>([]);
@@ -78,15 +82,24 @@ export function DashboardView() {
     Promise.all([
       getMonthlySummary(month),
       getMonthlyBreakdown(month),
+      getMonthlyClosePrediction(month),
       getNetHistory(),
       getLedgerEntries({ pageSize: 4 }),
       getRecurringPatterns().catch(() => [] as RecurringPattern[]),
     ])
       .then(
-        ([nextSummary, nextBreakdown, nextHistory, nextRecent, nextRecurring]) => {
+        ([
+          nextSummary,
+          nextBreakdown,
+          nextPrediction,
+          nextHistory,
+          nextRecent,
+          nextRecurring,
+        ]) => {
           if (!active) return;
           setSummary(nextSummary);
           setBreakdown(nextBreakdown);
+          setPrediction(nextPrediction);
           setHistory(nextHistory);
           setRecent(nextRecent.data);
           setRecurring(nextRecurring);
@@ -160,6 +173,11 @@ export function DashboardView() {
           tone="success"
         />
       </section>
+      {prediction ? (
+        <MonthlyClosePredictionCard prediction={prediction} />
+      ) : summary && !error ? (
+        <LoadingCard label="Calculating monthly close prediction…" />
+      ) : null}
       <Card className="p-5 sm:p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -279,7 +297,8 @@ function Metric({
         <p className="text-sm font-medium text-muted">{label}</p>
         <span
           className={
-            "flex size-8 items-center justify-center rounded-lg sm:size-9 " + className
+            "flex size-8 items-center justify-center rounded-lg sm:size-9 " +
+            className
           }
         >
           <Icon className="size-4" name={icon} />

@@ -1,7 +1,9 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import {
   analyticsMonthQuerySchema,
+  monthlyClosePredictionQuerySchema,
   type AnalyticsMonthQuery,
+  type MonthlyClosePredictionQuery,
 } from '@finance/contracts';
 
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe.js';
@@ -30,5 +32,16 @@ export class AnalyticsController {
   @Get('net-history')
   netHistory() {
     return this.analyticsService.netHistory();
+  }
+
+  @Get('monthly-close-prediction')
+  monthlyClosePrediction(
+    @Query(new ZodValidationPipe(monthlyClosePredictionQuerySchema))
+    query: MonthlyClosePredictionQuery,
+  ) {
+    return this.analyticsService.monthlyClosePrediction(
+      query.month,
+      query.asOf,
+    );
   }
 }

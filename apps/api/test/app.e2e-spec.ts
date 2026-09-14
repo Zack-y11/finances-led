@@ -29,6 +29,7 @@ describe('Ledger endpoints (e2e)', () => {
   let filterCategoryId: string | undefined;
   const filterEntryIds: string[] = [];
   const analyticsEntryIds: string[] = [];
+  const predictionEntryIds: string[] = [];
   const analyticsCategoryIds: string[] = [];
   const lifecycleAccountIds: string[] = [];
   const lifecycleCategoryIds: string[] = [];
@@ -1290,6 +1291,74 @@ describe('Ledger endpoints (e2e)', () => {
     expect(emptyBreakdownResponse.body).toEqual({ expenses: [], income: [] });
   });
 
+  it('serves a posted-entry monthly close prediction without creating rows', async () => {
+    const predictionMonth = '2199-08';
+    const predictionAsOf = '2199-08-10';
+    const beforeCount = await prisma.ledgerEntry.count({
+      where: { userId: devUserId },
+    });
+    const [income, expense] = await Promise.all([
+      prisma.ledgerEntry.create({
+        data: {
+          userId: devUserId,
+          accountId,
+          categoryId,
+          type: 'INCOME',
+          amount: 1000,
+          currency: 'USD',
+          merchant: `Prediction salary ${fixtureId}`,
+          occurredAt: new Date(`${predictionMonth}-05T12:00:00.000Z`),
+          monthKey: predictionMonth,
+          inputMethod: 'MANUAL',
+          status: 'POSTED',
+        },
+      }),
+      prisma.ledgerEntry.create({
+        data: {
+          userId: devUserId,
+          accountId,
+          categoryId,
+          type: 'EXPENSE',
+          amount: 100,
+          currency: 'USD',
+          merchant: `Prediction groceries ${fixtureId}`,
+          occurredAt: new Date(`${predictionMonth}-05T12:00:00.000Z`),
+          monthKey: predictionMonth,
+          inputMethod: 'MANUAL',
+          status: 'POSTED',
+        },
+      }),
+    ]);
+    predictionEntryIds.push(income.id, expense.id);
+
+    const response = await request(app.getHttpServer())
+      .get(
+        `/analytics/monthly-close-prediction?month=${predictionMonth}&asOf=${predictionAsOf}`,
+      )
+      .expect(200);
+
+    expect(response.body).toEqual({
+      month: predictionMonth,
+      asOf: predictionAsOf,
+      daysInMonth: 31,
+      elapsedDays: 10,
+      remainingDays: 21,
+      actual: { income: 1000, expenses: 100, net: 900 },
+      projectedRemaining: { income: 0, expenses: 210, net: -210 },
+      forecast: { income: 1000, expenses: 310, net: 690 },
+      assumptions: {
+        averageDailySpend: 10,
+        projectedVariableSpend: 210,
+        recurringIncomeStillDue: 0,
+        recurringExpensesStillDue: 0,
+        recurringStillDue: [],
+      },
+    });
+    await expect(
+      prisma.ledgerEntry.count({ where: { userId: devUserId } }),
+    ).resolves.toBe(beforeCount + 2);
+  });
+
   it('applies the highest-priority matching rule and explains it on parse', async () => {
     const high = await request(app.getHttpServer())
       .post('/rules')
@@ -1501,6 +1570,11 @@ describe('Ledger endpoints (e2e)', () => {
       if (analyticsEntryIds.length) {
         await prisma.ledgerEntry.deleteMany({
           where: { id: { in: analyticsEntryIds } },
+        });
+      }
+      if (predictionEntryIds.length) {
+        await prisma.ledgerEntry.deleteMany({
+          where: { id: { in: predictionEntryIds } },
         });
       }
       if (filterEntryIds.length) {

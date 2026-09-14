@@ -17,9 +17,15 @@ import type {
   UpdateLedgerEntry,
   VoiceIntakeResult,
   InputSessionTrace,
+  MonthlyClosePrediction,
 } from "@finance/contracts";
 
-export type { InputSessionTrace, ReceiptIntakeResult, VoiceIntakeResult };
+export type {
+  InputSessionTrace,
+  MonthlyClosePrediction,
+  ReceiptIntakeResult,
+  VoiceIntakeResult,
+};
 
 const baseUrl = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"
@@ -554,6 +560,16 @@ export async function getMonthlyBreakdown(
 }
 export async function getNetHistory(): Promise<AnalyticsSummary[]> {
   return request<AnalyticsSummary[]>("/analytics/net-history");
+}
+export async function getMonthlyClosePrediction(
+  month: string,
+  asOf?: string,
+): Promise<MonthlyClosePrediction> {
+  const query = new URLSearchParams({ month });
+  if (asOf) query.set("asOf", asOf);
+  return request<MonthlyClosePrediction>(
+    `/analytics/monthly-close-prediction?${query.toString()}`,
+  );
 }
 export async function parseTextCommand(
   input: ParseTextCommandRequest,
