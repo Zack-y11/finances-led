@@ -9,7 +9,6 @@ export const transactionTypeSchema = z.enum([
 export const monthKeySchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 export const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-
 export const ledgerEntriesQuerySchema = z.object({
   type: transactionTypeSchema.optional(),
   month: monthKeySchema.optional(),
@@ -104,7 +103,6 @@ export const updateLedgerEntrySchema = z
   .refine((input) => Object.keys(input).length > 0, {
     message: "At least one field must be provided for update",
   });
-
 
 export const createEntryGroupSchema = z.object({
   name: z.string().trim().min(1).max(120),
@@ -286,11 +284,84 @@ export const mergeMerchantsSchema = z.object({
   sourceMerchantId: z.string().uuid(),
 });
 
-export const recurringCadenceSchema = z.enum([
-  "weekly",
-  "biweekly",
-  "monthly",
-]);
+export const recurringCadenceSchema = z.enum(["weekly", "biweekly", "monthly"]);
+
+export const budgetPeriodSchema = z.enum(["monthly"]);
+
+export const budgetAlertLevelSchema = z.enum(["approaching", "exceeded"]);
+
+const budgetAmountSchema = z.number().positive();
+const budgetAlertThresholdSchema = z.number().positive().max(1);
+
+export const createBudgetSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120),
+    period: budgetPeriodSchema.default("monthly"),
+    amount: budgetAmountSchema,
+    alertThreshold: budgetAlertThresholdSchema.default(0.8),
+    categoryId: z.string().uuid().optional(),
+    accountId: z.string().uuid().optional(),
+  })
+  .refine(
+    (input) => input.categoryId !== undefined || input.accountId !== undefined,
+    {
+      message: "A budget must be scoped to a category or account",
+      path: ["categoryId"],
+    },
+  );
+
+export const updateBudgetSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    period: budgetPeriodSchema.optional(),
+    amount: budgetAmountSchema.optional(),
+    alertThreshold: budgetAlertThresholdSchema.optional(),
+    categoryId: z.string().uuid().nullable().optional(),
+    accountId: z.string().uuid().nullable().optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "At least one budget field must be provided for update",
+  });
+
+export const budgetMonthQuerySchema = z.object({
+  month: monthKeySchema.optional(),
+});
+
+export const budgetEvaluationSchema = z.object({
+  budgetId: z.string().uuid(),
+  monthKey: monthKeySchema,
+  spent: z.number().nonnegative(),
+  limitAmount: budgetAmountSchema,
+  remainingAmount: z.number(),
+  utilization: z.number().nonnegative(),
+  alertLevel: budgetAlertLevelSchema.nullable(),
+});
+
+export const budgetSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  name: z.string(),
+  period: budgetPeriodSchema,
+  amount: budgetAmountSchema,
+  alertThreshold: budgetAlertThresholdSchema,
+  categoryId: z.string().uuid().nullable(),
+  accountId: z.string().uuid().nullable(),
+  createdAt: z.string().datetime({ offset: true }),
+  updatedAt: z.string().datetime({ offset: true }),
+});
+
+export const budgetAlertSchema = z.object({
+  id: z.string().uuid(),
+  userId: z.string().uuid(),
+  budgetId: z.string().uuid(),
+  monthKey: monthKeySchema,
+  level: budgetAlertLevelSchema,
+  spent: z.number().nonnegative(),
+  limitAmount: budgetAmountSchema,
+  raisedAt: z.string().datetime({ offset: true }),
+});
+
+export const budgetAlertDtoSchema = budgetAlertSchema;
 
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
@@ -303,6 +374,15 @@ export type UpdateMerchant = z.infer<typeof updateMerchantSchema>;
 export type CreateMerchantAlias = z.infer<typeof createMerchantAliasSchema>;
 export type MergeMerchants = z.infer<typeof mergeMerchantsSchema>;
 export type RecurringCadence = z.infer<typeof recurringCadenceSchema>;
+export type BudgetPeriod = z.infer<typeof budgetPeriodSchema>;
+export type BudgetAlertLevel = z.infer<typeof budgetAlertLevelSchema>;
+export type CreateBudget = z.infer<typeof createBudgetSchema>;
+export type UpdateBudget = z.infer<typeof updateBudgetSchema>;
+export type BudgetMonthQuery = z.infer<typeof budgetMonthQuerySchema>;
+export type BudgetEvaluation = z.infer<typeof budgetEvaluationSchema>;
+export type Budget = z.infer<typeof budgetSchema>;
+export type BudgetAlert = z.infer<typeof budgetAlertSchema>;
+export type BudgetAlertDto = z.infer<typeof budgetAlertDtoSchema>;
 export type FinanceCommandIntent = z.infer<typeof financeCommandIntentSchema>;
 export type ParsedLedgerEntryCommandData = z.infer<
   typeof parsedLedgerEntryCommandDataSchema
