@@ -86,10 +86,10 @@ Goal: make the system learn from repeated behavior.
 - Merchant normalization — **done** (canonical merchant records, aliases, default category)
 - Recurring transaction detection — **done** (weekly / biweekly / monthly from posted history)
 - Budget alerts — **done** (monthly category/account budgets with deterministic posted-spend alerts)
-- Monthly close prediction — **current slice** (deterministic posted-history pace with recurring items still due)
+- Monthly close prediction — **done** (deterministic posted-history pace with recurring items still due)
 - Rule explanation in audit logs — **done** (`RULE_APPLIED` and `MERCHANT_NORMALIZED`)
 
-Current slice: user-owned rules remain the categorization engine. Incoming merchants are normalized onto a `Merchant` record before rules run, aliases such as `STARBUCKS #1842` collapse to a canonical name, and posted history is scanned for recurring cadences. The backend never auto-posts future recurrences. Monthly budgets can scope a category, an account, or both; the backend evaluates only posted expense ledger data in Postgres and raises approaching/exceeded alerts without creating or posting ledger entries. Budget changes and alert raises are audited. Monthly close prediction now projects the month from posted history and active recurring items.
+Shipped: user-owned rules remain the categorization engine. Incoming merchants are normalized onto a `Merchant` record before rules run, aliases such as `STARBUCKS #1842` collapse to a canonical name, and posted history is scanned for recurring cadences. The backend never auto-posts future recurrences. Monthly budgets can scope a category, an account, or both; the backend evaluates only posted expense ledger data in Postgres and raises approaching/exceeded alerts without creating or posting ledger entries. Budget changes and alert raises are audited. Monthly close prediction projects the month from posted history and active recurring items.
 
 Done when common transactions require less correction over time.
 
