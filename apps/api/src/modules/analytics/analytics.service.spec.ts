@@ -1,25 +1,37 @@
 import { ConfigService } from '@nestjs/config';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
+import { RecurringPatternsService } from '../rules/recurring-patterns.service.js';
 import { AnalyticsService } from './analytics.service.js';
 
 describe('AnalyticsService', () => {
   const amount = (value: string) => ({ toString: () => value });
-  let groupByResult: unknown[] = [];
-  let findManyResult: unknown[] = [];
+  const foodId = '11111111-1111-4111-8111-111111111111';
+  const salaryId = '22222222-2222-4222-8222-222222222222';
+  let monthRows: Record<string, unknown[]> = {};
+  let historyRows: unknown[] = [];
   let categoryResult: unknown[] = [];
-  let lastGroupByInput: unknown;
+  let monthEntries: unknown[] = [];
+  let predictionEntries: unknown[] = [];
+  let recurringPatterns: unknown[] = [];
+  const groupByInputs: unknown[] = [];
   let lastFindManyInput: unknown;
   const prisma = {
     db: {
       ledgerEntry: {
-        groupBy: (input: unknown) => {
-          lastGroupByInput = input;
-          return Promise.resolve(groupByResult);
+        groupBy: (input: { by: string[]; where?: { monthKey?: string } }) => {
+          groupByInputs.push(input);
+          if (input.by.includes('monthKey')) {
+            return Promise.resolve(historyRows);
+          }
+          return Promise.resolve(monthRows[input.where?.monthKey ?? ''] ?? []);
         },
-        findMany: (input: unknown) => {
+        findMany: (input: { where?: { monthKey?: string } }) => {
           lastFindManyInput = input;
-          return Promise.resolve(findManyResult);
+          if (input.where?.monthKey) {
+            return Promise.resolve(monthEntries);
+          }
+          return Promise.resolve(predictionEntries);
         },
       },
       category: {
@@ -27,24 +39,45 @@ describe('AnalyticsService', () => {
       },
     },
   } as unknown as PrismaService;
+  const recurringPatternsService = {
+    findAll: () => Promise.resolve({ data: recurringPatterns }),
+  } as unknown as RecurringPatternsService;
   const config = {
     getOrThrow: () => 'configured-user-id',
   } as unknown as ConfigService;
   let service: AnalyticsService;
 
   beforeEach(() => {
-    groupByResult = [];
-    findManyResult = [];
+    monthRows = {};
+    historyRows = [];
     categoryResult = [];
-    lastGroupByInput = undefined;
+    monthEntries = [];
+    predictionEntries = [];
+    recurringPatterns = [];
+    groupByInputs.length = 0;
     lastFindManyInput = undefined;
-    service = new AnalyticsService(prisma, config);
+    service = new AnalyticsService(prisma, recurringPatternsService, config);
   });
 
-  it('calculates income, expenses, and net for a month', async () => {
-    groupByResult = [
-      { type: 'INCOME', _sum: { amount: amount('1200.00') } },
-      { type: 'EXPENSE', _sum: { amount: amount('486.42') } },
+  it('calculates income, expenses, net, and prior-month delta', async () => {
+    monthRows['2026-07'] = [
+      {
+        type: 'INCOME',
+        categoryId: salaryId,
+        _sum: { amount: amount('1200.00') },
+      },
+      {
+        type: 'EXPENSE',
+        categoryId: foodId,
+        _sum: { amount: amount('486.42') },
+      },
+    ];
+    monthRows['2026-06'] = [
+      {
+        type: 'EXPENSE',
+        categoryId: foodId,
+        _sum: { amount: amount('40.00') },
+      },
     ];
 
     await expect(service.monthlySummary('2026-07')).resolves.toEqual({
@@ -52,20 +85,29 @@ describe('AnalyticsService', () => {
       income: 1200,
       expenses: 486.42,
       net: 713.58,
+      priorMonth: '2026-06',
+      prior: { income: 0, expenses: 40, net: -40 },
+      delta: { income: 1200, expenses: 446.42, net: 753.58 },
     });
-    expect(lastGroupByInput).toEqual(
-      expect.objectContaining({
-        where: expect.objectContaining({
-          userId: 'configured-user-id',
-          monthKey: '2026-07',
-          type: { in: ['INCOME', 'EXPENSE'] },
+    expect(groupByInputs).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          by: ['type', 'categoryId'],
+          where: expect.objectContaining({
+            userId: 'configured-user-id',
+            monthKey: '2026-07',
+            type: { in: ['INCOME', 'EXPENSE'] },
+          }),
         }),
-      }),
+        expect.objectContaining({
+          where: expect.objectContaining({ monthKey: '2026-06' }),
+        }),
+      ]),
     );
   });
 
-  it('groups monthly income and expenses by category and sorts by amount', async () => {
-    groupByResult = [
+  it('groups monthly income and expenses by category with prior trend', async () => {
+    monthRows['2026-07'] = [
       {
         type: 'EXPENSE',
         categoryId: 'transport-id',
@@ -95,38 +137,37 @@ describe('AnalyticsService', () => {
       { id: 'transport-id', name: 'Transport' },
     ];
 
-    await expect(service.monthlyBreakdown('2026-07')).resolves.toEqual({
-      expenses: [
-        { category: 'Food', amount: 145.32 },
-        { category: 'Transport', amount: 87 },
-        { category: 'Uncategorized', amount: 12 },
-      ],
-      income: [
-        { category: 'Salary', amount: 3000 },
-        { category: 'Bonus', amount: 500 },
-      ],
-    });
-    expect(lastGroupByInput).toEqual(
-      expect.objectContaining({
-        by: ['type', 'categoryId'],
-        where: expect.objectContaining({
-          userId: 'configured-user-id',
-          monthKey: '2026-07',
-          type: { in: ['INCOME', 'EXPENSE'] },
-        }),
-      }),
-    );
+    const breakdown = await service.monthlyBreakdown('2026-07');
+    expect(breakdown.expenses.map((item) => item.category)).toEqual([
+      'Food',
+      'Transport',
+      'Uncategorized',
+    ]);
+    expect(breakdown.income.map((item) => item.category)).toEqual([
+      'Salary',
+      'Bonus',
+    ]);
+    expect(
+      breakdown.expenses.reduce((sum, item) => sum + item.amount, 0),
+    ).toBeCloseTo(breakdown.totals.expenses, 10);
+    expect(
+      breakdown.income.reduce((sum, item) => sum + item.amount, 0),
+    ).toBeCloseTo(breakdown.totals.income, 10);
   });
 
   it('returns empty arrays for an empty monthly breakdown', async () => {
     await expect(service.monthlyBreakdown('2026-08')).resolves.toEqual({
+      month: '2026-08',
+      priorMonth: '2026-07',
+      totals: { income: 0, expenses: 0, net: 0 },
+      priorTotals: { income: 0, expenses: 0, net: 0 },
       expenses: [],
       income: [],
     });
   });
 
   it('returns chronological monthly net history', async () => {
-    groupByResult = [
+    historyRows = [
       {
         monthKey: '2026-06',
         type: 'EXPENSE',
@@ -151,7 +192,7 @@ describe('AnalyticsService', () => {
   });
 
   it('projects a posted-entry monthly close with DEV_USER_ID scoping', async () => {
-    findManyResult = [
+    predictionEntries = [
       {
         id: 'income-entry',
         type: 'INCOME',
@@ -189,5 +230,54 @@ describe('AnalyticsService', () => {
         }),
       }),
     );
+  });
+
+  it('includes a repeated-spending insight in the monthly overview', async () => {
+    monthRows['2026-07'] = [
+      {
+        type: 'EXPENSE',
+        categoryId: foodId,
+        _sum: { amount: amount('10.00') },
+      },
+    ];
+    recurringPatterns = [
+      {
+        merchant: 'Bus',
+        merchantId: 'bus-id',
+        type: 'expense',
+        cadence: 'weekly',
+        medianAmount: 5,
+        occurrenceCount: 4,
+        lastOccurredAt: '2026-07-21T12:00:00.000Z',
+        active: true,
+      },
+    ];
+    monthEntries = [
+      {
+        merchant: 'Bus',
+        merchantId: 'bus-id',
+        amount: amount('5.00'),
+      },
+      {
+        merchant: 'Bus',
+        merchantId: 'bus-id',
+        amount: amount('5.00'),
+      },
+    ];
+
+    const overview = await service.monthlyOverview('2026-07');
+    expect(overview.summary.expenses).toBe(10);
+    expect(overview.breakdown.totals.expenses).toBe(10);
+    expect(overview.insight).toEqual({
+      kind: 'repeated_spending',
+      merchant: 'Bus',
+      merchantId: 'bus-id',
+      cadence: 'weekly',
+      medianAmount: 5,
+      occurrenceCount: 4,
+      lastOccurredAt: '2026-07-21T12:00:00.000Z',
+      monthOccurrenceCount: 2,
+      monthAmount: 10,
+    });
   });
 });

@@ -27,6 +27,7 @@ describe('Ledger endpoints (e2e)', () => {
   let groupedEntryId: string | undefined;
   let filterAccountId: string | undefined;
   let filterCategoryId: string | undefined;
+  let filterMerchantId: string | undefined;
   const filterEntryIds: string[] = [];
   const analyticsEntryIds: string[] = [];
   const predictionEntryIds: string[] = [];
@@ -937,6 +938,7 @@ describe('Ledger endpoints (e2e)', () => {
       type: 'INCOME' | 'EXPENSE' | 'ADJUSTMENT';
       occurredAt: string;
       merchant: string;
+      merchantId?: string;
       note?: string;
       accountId?: string;
       categoryId?: string;
@@ -953,6 +955,7 @@ describe('Ledger endpoints (e2e)', () => {
           amount: 1,
           currency: 'USD',
           merchant: input.merchant,
+          merchantId: input.merchantId,
           note: input.note,
           occurredAt: new Date(input.occurredAt),
           monthKey: input.occurredAt.slice(0, 7),
@@ -963,10 +966,20 @@ describe('Ledger endpoints (e2e)', () => {
       return entry;
     }
 
+    const filterMerchant = await prisma.merchant.create({
+      data: {
+        userId,
+        displayName: `Filter merchant ${fixtureId}`,
+        normalizedKey: `filtermerchant${fixtureId.replaceAll('-', '').slice(0, 12)}`,
+      },
+    });
+    filterMerchantId = filterMerchant.id;
+
     const incomeEntry = await addFixtureEntry({
       type: 'INCOME',
       occurredAt: '2026-07-14T12:00:00.000Z',
       merchant: `MiXeD Merchant ${fixtureId}`,
+      merchantId: filterMerchant.id,
       note: `Case-sensitive note ${fixtureId}`,
     });
     const monthEntry = await addFixtureEntry({
@@ -1064,9 +1077,28 @@ describe('Ledger endpoints (e2e)', () => {
       expect.arrayContaining([expect.objectContaining({ id: groupEntry.id })]),
     );
 
+    const dateRangeResponse = await request(app.getHttpServer())
+      .get(
+        `/ledger-entries?search=pagination%20${fixtureId}&startDate=2026-08-02&endDate=2026-08-03`,
+      )
+      .expect(200);
+    expect(
+      dateRangeResponse.body.data.map((entry: { id: string }) => entry.id),
+    ).toEqual([newestPageEntry.id, middlePageEntry.id]);
+
+    const merchantResponse = await request(app.getHttpServer())
+      .get(`/ledger-entries?merchantId=${filterMerchant.id}`)
+      .expect(200);
+    expect(merchantResponse.body).toEqual(
+      expect.objectContaining({
+        data: [expect.objectContaining({ id: incomeEntry.id })],
+        pagination: expect.objectContaining({ total: 1, totalPages: 1 }),
+      }),
+    );
+
     const combinedResponse = await request(app.getHttpServer())
       .get(
-        `/ledger-entries?type=income&month=2026-07&accountId=${accountId}&categoryId=${categoryId}&search=mixed%20merchant%20${fixtureId}`,
+        `/ledger-entries?type=income&month=2026-07&accountId=${accountId}&categoryId=${categoryId}&merchantId=${filterMerchant.id}&search=mixed%20merchant%20${fixtureId}`,
       )
       .expect(200);
     expect(combinedResponse.body).toEqual(
@@ -1117,6 +1149,7 @@ describe('Ledger endpoints (e2e)', () => {
       'type=transfer',
       'month=2026-13',
       'categoryId=not-a-uuid',
+      'merchantId=not-a-uuid',
       'page=0',
       'page=1.5',
       'pageSize=0',
@@ -1195,6 +1228,12 @@ describe('Ledger endpoints (e2e)', () => {
     });
     await addAnalyticsEntry({
       type: 'EXPENSE',
+      amount: 40,
+      month: '2199-03',
+      categoryId: foodCategory.id,
+    });
+    await addAnalyticsEntry({
+      type: 'EXPENSE',
       amount: 100.32,
       month: analyticsMonth,
       categoryId: foodCategory.id,
@@ -1241,18 +1280,64 @@ describe('Ledger endpoints (e2e)', () => {
       income: 1200,
       expenses: 232.32,
       net: 967.68,
+      priorMonth: '2199-03',
+      prior: { income: 0, expenses: 40, net: -40 },
+      delta: { income: 1200, expenses: 192.32, net: 1007.68 },
     });
 
     const breakdownResponse = await request(app.getHttpServer())
       .get(`/analytics/monthly-breakdown?month=${analyticsMonth}`)
       .expect(200);
     expect(breakdownResponse.body).toEqual({
+      month: analyticsMonth,
+      priorMonth: '2199-03',
+      totals: { income: 1200, expenses: 232.32, net: 967.68 },
+      priorTotals: { income: 0, expenses: 40, net: -40 },
       expenses: [
-        { category: `Analytics Food ${fixtureId}`, amount: 145.32 },
-        { category: `Analytics Transport ${fixtureId}`, amount: 87 },
+        {
+          categoryId: foodCategory.id,
+          category: `Analytics Food ${fixtureId}`,
+          amount: 145.32,
+          priorAmount: 40,
+          delta: 105.32,
+          share: 0.6255,
+        },
+        {
+          categoryId: transportCategory.id,
+          category: `Analytics Transport ${fixtureId}`,
+          amount: 87,
+          priorAmount: 0,
+          delta: 87,
+          share: 0.3745,
+        },
       ],
-      income: [{ category: `Analytics Salary ${fixtureId}`, amount: 1200 }],
+      income: [
+        {
+          categoryId: salaryCategory.id,
+          category: `Analytics Salary ${fixtureId}`,
+          amount: 1200,
+          priorAmount: 0,
+          delta: 1200,
+          share: 1,
+        },
+      ],
     });
+    const expenseTotal = breakdownResponse.body.expenses.reduce(
+      (sum: number, item: { amount: number }) => sum + item.amount,
+      0,
+    );
+    expect(expenseTotal).toBeCloseTo(summaryResponse.body.expenses, 10);
+    expect(expenseTotal).toBeCloseTo(
+      breakdownResponse.body.totals.expenses,
+      10,
+    );
+
+    const overviewResponse = await request(app.getHttpServer())
+      .get(`/analytics/monthly-overview?month=${analyticsMonth}`)
+      .expect(200);
+    expect(overviewResponse.body.summary).toEqual(summaryResponse.body);
+    expect(overviewResponse.body.breakdown).toEqual(breakdownResponse.body);
+    expect(overviewResponse.body.insight).toBeNull();
 
     const historyResponse = await request(app.getHttpServer())
       .get('/analytics/net-history')
@@ -1276,19 +1361,29 @@ describe('Ledger endpoints (e2e)', () => {
       .expect(400);
 
     const emptySummaryResponse = await request(app.getHttpServer())
-      .get('/analytics/monthly-summary?month=2199-06')
+      .get('/analytics/monthly-summary?month=2198-01')
       .expect(200);
     expect(emptySummaryResponse.body).toEqual({
-      month: '2199-06',
+      month: '2198-01',
       income: 0,
       expenses: 0,
       net: 0,
+      priorMonth: '2197-12',
+      prior: { income: 0, expenses: 0, net: 0 },
+      delta: { income: 0, expenses: 0, net: 0 },
     });
 
     const emptyBreakdownResponse = await request(app.getHttpServer())
-      .get('/analytics/monthly-breakdown?month=2199-06')
+      .get('/analytics/monthly-breakdown?month=2198-01')
       .expect(200);
-    expect(emptyBreakdownResponse.body).toEqual({ expenses: [], income: [] });
+    expect(emptyBreakdownResponse.body).toEqual({
+      month: '2198-01',
+      priorMonth: '2197-12',
+      totals: { income: 0, expenses: 0, net: 0 },
+      priorTotals: { income: 0, expenses: 0, net: 0 },
+      expenses: [],
+      income: [],
+    });
   });
 
   it('serves a posted-entry monthly close prediction without creating rows', async () => {
@@ -1676,6 +1771,8 @@ describe('Ledger endpoints (e2e)', () => {
           where: { id: { in: lifecycleCategoryIds } },
         });
       }
+      if (filterMerchantId)
+        await prisma.merchant.delete({ where: { id: filterMerchantId } });
       if (filterAccountId)
         await prisma.account.delete({ where: { id: filterAccountId } });
       if (filterCategoryId)
