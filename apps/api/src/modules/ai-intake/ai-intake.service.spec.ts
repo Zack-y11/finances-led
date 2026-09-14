@@ -12,6 +12,7 @@ import type { ParsedFinanceCommand } from '@finance/contracts';
 
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { RulesService } from '../rules/rules.service.js';
+import { MerchantsService } from '../merchants/merchants.service.js';
 import { AiIntakeService } from './ai-intake.service.js';
 import { AudioTranscriberNotConfiguredError } from './audio-transcriber.provider.js';
 import { ReceiptParserNotConfiguredError } from './receipt-parser.provider.js';
@@ -93,8 +94,22 @@ describe('AiIntakeService voice intake', () => {
       amount: number;
       category?: string;
       account?: string;
-    }) => Promise.resolve({ category: input.category, account: input.account }),
+    }) =>
+      Promise.resolve({
+        result: { category: input.category, account: input.account },
+        applied: [],
+      }),
   } as unknown as RulesService;
+  const merchantsService = {
+    resolveForProposal: (raw?: string) =>
+      Promise.resolve({
+        original: raw ?? null,
+        merchant: raw ?? null,
+        merchantId: null,
+        defaultCategoryName: null,
+        changed: false,
+      }),
+  } as unknown as MerchantsService;
   const config = {
     getOrThrow: () => '1b58fb29-1f33-43d8-bdf0-b70844c20045',
   } as unknown as ConfigService;
@@ -115,6 +130,7 @@ describe('AiIntakeService voice intake', () => {
       overrides?.audioTranscriber ?? audioTranscriber,
       overrides?.receiptParser ?? receiptParser,
       rulesService,
+      merchantsService,
       prisma,
       config,
     );

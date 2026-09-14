@@ -127,10 +127,27 @@ export const parsedLedgerEntryCommandDataSchema = z.object({
   note: z.string().trim().max(500).optional(),
 });
 
+export const appliedRuleExplanationSchema = z.object({
+  ruleId: z.string().uuid(),
+  ruleName: z.string().trim().min(1),
+  priority: z.number().int().min(1),
+  actionField: z.enum(["category", "account"]),
+  actionValue: z.string().trim().min(1),
+  explanation: z.string().trim().min(1),
+});
+
+export const merchantNormalizationSchema = z.object({
+  original: z.string().trim().min(1),
+  canonical: z.string().trim().min(1),
+  merchantId: z.string().uuid().optional(),
+});
+
 export const parsedFinanceCommandSchema = z.object({
   intent: financeCommandIntentSchema,
   data: parsedLedgerEntryCommandDataSchema,
   confidence: z.number().min(0).max(1),
+  appliedRules: z.array(appliedRuleExplanationSchema).optional(),
+  merchantNormalization: merchantNormalizationSchema.optional(),
 });
 
 export const parseTextCommandRequestSchema = z.object({
@@ -247,8 +264,45 @@ export const updateAutomationRuleSchema = z
     message: "At least one rule field must be provided for update",
   });
 
+export const createMerchantSchema = z.object({
+  displayName: z.string().trim().min(1).max(120),
+  defaultCategoryId: z.string().uuid().optional(),
+});
+
+export const updateMerchantSchema = z
+  .object({
+    displayName: z.string().trim().min(1).max(120).optional(),
+    defaultCategoryId: z.string().uuid().nullable().optional(),
+  })
+  .refine((input) => Object.keys(input).length > 0, {
+    message: "At least one merchant field must be provided for update",
+  });
+
+export const createMerchantAliasSchema = z.object({
+  alias: z.string().trim().min(1).max(120),
+});
+
+export const mergeMerchantsSchema = z.object({
+  sourceMerchantId: z.string().uuid(),
+});
+
+export const recurringCadenceSchema = z.enum([
+  "weekly",
+  "biweekly",
+  "monthly",
+]);
+
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
+export type AppliedRuleExplanation = z.infer<
+  typeof appliedRuleExplanationSchema
+>;
+export type MerchantNormalization = z.infer<typeof merchantNormalizationSchema>;
+export type CreateMerchant = z.infer<typeof createMerchantSchema>;
+export type UpdateMerchant = z.infer<typeof updateMerchantSchema>;
+export type CreateMerchantAlias = z.infer<typeof createMerchantAliasSchema>;
+export type MergeMerchants = z.infer<typeof mergeMerchantsSchema>;
+export type RecurringCadence = z.infer<typeof recurringCadenceSchema>;
 export type FinanceCommandIntent = z.infer<typeof financeCommandIntentSchema>;
 export type ParsedLedgerEntryCommandData = z.infer<
   typeof parsedLedgerEntryCommandDataSchema

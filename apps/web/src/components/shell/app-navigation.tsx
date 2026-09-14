@@ -13,6 +13,11 @@ const items: { href: string; label: string; icon: IconName }[] = [
   { href: "/review", label: "Review Inbox", icon: "inbox" },
   { href: "/rules", label: "Rules", icon: "rule" },
   {
+    href: "/settings/merchants",
+    label: "Merchants",
+    icon: "store",
+  },
+  {
     href: "/settings/accounts",
     label: "Accounts",
     icon: "wallet",

@@ -17,6 +17,7 @@ export type IconName =
   | "tag"
   | "inbox"
   | "rule"
+  | "store"
   | "mic"
   | "camera";
 
@@ -114,6 +115,13 @@ const paths: Record<IconName, ReactNode> = {
       <path d="M4 6h16M4 18h16M8 6v6M16 12v6" />
       <circle cx="8" cy="13" r="2" />
       <circle cx="16" cy="11" r="2" />
+    </>
+  ),
+  store: (
+    <>
+      <path d="M4 7h16l-1 12H5L4 7Z" />
+      <path d="M4 7 6 3h12l2 4" />
+      <path d="M10 11h4" />
     </>
   ),
   mic: (

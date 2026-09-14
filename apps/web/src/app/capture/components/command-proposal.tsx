@@ -143,6 +143,25 @@ export function CommandProposal({
             <Detail label="Intent" value={result.intent} />
             <Detail label="Currency" value={result.data.currency} />
           </div>
+          {result.merchantNormalization ? (
+            <p className="mt-3 rounded-lg bg-action-soft px-3 py-2 text-sm text-action">
+              Merchant normalized from{" "}
+              <strong>{result.merchantNormalization.original}</strong> to{" "}
+              <strong>{result.merchantNormalization.canonical}</strong>.
+            </p>
+          ) : null}
+          {result.appliedRules?.length ? (
+            <ul className="mt-3 grid gap-2">
+              {result.appliedRules.map((rule) => (
+                <li
+                  className="rounded-lg bg-success-soft/60 px-3 py-2 text-sm text-ink"
+                  key={rule.ruleId}
+                >
+                  {rule.explanation}
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       </div>
       {error ? <p className="text-sm text-danger">{error}</p> : null}

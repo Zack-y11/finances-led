@@ -16,6 +16,8 @@ finance-ledger/
   packages/
     contracts/  Shared Zod schemas and DTO types
     database/   Prisma schema, migrations, and client
+    ai/         AI provider interfaces and OpenRouter adapters
+    rules/      Deterministic merchant normalization, rule evaluation, recurring detection
 
   infra/
     docker-compose.yml
@@ -33,14 +35,9 @@ The original long-term package map also reserves room for:
 
 ```txt
 packages/
-  ai/       AI provider interfaces and adapters
-  rules/    Deterministic categorization and automation engine
   config/   Shared runtime configuration
   ui/       Shared components, only if web/mobile overlap becomes real
 ```
-
-Create these packages when there is code to put in them. Until then, keep the
-contracts in `packages/contracts` and behavior in the owning app module.
 
 ## System Boundary
 
@@ -118,6 +115,8 @@ intent. Parser output must include confidence and unresolved fields.
 
 Applies deterministic user-owned rules, such as merchant-to-category, phrase-to-
 account, or amount-range behavior. Rules should be explainable and auditable.
+Merchant names are normalized before rule matching so aliases and store numbers
+collapse onto a canonical payee.
 
 ### Ledger
 
@@ -158,7 +157,7 @@ Use background jobs for slow or retryable tasks:
 - Receipt OCR
 - AI parsing
 - Notion sync
-- Recurring expense detection
+- Notion sync
 - Monthly summary materialization, if needed
 
 Keep synchronous API paths for direct manual entry and read views.

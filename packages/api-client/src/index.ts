@@ -4,7 +4,10 @@ import type {
   CreateCategory,
   CreateEntryGroup,
   CreateLedgerEntry,
+  CreateMerchant,
+  CreateMerchantAlias,
   InputSessionTrace,
+  MergeMerchants,
   ParseTextCommandRequest,
   ParsedFinanceCommand,
   ReceiptIntakeResult,
@@ -12,6 +15,7 @@ import type {
   UpdateAutomationRule,
   UpdateCategory,
   UpdateLedgerEntry,
+  UpdateMerchant,
   VoiceIntakeResult,
 } from "@finance/contracts";
 
@@ -94,6 +98,27 @@ export type AutomationRule = {
   actionValue: string;
   priority: number;
   isEnabled: boolean;
+  createdAt: string;
+};
+export type RecurringPattern = {
+  merchant: string;
+  merchantId: string | null;
+  type: "income" | "expense";
+  cadence: "weekly" | "biweekly" | "monthly";
+  medianAmount: number;
+  occurrenceCount: number;
+  lastOccurredAt: string;
+  nextExpectedAt: string;
+  active: boolean;
+  sampleEntryIds: string[];
+};
+export type Merchant = {
+  id: string;
+  displayName: string;
+  normalizedKey: string;
+  defaultCategory: { id: string; name: string } | null;
+  aliases: Array<{ id: string; alias: string; normalizedKey: string }>;
+  entryCount: number;
   createdAt: string;
 };
 export type ReviewMetrics = {
@@ -349,6 +374,33 @@ export function createFinanceApiClient({
       request<{ success: boolean; id: string }>(`/rules/${id}`, {
         method: "DELETE",
       }),
+    getMerchants: () => request<Merchant[]>("/merchants"),
+    createMerchant: (input: CreateMerchant) =>
+      request<Merchant>("/merchants", {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    updateMerchant: (id: string, input: UpdateMerchant) =>
+      request<Merchant>(`/merchants/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(input),
+      }),
+    addMerchantAlias: (id: string, input: CreateMerchantAlias) =>
+      request<Merchant>(`/merchants/${id}/aliases`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    mergeMerchants: (targetId: string, input: MergeMerchants) =>
+      request<Merchant>(`/merchants/${targetId}/merge`, {
+        method: "POST",
+        body: JSON.stringify(input),
+      }),
+    async getRecurringPatterns(): Promise<RecurringPattern[]> {
+      const payload = await request<{ data: RecurringPattern[] }>(
+        "/recurring-patterns",
+      );
+      return payload.data;
+    },
     async getReviewItems(status?: string): Promise<ReviewItemsResponse> {
       const query = status ? `?status=${status}` : "";
       const payload = await request<{
