@@ -26,9 +26,7 @@ describe('AnalyticsController', () => {
         recurringStillDue: [],
       },
     } satisfies MonthlyClosePrediction;
-    const monthlyClosePrediction = jest.fn(
-      async (_month: string, _asOf?: string) => prediction,
-    );
+    const monthlyClosePrediction = jest.fn(() => Promise.resolve(prediction));
     const moduleFixture = await Test.createTestingModule({
       imports: [AnalyticsModule],
     })
