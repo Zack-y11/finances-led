@@ -56,7 +56,7 @@ Install dependencies:
 pnpm install
 ```
 
-`@finance/database` runs `prisma generate` on install and again before `build` / `check-types`, so pulling schema changes does not leave the API on a stale Prisma client.
+`@finance/database` runs `prisma generate` on install, via `pnpm db:generate`, and again before `build`, so pulling schema changes does not leave the API on a stale Prisma client. Turbo runs `db:generate` before database `build` / `check-types` so those tasks do not regenerate in parallel.
 
 Start infrastructure:
 
