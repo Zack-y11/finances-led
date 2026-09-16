@@ -12,11 +12,16 @@ export {
   OPENROUTER_DEFAULT_APP_TITLE,
   OPENROUTER_DEFAULT_CHAT_MODEL,
   OPENROUTER_DEFAULT_HTTP_REFERER,
+  OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
   OPENROUTER_DEFAULT_VISION_MODEL,
+  OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES,
+  OPENROUTER_TRANSCRIBE_PROMPT,
   audioFormatFromMimeOrFilename,
   buildOpenRouterHeaders,
 } from "./openrouter.js";
+export type { OpenRouterTranscribeLanguage } from "./openrouter.js";
+export { transcriptLooksPortuguese } from "./transcript-language.js";
 export type {
   AudioTranscriber,
   AudioTranscriptionInput,

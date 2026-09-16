@@ -10,6 +10,7 @@ import {
   OPENROUTER_DEFAULT_HTTP_REFERER,
   OPENROUTER_DEFAULT_VISION_MODEL,
 } from "./openrouter.js";
+import { coerceParsedCommandJson, parseModelJsonContent } from "./parsed-command.js";
 import type { ParseReceiptInput, ReceiptParser } from "./receipt-parser.js";
 
 type ChatMessage = {
@@ -103,12 +104,14 @@ export class OpenRouterReceiptParser implements ReceiptParser {
 
     let parsed: unknown;
     try {
-      parsed = JSON.parse(content);
+      parsed = parseModelJsonContent(content);
     } catch {
       throw new Error("AI receipt parser returned non-JSON content");
     }
 
-    const result = parsedFinanceCommandSchema.safeParse(parsed);
+    const result = parsedFinanceCommandSchema.safeParse(
+      coerceParsedCommandJson(parsed),
+    );
     if (!result.success) {
       throw new Error("AI receipt parser returned an invalid finance command");
     }
@@ -125,15 +128,15 @@ function normalizeImageMime(mimeType: string): string {
 
 function buildSystemPrompt(): string {
   return [
-    "You extract personal-finance facts from a receipt photo into JSON only.",
+    "You extract personal-finance facts from a receipt photo into JSON only. Receipts may be in Spanish or English, never Portuguese.",
     "Return exactly one JSON object with intent, data, and confidence (number between 0 and 1).",
     'The only supported intent is "create_ledger_entry".',
     'data.type is almost always "expense". Use "income" only if the document is clearly a payout or refund credit, not a purchase receipt.',
-    "data.amount must be the grand total the customer paid, including tax, as a positive number, not a string. Prefer the labeled total / amount due, not subtotal, tip-only, or change.",
-    "data.currency must be a 3-letter uppercase ISO code. Infer from symbols or text. Default to USD if unspecified.",
-    "data.merchant is the store or vendor name printed on the receipt.",
-    "data.account must be the matching account name from the provided account catalog when a payment method is visible (cash, BAC, card brand, wallet). If unknown, pick the best catalog match and lower confidence.",
-    "data.category must be the best matching category name from the provided category catalog (e.g. Food, Groceries, Transit).",
+    "data.amount must be the grand total the customer paid, including tax, as a positive number, not a string. Prefer the labeled total / amount due / total / importe, not subtotal, tip-only, or change. Treat decimal commas as decimal points (3,19 = 3.19).",
+    "data.currency must be a 3-letter uppercase ISO code. Infer from symbols or text (USD, dolares). Default to USD if unspecified.",
+    "data.merchant is the store or vendor name printed on the receipt. Do not translate merchant names.",
+    "data.account is required: choose the closest account name from the provided catalog when a payment method is visible (cash/efectivo, BAC, card brand, wallet). If unknown, pick the best catalog match and lower confidence.",
+    "data.category is required: choose the closest category name from the provided catalog (e.g. Food, Groceries, Transit). Map comida/alimentos to Food or Groceries when those catalog names exist.",
     "data.occurredAt must be a YYYY-MM-DD date string. Use the printed receipt date. If missing or unreadable, use referenceDate.",
     "Do not extract card numbers, CVV, full PANs, addresses, phone numbers, barcodes, or unrelated document text.",
     "Do not create, update, or delete records. Do not return database IDs.",

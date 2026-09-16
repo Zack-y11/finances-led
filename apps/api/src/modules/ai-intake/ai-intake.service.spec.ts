@@ -223,6 +223,69 @@ describe('AiIntakeService voice intake', () => {
     );
   });
 
+  it('retries English when Spanish transcription cannot be parsed', async () => {
+    const languages: Array<string | undefined> = [];
+    const transcripts = [
+      'garbled spanish guess',
+      'spent 3.19 at Starbucks with BAC',
+    ];
+    let index = 0;
+    const service = createService({
+      audioTranscriber: {
+        transcribeAudio: (input) => {
+          languages.push(input.language);
+          return Promise.resolve(transcripts[index++] ?? transcripts.at(-1)!);
+        },
+      },
+      textCommandParser: {
+        parseText: (input) =>
+          input.text.startsWith('spent')
+            ? Promise.resolve(command)
+            : Promise.reject(new Error('bad transcript')),
+      },
+    });
+
+    const result = await service.parseVoiceCommand({
+      buffer: Buffer.from('temporary-audio'),
+      mimetype: 'audio/webm',
+      originalname: 'clip.webm',
+      size: 15,
+    });
+
+    expect(languages).toEqual(['es', 'en']);
+    expect(result.transcript).toBe('spent 3.19 at Starbucks with BAC');
+    expect(result.command).toEqual(command);
+    expect(result.parseError).toBeUndefined();
+  });
+
+  it('skips Portuguese transcripts and retries in English', async () => {
+    const languages: Array<string | undefined> = [];
+    const transcripts = [
+      'gastei 3,19 no Starbucks com o BAC hoje',
+      'spent 3.19 at Starbucks with BAC',
+    ];
+    let index = 0;
+    const service = createService({
+      audioTranscriber: {
+        transcribeAudio: (input) => {
+          languages.push(input.language);
+          return Promise.resolve(transcripts[index++] ?? transcripts.at(-1)!);
+        },
+      },
+    });
+
+    const result = await service.parseVoiceCommand({
+      buffer: Buffer.from('temporary-audio'),
+      mimetype: 'audio/webm',
+      originalname: 'clip.webm',
+      size: 15,
+    });
+
+    expect(languages).toEqual(['es', 'en']);
+    expect(result.transcript).toBe('spent 3.19 at Starbucks with BAC');
+    expect(result.command).toEqual(command);
+  });
+
   it('does not store a session when transcription is not configured', async () => {
     const service = createService({
       audioTranscriber: {

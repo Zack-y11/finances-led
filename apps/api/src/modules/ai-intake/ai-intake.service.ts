@@ -16,10 +16,12 @@ import {
   type ReceiptIntakeResult,
   type VoiceIntakeResult,
 } from '@finance/contracts';
-import type {
-  AudioTranscriber,
-  ReceiptParser,
-  TextCommandParser,
+import {
+  OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES,
+  transcriptLooksPortuguese,
+  type AudioTranscriber,
+  type ReceiptParser,
+  type TextCommandParser,
 } from '@finance/ai';
 import { Prisma } from '@finance/database';
 
@@ -103,22 +105,54 @@ export class AiIntakeService {
     const mediaByteLength = audio.buffer.length;
     const mediaMimeType = audio.mimetype;
     let transcript = '';
+    let parsed: {
+      command: ParsedFinanceCommand | null;
+      parseError?: string;
+    } = {
+      command: null,
+      parseError: 'AI text command parser failed',
+    };
 
     try {
-      transcript = (
-        await this.audioTranscriber.transcribeAudio({
-          audio: audio.buffer,
-          mimeType: audio.mimetype,
-          filename: audio.originalname,
-        })
-      ).trim();
-    } catch (error) {
-      if (error instanceof AudioTranscriberNotConfiguredError) {
-        throw new ServiceUnavailableException(
-          'AI audio transcriber is not configured',
-        );
+      for (const [index, language] of OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES.entries()) {
+        try {
+          const nextTranscript = (
+            await this.audioTranscriber.transcribeAudio({
+              audio: audio.buffer,
+              mimeType: audio.mimetype,
+              filename: audio.originalname,
+              language,
+            })
+          ).trim();
+
+          if (!nextTranscript) continue;
+          const lastAttempt =
+            index === OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES.length - 1;
+          if (transcriptLooksPortuguese(nextTranscript) && !lastAttempt) {
+            continue;
+          }
+
+          const nextParsed = await this.parseTranscript(
+            nextTranscript,
+            referenceDate ?? currentDate(),
+          );
+          transcript = nextTranscript;
+          parsed = nextParsed;
+          if (parsed.command) break;
+        } catch (error) {
+          if (error instanceof AudioTranscriberNotConfiguredError) {
+            throw new ServiceUnavailableException(
+              'AI audio transcriber is not configured',
+            );
+          }
+          if (error instanceof ServiceUnavailableException) {
+            throw error;
+          }
+          if (!transcript) {
+            throw new BadGatewayException('AI audio transcription failed');
+          }
+        }
       }
-      throw new BadGatewayException('AI audio transcription failed');
     } finally {
       discardAudioBuffer(audio.buffer);
     }
@@ -128,11 +162,6 @@ export class AiIntakeService {
         'AI transcription returned an empty transcript',
       );
     }
-
-    const parsed = await this.parseTranscript(
-      transcript,
-      referenceDate ?? currentDate(),
-    );
     const session = await this.persistMediaSession({
       modality: 'VOICE',
       transcriptText: transcript,

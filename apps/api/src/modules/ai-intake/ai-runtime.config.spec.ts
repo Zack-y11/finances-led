@@ -2,8 +2,11 @@ import {
   OPENROUTER_BASE_URL,
   OPENROUTER_DEFAULT_CHAT_MODEL,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+  OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE,
   OPENROUTER_DEFAULT_VISION_MODEL,
+  OPENROUTER_TRANSCRIBE_PROMPT,
   OpenRouterAudioTranscriber,
+  transcriptLooksPortuguese,
   OpenRouterReceiptParser,
   OpenRouterTextCommandParser,
   resolveAiRuntimeConfig,
@@ -187,8 +190,49 @@ describe('OpenRouter AI runtime', () => {
     );
     const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
       model: string;
+      messages: Array<{ role: string; content: string }>;
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_CHAT_MODEL);
+    expect(body.messages[0]?.content).toContain('Spanish and English');
+    expect(body.messages[0]?.content).toContain('Never treat the text as Portuguese');
+  });
+
+  it('accepts Spanish decimal-comma amounts from the text parser', async () => {
+    const fetchStub = stubFetch({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              intent: 'create_ledger_entry',
+              data: {
+                type: 'expense',
+                amount: '3,19',
+                currency: 'usd',
+                merchant: 'Starbucks',
+                account: 'BAC',
+                category: 'Food',
+                occurredAt: '2026-09-04T12:00:00.000Z',
+              },
+              confidence: '0.93',
+            }),
+          },
+        },
+      ],
+    });
+    restores.push(fetchStub.restore);
+
+    const parser = new OpenRouterTextCommandParser({ apiKey: 'or-key' });
+    const result = await parser.parseText({
+      text: 'gaste 3,19 en Starbucks con BAC',
+      referenceDate: '2026-09-04',
+      accounts: [{ name: 'BAC', currency: 'USD' }],
+      categories: [{ name: 'Food', kind: 'expense' }],
+    });
+
+    expect(result.data.amount).toBe(3.19);
+    expect(result.data.currency).toBe('USD');
+    expect(result.data.occurredAt).toBe('2026-09-04');
+    expect(result.confidence).toBe(0.93);
   });
 
   it('transcribes via OpenRouter input_audio JSON, not api.openai.com', async () => {
@@ -218,13 +262,34 @@ describe('OpenRouter AI runtime', () => {
     );
     const body = JSON.parse(requestBody(fetchStub.calls[0]?.init?.body)) as {
       model: string;
+      language?: string;
+      temperature: number;
       input_audio: { format: string; data: string };
+      provider: {
+        options: { openai: { prompt: string }; groq: { prompt: string } };
+      };
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_TRANSCRIBE_MODEL);
+    expect(body.language).toBe(OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE);
+    expect(body.temperature).toBe(0);
+    expect(body.provider.options.openai.prompt).toBe(OPENROUTER_TRANSCRIBE_PROMPT);
+    expect(body.provider.options.groq.prompt).toBe(OPENROUTER_TRANSCRIBE_PROMPT);
+    expect(body.provider.options.openai.prompt).toContain('Never Portuguese');
+    expect(body.provider.options.openai.prompt).toContain('Gaste');
+    expect(body.provider.options.openai.prompt).toContain('Spent');
     expect(body.input_audio.format).toBe('webm');
     expect(body.input_audio.data).toBe(
       Buffer.from('fake-audio').toString('base64'),
     );
+  });
+
+  it('detects Portuguese transcripts and keeps Spanish ones', () => {
+    expect(
+      transcriptLooksPortuguese('gastei 3,19 no Starbucks com o BAC hoje'),
+    ).toBe(true);
+    expect(
+      transcriptLooksPortuguese('gaste 3,19 en Starbucks con BAC hoy'),
+    ).toBe(false);
   });
 
   it('sends receipt images to OpenRouter chat completions as vision content', async () => {

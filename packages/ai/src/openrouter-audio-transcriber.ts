@@ -8,7 +8,9 @@ import {
   OPENROUTER_BASE_URL,
   OPENROUTER_DEFAULT_APP_TITLE,
   OPENROUTER_DEFAULT_HTTP_REFERER,
+  OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE,
   OPENROUTER_DEFAULT_TRANSCRIBE_MODEL,
+  OPENROUTER_TRANSCRIBE_PROMPT,
 } from "./openrouter.js";
 
 type TranscriptionResponse = {
@@ -60,6 +62,15 @@ export class OpenRouterAudioTranscriber implements AudioTranscriber {
       body: JSON.stringify({
         model: this.model,
         input_audio: { data, format },
+        language: input.language ?? OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE,
+        // Pin language so Latin-American Spanish is not auto-detected as PT.
+        temperature: 0,
+        provider: {
+          options: {
+            openai: { prompt: OPENROUTER_TRANSCRIBE_PROMPT },
+            groq: { prompt: OPENROUTER_TRANSCRIBE_PROMPT },
+          },
+        },
       }),
     });
 

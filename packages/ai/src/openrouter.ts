@@ -5,6 +5,13 @@ export const OPENROUTER_DEFAULT_VISION_MODEL = "openai/gpt-4o-mini";
 export const OPENROUTER_DEFAULT_HTTP_REFERER =
   "https://github.com/Zack-y11/finances-led";
 export const OPENROUTER_DEFAULT_APP_TITLE = "Finance Ledger";
+export const OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES = ["es", "en"] as const;
+export type OpenRouterTranscribeLanguage =
+  (typeof OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES)[number];
+export const OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE: OpenRouterTranscribeLanguage =
+  "es";
+export const OPENROUTER_TRANSCRIBE_PROMPT =
+  "Spanish or English personal finance notes only. Never Portuguese. Transcribe, do not translate. Gaste 3,19 en Starbucks con BAC hoy. Spent 12 dollars at Starbucks with BAC yesterday.";
 
 const AUDIO_FORMATS = new Set([
   "wav",
