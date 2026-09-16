@@ -3,16 +3,12 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**",
-        "dist/**",
-        "generated/**"
-      ]
+      "dependsOn": ["^build", "^db:generate"],
+      "inputs": ["$TURBO_DEFAULT$", "prisma/**"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "dev": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^db:generate"],
       "cache": false,
       "persistent": true
     },
@@ -20,14 +16,15 @@
       "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "^db:generate"]
     },
     "test": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^db:generate"],
       "outputs": ["coverage/**"]
     },
     "db:generate": {
-      "cache": false
+      "inputs": ["prisma/**", "prisma.config.ts", "package.json"],
+      "outputs": ["generated/**"]
     },
     "db:migrate": {
       "cache": false

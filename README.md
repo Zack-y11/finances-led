@@ -56,6 +56,8 @@ Install dependencies:
 pnpm install
 ```
 
+`@finance/database` runs `prisma generate` on install, via `pnpm db:generate`, and again before `build`, so pulling schema changes does not leave the API on a stale Prisma client. Turbo runs `db:generate` before database `build` / `check-types` so those tasks do not regenerate in parallel.
+
 Start infrastructure:
 
 ```bash
@@ -85,6 +87,8 @@ Start web and API:
 ```bash
 pnpm dev
 ```
+
+The web app pins `turbopack.root` (and `outputFileTracingRoot`) to this repository root so a lockfile in a parent folder cannot be inferred as the workspace.
 
 Run all checks:
 
