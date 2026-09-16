@@ -4,6 +4,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "prisma/**"],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
@@ -27,7 +28,8 @@
       "outputs": ["coverage/**"]
     },
     "db:generate": {
-      "cache": false
+      "cache": false,
+      "outputs": ["generated/**"]
     },
     "db:migrate": {
       "cache": false

@@ -29,6 +29,8 @@ From the repo root:
 pnpm dev:web
 ```
 
+`next.config.ts` sets `turbopack.root` to the monorepo root so a parent-directory lockfile cannot steal the workspace.
+
 The app reads API data from:
 
 ```txt
