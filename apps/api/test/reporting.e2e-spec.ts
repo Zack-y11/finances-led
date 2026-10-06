@@ -44,7 +44,7 @@ describe('Phase 7 reporting (e2e)', () => {
       .compile();
     app = module.createNestApplication();
     await app.init();
-    httpServer = app.getHttpServer<Server>();
+    httpServer = app.getHttpServer() as Server;
     userId = process.env.DEV_USER_ID!;
     prisma = createPrismaClient(process.env.DATABASE_URL!);
     await prisma.$connect();
@@ -118,6 +118,21 @@ describe('Phase 7 reporting (e2e)', () => {
           monthKey: '2196-12',
           occurredAt: new Date('2196-12-31T23:59:59Z'),
         }),
+        ...(['USD', 'EUR'] as const).flatMap((currency) =>
+          [9, 10, 11].map((monthNumber) =>
+            makeEntry({
+              amount: currency === 'USD' ? 10 : 20,
+              currency,
+              merchant: `Currency split ${fixture}`,
+              merchantId: null,
+              groupId: null,
+              occurredAt: new Date(
+                `2196-${String(monthNumber).padStart(2, '0')}-01T12:00:00Z`,
+              ),
+              monthKey: `2196-${String(monthNumber).padStart(2, '0')}`,
+            }),
+          ),
+        ),
         makeEntry({
           userId: foreignUserId,
           accountId: null,
@@ -239,6 +254,54 @@ describe('Phase 7 reporting (e2e)', () => {
     ).toMatchObject({ spent: 10.7, remainingAmount: 9.3, alertLevel: null });
   });
 
+  it('keeps recurring pattern amounts separate for each currency', async () => {
+    const response = await request(httpServer)
+      .get('/recurring-patterns')
+      .expect(200);
+    expect(
+      response.body.data
+        .filter((pattern: { merchant: string }) =>
+          pattern.merchant.includes(`Currency split ${fixture}`),
+        )
+        .map((pattern: { currency: string; medianAmount: number }) => ({
+          currency: pattern.currency,
+          medianAmount: pattern.medianAmount,
+        }))
+        .sort((left: { currency: string }, right: { currency: string }) =>
+          left.currency.localeCompare(right.currency),
+        ),
+    ).toEqual([
+      { currency: 'EUR', medianAmount: 20 },
+      { currency: 'USD', medianAmount: 10 },
+    ]);
+  });
+
+  it('assigns ledger month keys from the stored UTC timestamp on create and update', async () => {
+    const created = await request(httpServer)
+      .post('/ledger-entries')
+      .send({
+        type: 'expense',
+        amount: 1,
+        currency: 'USD',
+        merchant: `UTC boundary ${fixture}`,
+        occurredAt: '2198-01-01T00:30:00+14:00',
+        categoryId,
+        accountId,
+        inputMethod: 'manual',
+      })
+      .expect(201);
+    entryIds.push(created.body.id);
+    expect(created.body.occurredAt).toBe('2197-12-31T10:30:00.000Z');
+    expect(created.body.monthKey).toBe('2197-12');
+
+    const updated = await request(httpServer)
+      .patch(`/ledger-entries/${created.body.id}`)
+      .send({ occurredAt: '2197-12-31T23:30:00-02:00' })
+      .expect(200);
+    expect(updated.body.occurredAt).toBe('2198-01-01T01:30:00.000Z');
+    expect(updated.body.monthKey).toBe('2198-01');
+  });
+
   it('exports every filtered row across pagination with a stable order and original facts', async () => {
     const query = {
       month,
@@ -290,6 +353,7 @@ describe('Phase 7 reporting (e2e)', () => {
     expect(csv.text.split('\r\n')).toHaveLength(2);
     for (const query of [
       'month=2197-13',
+      'startDate=2197-02-31',
       'status=broken',
       'currency=usd',
       'groupId=invalid',
@@ -299,6 +363,27 @@ describe('Phase 7 reporting (e2e)', () => {
         .expect(400);
     }
     await request(httpServer).get('/analytics/group-breakdown').expect(400);
+    await request(httpServer).get('/entry-groups/not-a-uuid').expect(400);
+    await request(httpServer)
+      .post('/entry-groups/not-a-uuid/entries')
+      .send({
+        type: 'expense',
+        amount: 1,
+        currency: 'USD',
+        occurredAt: `${month}-10T12:00:00.000Z`,
+        categoryId,
+        accountId,
+      })
+      .expect(400);
+    await request(httpServer).get('/review-items?status=unknown').expect(400);
+    const postedReviews = await request(httpServer)
+      .get('/review-items?status=posted')
+      .expect(200);
+    expect(
+      postedReviews.body.data.every(
+        (entry: { status: string }) => entry.status === 'POSTED',
+      ),
+    ).toBe(true);
   });
 
   afterAll(async () => {
