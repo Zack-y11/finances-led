@@ -58,7 +58,7 @@ export function TransactionList({
             }
           >
             {item.type === "income" ? "+" : "−"}
-            {money(item.amount)}
+            {money(item.amount, item.currency)}
           </p>
         </article>
       ))}
