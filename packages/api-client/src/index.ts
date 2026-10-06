@@ -1,5 +1,6 @@
 import type {
   AnalyticsBreakdown,
+  AnalyticsGroupBreakdown,
   AnalyticsMonthOverview,
   AnalyticsNetHistoryItem,
   AnalyticsRepeatedSpendingInsight,
@@ -25,6 +26,7 @@ import type {
 } from "@finance/contracts";
 
 export type {
+  AnalyticsGroupBreakdown,
   AnalyticsBreakdown,
   AnalyticsMonthOverview,
   AnalyticsNetHistoryItem,
@@ -59,6 +61,7 @@ export type LedgerEntry = {
   id: string;
   type: "income" | "expense" | "adjustment";
   amount: number;
+  currency: string;
   merchant: string;
   note?: string | null;
   occurredAt: string;
@@ -314,6 +317,10 @@ export function createFinanceApiClient({
       request<AnalyticsMonthOverview>(
         `/analytics/monthly-overview?month=${encodeURIComponent(month)}`,
       ),
+    getGroupBreakdown: (month: string) =>
+      request<AnalyticsGroupBreakdown>(
+        `/analytics/group-breakdown?month=${encodeURIComponent(month)}`,
+      ),
     getNetHistory: () =>
       request<AnalyticsNetHistoryItem[]>("/analytics/net-history"),
     parseTextCommand: (input: ParseTextCommandRequest) =>
@@ -479,6 +486,7 @@ function normalizeEntry(value: Record<string, unknown>): LedgerEntry {
     type:
       rawType === "income" || rawType === "adjustment" ? rawType : "expense",
     amount: numberValue(value.amount),
+    currency: String(value.currency ?? "USD"),
     merchant: String(value.merchant ?? value.note ?? "Untitled entry"),
     note: typeof value.note === "string" ? value.note : null,
     occurredAt: String(value.occurredAt),
