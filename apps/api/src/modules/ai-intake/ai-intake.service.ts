@@ -114,7 +114,10 @@ export class AiIntakeService {
     };
 
     try {
-      for (const [index, language] of OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES.entries()) {
+      for (const [
+        index,
+        language,
+      ] of OPENROUTER_TRANSCRIBE_PRIMARY_LANGUAGES.entries()) {
         try {
           const nextTranscript = (
             await this.audioTranscriber.transcribeAudio({

@@ -194,7 +194,9 @@ describe('OpenRouter AI runtime', () => {
     };
     expect(body.model).toBe(OPENROUTER_DEFAULT_CHAT_MODEL);
     expect(body.messages[0]?.content).toContain('Spanish and English');
-    expect(body.messages[0]?.content).toContain('Never treat the text as Portuguese');
+    expect(body.messages[0]?.content).toContain(
+      'Never treat the text as Portuguese',
+    );
   });
 
   it('accepts Spanish decimal-comma amounts from the text parser', async () => {
@@ -272,8 +274,12 @@ describe('OpenRouter AI runtime', () => {
     expect(body.model).toBe(OPENROUTER_DEFAULT_TRANSCRIBE_MODEL);
     expect(body.language).toBe(OPENROUTER_DEFAULT_TRANSCRIBE_LANGUAGE);
     expect(body.temperature).toBe(0);
-    expect(body.provider.options.openai.prompt).toBe(OPENROUTER_TRANSCRIBE_PROMPT);
-    expect(body.provider.options.groq.prompt).toBe(OPENROUTER_TRANSCRIBE_PROMPT);
+    expect(body.provider.options.openai.prompt).toBe(
+      OPENROUTER_TRANSCRIBE_PROMPT,
+    );
+    expect(body.provider.options.groq.prompt).toBe(
+      OPENROUTER_TRANSCRIBE_PROMPT,
+    );
     expect(body.provider.options.openai.prompt).toContain('Never Portuguese');
     expect(body.provider.options.openai.prompt).toContain('Gaste');
     expect(body.provider.options.openai.prompt).toContain('Spent');
