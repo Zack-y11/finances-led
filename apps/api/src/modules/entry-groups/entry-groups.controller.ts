@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+} from '@nestjs/common';
 import {
   appendEntryToGroupSchema,
   createEntryGroupSchema,
@@ -27,13 +34,13 @@ export class EntryGroupsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.entryGroupsService.findOne(id);
   }
 
   @Post(':id/entries')
   appendEntry(
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body(new ZodValidationPipe(appendEntryToGroupSchema))
     input: AppendEntryToGroup,
   ) {
