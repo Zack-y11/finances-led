@@ -20,6 +20,10 @@ import { MerchantsService } from '../merchants/merchants.service.js';
 import { buildLedgerWhere } from './ledger-query.js';
 import { ledgerCsv } from './ledger-csv.js';
 
+function monthKeyFromUtc(date: Date): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+}
+
 @Injectable()
 export class LedgerService {
   private readonly userId: string;
@@ -47,7 +51,7 @@ export class LedgerService {
     if (groupId) await this.assertOwnedGroup(groupId);
 
     const occurredAt = new Date(input.occurredAt);
-    const monthKey = input.occurredAt.slice(0, 7);
+    const monthKey = monthKeyFromUtc(occurredAt);
     const resolvedMerchant = await this.merchantsService.resolveForWrite(
       input.merchant,
     );
@@ -243,7 +247,7 @@ export class LedgerService {
       ? new Date(input.occurredAt)
       : existing.occurredAt;
     const monthKey = input.occurredAt
-      ? input.occurredAt.slice(0, 7)
+      ? monthKeyFromUtc(occurredAt)
       : existing.monthKey;
     const resolvedMerchant =
       input.merchant !== undefined
