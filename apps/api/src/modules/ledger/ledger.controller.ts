@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -13,6 +14,8 @@ import {
   createLedgerEntrySchema,
   type CreateLedgerEntry,
   ledgerEntriesQuerySchema,
+  ledgerExportQuerySchema,
+  type LedgerExportQuery,
   type LedgerEntriesQuery,
   updateLedgerEntrySchema,
   type UpdateLedgerEntry,
@@ -44,6 +47,17 @@ export class LedgerController {
   @Get('options')
   getOptions() {
     return this.ledgerService.getOptions();
+  }
+
+  @Get('export.csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="ledger-entries.csv"')
+  @Header('Cache-Control', 'no-store')
+  exportCsv(
+    @Query(new ZodValidationPipe(ledgerExportQuerySchema))
+    query: LedgerExportQuery,
+  ) {
+    return this.ledgerService.exportCsv(query);
   }
 
   @Get(':id')

@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import type {
   CreateLedgerEntry,
   LedgerEntriesQuery,
+  LedgerExportQuery,
   UpdateLedgerEntry,
 } from '@finance/contracts';
 import {
@@ -17,6 +18,7 @@ import {
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { MerchantsService } from '../merchants/merchants.service.js';
 import { buildLedgerWhere } from './ledger-query.js';
+import { ledgerCsv } from './ledger-csv.js';
 
 @Injectable()
 export class LedgerService {
@@ -188,6 +190,15 @@ export class LedgerService {
         totalPages: Math.ceil(total / pageSize),
       },
     };
+  }
+
+  async exportCsv(query: LedgerExportQuery) {
+    const entries = await this.prisma.db.ledgerEntry.findMany({
+      where: buildLedgerWhere(this.userId, query),
+      include: { account: true, category: true, group: true },
+      orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+    });
+    return ledgerCsv(entries);
   }
 
   async getOptions() {
