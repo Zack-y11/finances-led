@@ -51,6 +51,25 @@ function parseHttpUrl(value: string, key: string): string {
   }
 }
 
+function parseHttpOrigin(value: string, key: string): string {
+  try {
+    const url = new URL(value);
+    if (
+      (url.protocol !== 'http:' && url.protocol !== 'https:') ||
+      url.username ||
+      url.password ||
+      url.pathname !== '/' ||
+      url.search ||
+      url.hash
+    ) {
+      throw new Error('invalid origin');
+    }
+    return url.origin;
+  } catch {
+    throw new Error(`${key} must be a valid http(s) origin`);
+  }
+}
+
 function parseDatabaseUrl(config: EnvironmentConfig): string {
   const databaseUrl = requireString(config, 'DATABASE_URL');
   try {
@@ -89,7 +108,7 @@ export function validateEnvironment(
     DEV_USER_ID: parseDevUserId(config),
     PORT: parsePort(config),
     HOST: readString(config, 'HOST') ?? '0.0.0.0',
-    CORS_ORIGIN: parseHttpUrl(
+    CORS_ORIGIN: parseHttpOrigin(
       readString(config, 'CORS_ORIGIN') ?? 'http://localhost:3000',
       'CORS_ORIGIN',
     ),
