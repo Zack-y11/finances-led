@@ -28,6 +28,7 @@ export class RecurringPatternsService {
         id: true,
         type: true,
         amount: true,
+        currency: true,
         merchant: true,
         merchantId: true,
         occurredAt: true,
@@ -35,21 +36,24 @@ export class RecurringPatternsService {
       orderBy: { occurredAt: 'asc' },
     });
 
-    const data = detectRecurringPatterns(
-      entries.flatMap((entry) =>
-        entry.merchant
-          ? [
-              {
-                id: entry.id,
-                type: entry.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
-                amount: Number(entry.amount),
-                merchant: entry.merchant,
-                merchantId: entry.merchantId,
-                occurredAt: entry.occurredAt,
-              },
-            ]
-          : [],
-      ),
+    const currencies = [...new Set(entries.map((entry) => entry.currency))];
+    const data = currencies.flatMap((entryCurrency) =>
+      detectRecurringPatterns(
+        entries.flatMap((entry) =>
+          entry.currency === entryCurrency && entry.merchant
+            ? [
+                {
+                  id: entry.id,
+                  type: entry.type === 'INCOME' ? 'INCOME' : 'EXPENSE',
+                  amount: Number(entry.amount),
+                  merchant: entry.merchant,
+                  merchantId: entry.merchantId,
+                  occurredAt: entry.occurredAt,
+                },
+              ]
+            : [],
+        ),
+      ).map((pattern) => ({ ...pattern, currency: entryCurrency })),
     );
 
     return { data };
