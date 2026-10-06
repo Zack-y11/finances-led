@@ -46,8 +46,9 @@ export function RecurringPatternsCard({
                   </Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted">
-                  About {money(pattern.medianAmount)} · {pattern.occurrenceCount}{" "}
-                  times · next {dateLabel(pattern.nextExpectedAt)}
+                  About {money(pattern.medianAmount, pattern.currency)} ·{" "}
+                  {pattern.occurrenceCount} times · next{" "}
+                  {dateLabel(pattern.nextExpectedAt)}
                 </p>
               </div>
             </article>

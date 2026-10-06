@@ -128,6 +128,7 @@ export type AutomationRule = {
 export type RecurringPattern = {
   merchant: string;
   merchantId: string | null;
+  currency: string;
   type: "income" | "expense";
   cadence: "weekly" | "biweekly" | "monthly";
   medianAmount: number;
