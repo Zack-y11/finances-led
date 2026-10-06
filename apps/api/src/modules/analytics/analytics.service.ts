@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type {
   AnalyticsBreakdown,
+  AnalyticsGroupBreakdown,
   AnalyticsMonthOverview,
   AnalyticsSummary,
 } from '@finance/contracts';
@@ -10,6 +11,7 @@ import { detectRecurringPatterns } from '@finance/rules';
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 import { RecurringPatternsService } from '../rules/recurring-patterns.service.js';
 import {
+  buildGroupBreakdown,
   buildCategoryBreakdown,
   buildMonthlySummary,
   centsFromDecimal,
@@ -65,6 +67,8 @@ export class AnalyticsService {
       by: ['monthKey', 'type'],
       where: {
         userId: this.userId,
+        status: 'POSTED',
+        currency: 'USD',
         type: { in: ['INCOME', 'EXPENSE'] },
       },
       _sum: { amount: true },
@@ -96,6 +100,7 @@ export class AnalyticsService {
       where: {
         userId: this.userId,
         status: 'POSTED',
+        currency: 'USD',
         type: { in: ['INCOME', 'EXPENSE'] },
         occurredAt: { lte: this.endOfDay(asOf) },
       },
@@ -142,6 +147,38 @@ export class AnalyticsService {
     });
   }
 
+  async groupBreakdown(month: string): Promise<AnalyticsGroupBreakdown> {
+    const rows = await this.prisma.db.ledgerEntry.groupBy({
+      by: ['groupId', 'type'],
+      where: {
+        userId: this.userId,
+        monthKey: month,
+        status: 'POSTED',
+        currency: 'USD',
+        type: { in: ['INCOME', 'EXPENSE'] },
+      },
+      _sum: { amount: true },
+      _count: { _all: true },
+    });
+    const ids = rows.flatMap((row) => (row.groupId ? [row.groupId] : []));
+    const groups = ids.length
+      ? await this.prisma.db.entryGroup.findMany({
+          where: { userId: this.userId, id: { in: ids } },
+          select: { id: true, name: true },
+        })
+      : [];
+    return buildGroupBreakdown(
+      month,
+      rows.map((row) => ({
+        groupId: row.groupId,
+        type: row.type as 'INCOME' | 'EXPENSE',
+        amountCents: centsFromDecimal(row._sum.amount),
+        transactionCount: row._count._all,
+      })),
+      new Map(groups.map((group) => [group.id, group.name])),
+    );
+  }
+
   private async loadComparedMonths(month: string) {
     const priorMonth = previousMonthKey(month);
     const [currentRows, priorRows] = await Promise.all([
@@ -174,6 +211,8 @@ export class AnalyticsService {
       where: {
         userId: this.userId,
         monthKey: month,
+        status: 'POSTED',
+        currency: 'USD',
         type: { in: ['INCOME', 'EXPENSE'] },
       },
       _sum: { amount: true },
@@ -205,7 +244,8 @@ export class AnalyticsService {
   }
 
   private async repeatedSpendingInsight(month: string) {
-    const { data: patterns } = await this.recurringPatternsService.findAll();
+    const { data: patterns } =
+      await this.recurringPatternsService.findAll('USD');
     if (!patterns.length) return null;
 
     const monthEntries = await this.prisma.db.ledgerEntry.findMany({
@@ -214,6 +254,7 @@ export class AnalyticsService {
         monthKey: month,
         type: 'EXPENSE',
         status: 'POSTED',
+        currency: 'USD',
         merchant: { not: null },
       },
       select: {
