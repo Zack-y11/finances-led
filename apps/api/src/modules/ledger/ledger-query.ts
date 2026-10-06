@@ -1,9 +1,9 @@
-import type { LedgerEntriesQuery } from '@finance/contracts';
+import type { LedgerExportQuery } from '@finance/contracts';
 import { Prisma } from '@finance/database';
 
 export function buildLedgerWhere(
   userId: string,
-  query: LedgerEntriesQuery,
+  query: LedgerExportQuery,
 ): Prisma.LedgerEntryWhereInput {
   const {
     type,
@@ -15,6 +15,10 @@ export function buildLedgerWhere(
     groupId,
     merchantId,
     search,
+    status,
+    currency,
+    ungrouped,
+    financialOnly,
   } = query;
 
   const dateFilter: Prisma.LedgerEntryWhereInput =
@@ -34,12 +38,20 @@ export function buildLedgerWhere(
   return {
     userId,
     ...dateFilter,
+    ...(status
+      ? {
+          status: status.toUpperCase() as 'POSTED' | 'NEEDS_REVIEW' | 'IGNORED',
+        }
+      : {}),
+    ...(currency ? { currency } : {}),
     ...(type
       ? { type: type.toUpperCase() as 'INCOME' | 'EXPENSE' | 'ADJUSTMENT' }
-      : {}),
+      : financialOnly
+        ? { type: { in: ['INCOME', 'EXPENSE'] as const } }
+        : {}),
     ...(categoryId ? { categoryId } : {}),
     ...(accountId ? { accountId } : {}),
-    ...(groupId ? { groupId } : {}),
+    ...(ungrouped === 'true' ? { groupId: null } : groupId ? { groupId } : {}),
     ...(merchantId ? { merchantId } : {}),
     ...(search
       ? {
