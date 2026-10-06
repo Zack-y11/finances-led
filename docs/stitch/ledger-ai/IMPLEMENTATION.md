@@ -14,6 +14,9 @@ Live endpoints:
 - `GET /analytics/monthly-summary?month=YYYY-MM`
 - `GET /analytics/monthly-breakdown?month=YYYY-MM` returning `expenses` and `income`
 - `GET /analytics/net-history`
+- `GET /analytics/group-breakdown?month=YYYY-MM` — posted USD monthly group metrics and ungrouped totals.
+- `GET /ledger-entries/export.csv` — all matching ledger entries across pagination.
+- `GET /budgets?month=YYYY-MM` — scoped monthly budgets with posted USD actuals.
 
 - `POST /ai-intake/text` returning a parsed text finance command proposal; it does not create ledger entries.
 - `POST /ai-intake/voice` accepting in-memory audio, transcribing it, storing an `InputSession` trace, and returning a proposal. Raw audio is never persisted.
@@ -31,9 +34,10 @@ Not yet implemented: confirmed text-command auto-execution without the client sa
 
 Live routes:
 
-- `/dashboard` — canonical live dashboard with current-month cards, monthly net chart, expense breakdown, income breakdown, and recent transactions.
+- `/dashboard` — month-selected posted USD dashboard with category trends, predictions, budget versus actual, group metrics, and ledger drilldowns.
 - `/` — redirects to `/dashboard`.
-- `/ledger` — URL-backed month/type/account/category/group/search filters, transaction list, manual create form, and detail pane.
+- `/ledger` — URL-backed month/date/type/status/currency/account/category/group/merchant/search filters, complete CSV export, transaction list, manual create form, and detail pane.
+- `/budgets` — monthly limits and alert management, preserving the selected month in the URL.
 - `/groups` — group list and group creation.
 - `/groups/[id]` — group detail, computed total, linked entries, and append-entry form.
 - `/settings/accounts` — persistent account list/create/edit and deactivate/reactivate management.
