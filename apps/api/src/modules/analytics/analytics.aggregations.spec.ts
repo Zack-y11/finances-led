@@ -1,5 +1,6 @@
 import {
   buildCategoryBreakdown,
+  buildGroupBreakdown,
   buildMonthlySummary,
   centsFromDecimal,
   pickRepeatedSpendingInsight,
@@ -9,6 +10,60 @@ import {
 } from './analytics.aggregations.js';
 
 describe('analytics aggregations', () => {
+  it('reconciles grouped and ungrouped rows in cents and ranks by expenses', () => {
+    expect(
+      buildGroupBreakdown(
+        '2026-01',
+        [
+          {
+            groupId: 'trip',
+            type: 'EXPENSE',
+            amountCents: 10,
+            transactionCount: 1,
+          },
+          {
+            groupId: 'trip',
+            type: 'INCOME',
+            amountCents: 100,
+            transactionCount: 1,
+          },
+          {
+            groupId: null,
+            type: 'EXPENSE',
+            amountCents: 20,
+            transactionCount: 2,
+          },
+        ],
+        new Map([['trip', 'Trip']]),
+      ),
+    ).toEqual({
+      month: '2026-01',
+      totals: { income: 1, expenses: 0.3, net: 0.7 },
+      groups: [
+        {
+          groupId: null,
+          groupName: 'Ungrouped',
+          income: 0,
+          expenses: 0.2,
+          net: -0.2,
+          transactionCount: 2,
+        },
+        {
+          groupId: 'trip',
+          groupName: 'Trip',
+          income: 1,
+          expenses: 0.1,
+          net: 0.9,
+          transactionCount: 2,
+        },
+      ],
+    });
+    expect(buildGroupBreakdown('2026-01', [], new Map())).toEqual({
+      month: '2026-01',
+      totals: { income: 0, expenses: 0, net: 0 },
+      groups: [],
+    });
+  });
   it('walks to the previous calendar month, including year boundaries', () => {
     expect(previousMonthKey('2026-07')).toBe('2026-06');
     expect(previousMonthKey('2026-01')).toBe('2025-12');

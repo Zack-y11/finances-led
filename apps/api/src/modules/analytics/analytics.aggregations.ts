@@ -1,5 +1,6 @@
 import type {
   AnalyticsBreakdown,
+  AnalyticsGroupBreakdown,
   AnalyticsCategoryBreakdownItem,
   AnalyticsMoneyTotals,
   AnalyticsRepeatedSpendingInsight,
@@ -49,6 +50,51 @@ export function centsFromDecimal(value: { toString(): string } | null): number {
 
 export function dollars(cents: number): number {
   return cents / 100;
+}
+
+export function buildGroupBreakdown(
+  month: string,
+  rows: Array<{
+    type: 'INCOME' | 'EXPENSE';
+    groupId: string | null;
+    amountCents: number;
+    transactionCount: number;
+  }>,
+  groupNames: Map<string, string>,
+): AnalyticsGroupBreakdown {
+  const groups = new Map<
+    string | null,
+    MonthlyTotals & { transactionCount: number }
+  >();
+  const totals: MonthlyTotals = { incomeCents: 0, expenseCents: 0 };
+  for (const row of rows) {
+    const group = groups.get(row.groupId) ?? {
+      incomeCents: 0,
+      expenseCents: 0,
+      transactionCount: 0,
+    };
+    const key = row.type === 'INCOME' ? 'incomeCents' : 'expenseCents';
+    group[key] += row.amountCents;
+    totals[key] += row.amountCents;
+    group.transactionCount += row.transactionCount;
+    groups.set(row.groupId, group);
+  }
+  return {
+    month,
+    totals: moneyTotals(totals),
+    groups: Array.from(groups, ([groupId, group]) => ({
+      groupId,
+      groupName:
+        groupId === null
+          ? 'Ungrouped'
+          : (groupNames.get(groupId) ?? 'Unknown group'),
+      ...moneyTotals(group),
+      transactionCount: group.transactionCount,
+    })).sort(
+      (a, b) =>
+        b.expenses - a.expenses || a.groupName.localeCompare(b.groupName),
+    ),
+  };
 }
 
 export function shareOf(amountCents: number, totalCents: number): number {
