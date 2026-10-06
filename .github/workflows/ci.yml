@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - master
       - feat/**
       - codex/**
 
@@ -69,6 +70,9 @@ jobs:
 
       - name: Unit tests
         run: pnpm test
+
+      - name: Build
+        run: pnpm build
 
       - name: API e2e tests
         run: pnpm --filter @finance/api test:e2e
