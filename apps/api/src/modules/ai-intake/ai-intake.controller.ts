@@ -22,7 +22,11 @@ import {
   MAX_IMAGE_BYTES,
   type UploadedImage,
 } from './receipt-image.js';
-import { MAX_AUDIO_BYTES, type UploadedAudio } from './voice-audio.js';
+import {
+  discardAudioBuffer,
+  MAX_AUDIO_BYTES,
+  type UploadedAudio,
+} from './voice-audio.js';
 
 @Controller('ai-intake')
 export class AiIntakeController {
@@ -47,9 +51,15 @@ export class AiIntakeController {
     @UploadedFile() file: UploadedAudio | undefined,
     @Body() body: unknown,
   ) {
-    const fields = new ZodValidationPipe(
-      parseVoiceCommandRequestSchema,
-    ).transform(body ?? {});
+    let fields: ReturnType<typeof parseVoiceCommandRequestSchema.parse>;
+    try {
+      fields = new ZodValidationPipe(parseVoiceCommandRequestSchema).transform(
+        body ?? {},
+      );
+    } catch (error) {
+      if (file?.buffer) discardAudioBuffer(file.buffer);
+      throw error;
+    }
     return this.aiIntakeService.parseVoiceCommand(file, fields.referenceDate);
   }
 
