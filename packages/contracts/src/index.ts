@@ -9,6 +9,12 @@ export const transactionTypeSchema = z.enum([
 export const monthKeySchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
 export const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
+export const ledgerEntryStatusSchema = z.enum([
+  "posted",
+  "needs_review",
+  "ignored",
+]);
+
 export const ledgerEntriesQuerySchema = z.object({
   type: transactionTypeSchema.optional(),
   month: monthKeySchema.optional(),
@@ -18,9 +24,21 @@ export const ledgerEntriesQuerySchema = z.object({
   accountId: z.string().uuid().optional(),
   groupId: z.string().uuid().optional(),
   merchantId: z.string().uuid().optional(),
+  status: ledgerEntryStatusSchema.optional(),
+  currency: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .optional(),
+  ungrouped: z.enum(["true"]).optional(),
+  financialOnly: z.enum(["true"]).optional(),
   search: z.string().trim().min(1).max(500).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+export const ledgerExportQuerySchema = ledgerEntriesQuerySchema.omit({
+  page: true,
+  pageSize: true,
 });
 
 export const analyticsMonthQuerySchema = z.object({
@@ -461,6 +479,23 @@ export const analyticsMonthOverviewSchema = z.object({
   breakdown: analyticsBreakdownSchema,
   insight: analyticsRepeatedSpendingInsightSchema.nullable(),
 });
+
+export const analyticsGroupBreakdownSchema = z.object({
+  month: monthKeySchema,
+  totals: analyticsMoneyTotalsSchema,
+  groups: z.array(
+    analyticsMoneyTotalsSchema.extend({
+      groupId: z.string().uuid().nullable(),
+      groupName: z.string(),
+      transactionCount: z.number().int().nonnegative(),
+    }),
+  ),
+});
+
+export type AnalyticsGroupBreakdown = z.infer<
+  typeof analyticsGroupBreakdownSchema
+>;
+export type LedgerExportQuery = z.infer<typeof ledgerExportQuerySchema>;
 
 export type CreateAutomationRule = z.infer<typeof createAutomationRuleSchema>;
 export type UpdateAutomationRule = z.infer<typeof updateAutomationRuleSchema>;
