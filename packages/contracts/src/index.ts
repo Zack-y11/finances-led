@@ -7,7 +7,16 @@ export const transactionTypeSchema = z.enum([
 ]);
 
 export const monthKeySchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
-export const dateStringSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+export const dateStringSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((value) => {
+    const timestamp = Date.parse(`${value}T00:00:00.000Z`);
+    return (
+      Number.isFinite(timestamp) &&
+      new Date(timestamp).toISOString().slice(0, 10) === value
+    );
+  }, "Expected a valid calendar date");
 
 export const ledgerEntryStatusSchema = z.enum([
   "posted",
@@ -48,6 +57,17 @@ export const analyticsMonthQuerySchema = z.object({
 export const monthlyClosePredictionQuerySchema = z.object({
   month: monthKeySchema,
   asOf: dateStringSchema.optional(),
+});
+
+const reviewItemStatusSchema = z
+  .enum(["NEEDS_REVIEW", "POSTED", "IGNORED"])
+  .or(z.enum(["needs_review", "posted", "ignored"]))
+  .transform(
+    (status) => status.toUpperCase() as "NEEDS_REVIEW" | "POSTED" | "IGNORED",
+  );
+
+export const reviewItemsQuerySchema = z.object({
+  status: reviewItemStatusSchema.optional(),
 });
 
 export const inputMethodSchema = z.enum(["manual", "text", "voice", "receipt"]);
@@ -513,6 +533,7 @@ export type BudgetAlertLevel = z.infer<typeof budgetAlertLevelSchema>;
 export type CreateBudget = z.infer<typeof createBudgetSchema>;
 export type UpdateBudget = z.infer<typeof updateBudgetSchema>;
 export type BudgetMonthQuery = z.infer<typeof budgetMonthQuerySchema>;
+export type ReviewItemsQuery = z.infer<typeof reviewItemsQuerySchema>;
 export type BudgetEvaluation = z.infer<typeof budgetEvaluationSchema>;
 export type Budget = z.infer<typeof budgetSchema>;
 export type BudgetAlert = z.infer<typeof budgetAlertSchema>;
