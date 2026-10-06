@@ -206,14 +206,18 @@ export class BudgetsService {
   }
 
   private async withEvaluation(budget: BudgetWithScope, month: string) {
-    const spent = await this.scopedPostedExpenseTotal(budget, month);
-    const limit = this.decimalToNumber(budget.amount);
-    const alertThreshold = this.decimalToNumber(budget.alertThreshold);
-    const utilization = limit > 0 ? spent / limit : 0;
+    const spentCents = await this.scopedPostedExpenseTotal(budget, month);
+    const limitCents = Math.round(this.decimalToNumber(budget.amount) * 100);
+    const spent = spentCents / 100;
+    const limit = limitCents / 100;
+    const thresholdThousandths = Math.round(
+      this.decimalToNumber(budget.alertThreshold) * 1000,
+    );
+    const utilization = limitCents > 0 ? spentCents / limitCents : 0;
     const alertLevel: AlertLevel | null =
-      spent >= limit
+      spentCents >= limitCents
         ? 'EXCEEDED'
-        : spent >= limit * alertThreshold
+        : spentCents * 1000 >= limitCents * thresholdThousandths
           ? 'APPROACHING'
           : null;
     const alert = alertLevel
@@ -227,7 +231,7 @@ export class BudgetsService {
         monthKey: month,
         spent,
         limitAmount: limit,
-        remainingAmount: limit - spent,
+        remainingAmount: (limitCents - spentCents) / 100,
         utilization,
         alertLevel:
           alertLevel === null
@@ -249,12 +253,13 @@ export class BudgetsService {
         monthKey: month,
         type: 'EXPENSE',
         status: 'POSTED',
+        currency: 'USD',
         ...(budget.categoryId ? { categoryId: budget.categoryId } : {}),
         ...(budget.accountId ? { accountId: budget.accountId } : {}),
       },
       _sum: { amount: true },
     });
-    return this.decimalToNumber(total._sum.amount);
+    return Math.round(this.decimalToNumber(total._sum.amount) * 100);
   }
 
   private async ensureAlert(
