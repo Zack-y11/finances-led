@@ -15,11 +15,12 @@ export class RecurringPatternsService {
     this.userId = config.getOrThrow<string>('DEV_USER_ID');
   }
 
-  async findAll() {
+  async findAll(currency?: string) {
     const entries = await this.prisma.db.ledgerEntry.findMany({
       where: {
         userId: this.userId,
         status: 'POSTED',
+        ...(currency ? { currency } : {}),
         merchant: { not: null },
         type: { in: ['INCOME', 'EXPENSE'] },
       },
