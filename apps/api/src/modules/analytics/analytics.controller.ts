@@ -42,6 +42,14 @@ export class AnalyticsController {
     return this.analyticsService.netHistory();
   }
 
+  @Get('group-breakdown')
+  groupBreakdown(
+    @Query(new ZodValidationPipe(analyticsMonthQuerySchema))
+    query: AnalyticsMonthQuery,
+  ) {
+    return this.analyticsService.groupBreakdown(query.month);
+  }
+
   @Get('monthly-close-prediction')
   monthlyClosePrediction(
     @Query(new ZodValidationPipe(monthlyClosePredictionQuerySchema))

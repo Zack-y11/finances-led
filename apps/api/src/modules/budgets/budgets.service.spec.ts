@@ -196,7 +196,7 @@ describe('BudgetsService', () => {
           limitAmount: 100,
           remainingAmount: expect.closeTo(100 - spent, 10),
           alertLevel,
-          utilization: spent / 100,
+          utilization: expect.closeTo(spent / 100, 10),
         }),
       );
 
@@ -227,6 +227,7 @@ describe('BudgetsService', () => {
         monthKey: month,
         type: 'EXPENSE',
         status: 'POSTED',
+        currency: 'USD',
         categoryId,
         accountId,
       },
@@ -242,6 +243,20 @@ describe('BudgetsService', () => {
         alertLevel: null,
       }),
     );
+  });
+
+  it('returns exact cents for remaining amounts', async () => {
+    budgets = [{ ...budget, amount: '0.30' }];
+    aggregateAmount = '0.10';
+    const [result] = await service.findAll(month);
+    expect(result?.evaluation.remainingAmount).toBe(0.2);
+  });
+
+  it('recognizes fractional alert thresholds without floating-point drift', async () => {
+    budgets = [{ ...budget, amount: '1.00', alertThreshold: '0.070' }];
+    aggregateAmount = '0.07';
+    const [result] = await service.findAll(month);
+    expect(result?.evaluation.alertLevel).toBe('approaching');
   });
 
   it('raises each alert level once and returns the current alert for the month', async () => {

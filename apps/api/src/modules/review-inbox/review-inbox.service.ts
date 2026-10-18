@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { ReviewItemsQuery } from '@finance/contracts';
 import { PrismaService } from '../../infrastructure/prisma.service.js';
 
 type ReviewTransition = {
@@ -25,12 +26,12 @@ export class ReviewInboxService {
     this.userId = config.getOrThrow<string>('DEV_USER_ID');
   }
 
-  async findAll(statusFilter?: string) {
-    const status = statusFilter ? statusFilter.toUpperCase() : 'NEEDS_REVIEW';
+  async findAll(statusFilter?: ReviewItemsQuery['status']) {
+    const status = statusFilter ?? 'NEEDS_REVIEW';
     const entries = await this.prisma.db.ledgerEntry.findMany({
       where: {
         userId: this.userId,
-        status: status as 'NEEDS_REVIEW' | 'POSTED' | 'IGNORED',
+        status,
       },
       include: { account: true, category: true, group: true },
       orderBy: { createdAt: 'desc' },

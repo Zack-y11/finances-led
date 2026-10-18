@@ -118,13 +118,20 @@ Shipped in this slice:
 - Category breakdown whose amounts reconcile with those monthly totals
 - Simple trend: this month vs prior month per category
 - One repeated-spending insight from existing `GET /recurring-patterns`
-- Filterable history by date range, category, account, merchant, type, and search
+- Filterable history by month/date range, category, account, merchant, group, type, status, currency, and search
 
-Still later in Phase 7:
+Completed in the web reporting slice:
 
-- Budget vs actual
-- CSV export
-- Group-level analytics beyond existing group totals
+- Budget vs actual with individually evaluated category/account scopes and ledger drilldowns
+- CSV export of every matching ledger entry across pagination
+- Monthly group income, expenses, net, and entry counts, including an ungrouped bucket
+
+Financial reports and budget actuals count posted USD entries only. Income and
+expense reports exclude adjustments, review entries, and ignored entries; history
+and CSV exports retain original status and currency. See [Phase 7 reporting](phase7-reporting.md).
+
+The web Phase 7 milestone is complete. Mobile reporting parity remains a later
+milestone, alongside production authentication and release preparation.
 
 ## Phase 8: Optional Notion Sync
 

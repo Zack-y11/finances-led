@@ -96,6 +96,8 @@ describe('AnalyticsService', () => {
           where: expect.objectContaining({
             userId: 'configured-user-id',
             monthKey: '2026-07',
+            status: 'POSTED',
+            currency: 'USD',
             type: { in: ['INCOME', 'EXPENSE'] },
           }),
         }),
@@ -226,6 +228,7 @@ describe('AnalyticsService', () => {
         where: expect.objectContaining({
           userId: 'configured-user-id',
           status: 'POSTED',
+          currency: 'USD',
           type: { in: ['INCOME', 'EXPENSE'] },
         }),
       }),

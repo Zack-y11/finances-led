@@ -32,7 +32,6 @@ import {
   getMonthlyOverview,
   getNetHistory,
   money,
-  monthDateRange,
   shiftMonth,
   type AnalyticsCategoryBreakdownItem,
   type AnalyticsMonthOverview,
@@ -41,6 +40,8 @@ import {
   type LedgerEntry,
   type MonthlyClosePrediction,
 } from "@/lib/api";
+import { reportLedgerHref as ledgerHref } from "@/lib/report-links";
+import { BudgetActualReport, GroupAnalyticsReport } from "./monthly-reports";
 
 const expenseColors = [
   "#1d4ed8",
@@ -89,31 +90,27 @@ function deltaCopy(value: number) {
     : `${amount} less than last month`;
 }
 
-function ledgerHref(
-  month: string,
-  extra: Record<string, string | null | undefined> = {},
-) {
-  const range = monthDateRange(month);
-  const params = new URLSearchParams({
-    startDate: range.startDate,
-    endDate: range.endDate,
-  });
-  for (const [key, value] of Object.entries(extra)) {
-    if (value) params.set(key, value);
-  }
-  return `/ledger?${params.toString()}`;
-}
-
 export function DashboardView() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
   const month = selectedMonth(searchParams.get("month"));
-  const [overview, setOverview] = useState<AnalyticsMonthOverview>();
-  const [prediction, setPrediction] = useState<MonthlyClosePrediction>();
-  const [history, setHistory] = useState<AnalyticsNetHistoryItem[]>([]);
-  const [recent, setRecent] = useState<LedgerEntry[]>([]);
-  const [error, setError] = useState<string>();
+  const [result, setResult] = useState<{
+    month: string;
+    data?: {
+      overview: AnalyticsMonthOverview;
+      prediction: MonthlyClosePrediction;
+      history: AnalyticsNetHistoryItem[];
+      recent: LedgerEntry[];
+    };
+    error?: string;
+  }>();
+  const data = result?.month === month ? result.data : undefined;
+  const error = result?.month === month ? result.error : undefined;
+  const overview = data?.overview;
+  const prediction = data?.prediction;
+  const history = data?.history ?? [];
+  const recent = data?.recent ?? [];
 
   function setMonth(nextMonth: string) {
     const next = new URLSearchParams(searchParams.toString());
@@ -127,32 +124,39 @@ export function DashboardView() {
 
   useEffect(() => {
     let active = true;
-    const range = monthDateRange(month);
     Promise.all([
       getMonthlyOverview(month),
       getMonthlyClosePrediction(month),
       getNetHistory(),
       getLedgerEntries({
-        startDate: range.startDate,
-        endDate: range.endDate,
+        month,
+        status: "posted",
+        currency: "USD",
+        financialOnly: "true",
         pageSize: 4,
       }),
     ])
       .then(([nextOverview, nextPrediction, nextHistory, nextRecent]) => {
         if (!active) return;
-        setError(undefined);
-        setOverview(nextOverview);
-        setPrediction(nextPrediction);
-        setHistory(nextHistory);
-        setRecent(nextRecent.data);
+        setResult({
+          month,
+          data: {
+            overview: nextOverview,
+            prediction: nextPrediction,
+            history: nextHistory,
+            recent: nextRecent.data,
+          },
+        });
       })
       .catch((reason) => {
         if (!active) return;
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : "Could not load the financial overview.",
-        );
+        setResult({
+          month,
+          error:
+            reason instanceof Error
+              ? reason.message
+              : "Could not load the financial overview.",
+        });
       });
     return () => {
       active = false;
@@ -174,7 +178,7 @@ export function DashboardView() {
       <PageHeading
         eyebrow="Financial overview"
         title={monthLabel(month)}
-        description="Pick a month to see where money went, how it compares to last month, and which spend keeps repeating."
+        description="Posted USD income and expenses, compared to last month, with budgets and group spending."
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -336,6 +340,8 @@ export function DashboardView() {
         />
       </section>
       <RepeatedSpendingCard insight={overview?.insight ?? null} month={month} />
+      <BudgetActualReport month={month} />
+      <GroupAnalyticsReport month={month} />
       <Card className="p-5 sm:p-6">
         <div className="flex items-center justify-between gap-4">
           <div>

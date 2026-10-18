@@ -27,4 +27,19 @@ describe('validateEnvironment AI provider', () => {
       }),
     ).toThrow('AI_PROVIDER must be openrouter or openai');
   });
+
+  it('accepts only an HTTP origin for CORS and normalizes a trailing slash', () => {
+    expect(
+      validateEnvironment({
+        ...required,
+        CORS_ORIGIN: 'https://ledger.example/',
+      }).CORS_ORIGIN,
+    ).toBe('https://ledger.example');
+    expect(() =>
+      validateEnvironment({
+        ...required,
+        CORS_ORIGIN: 'https://ledger.example/dashboard',
+      }),
+    ).toThrow('CORS_ORIGIN must be a valid http(s) origin');
+  });
 });

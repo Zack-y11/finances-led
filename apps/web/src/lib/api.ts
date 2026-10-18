@@ -2,6 +2,7 @@
 
 import type {
   AnalyticsBreakdown,
+  AnalyticsGroupBreakdown,
   AnalyticsCategoryBreakdownItem,
   AnalyticsMonthOverview,
   AnalyticsNetHistoryItem,
@@ -27,6 +28,7 @@ import type {
 } from "@finance/contracts";
 
 export type {
+  AnalyticsGroupBreakdown,
   AnalyticsBreakdown,
   AnalyticsCategoryBreakdownItem,
   AnalyticsMonthOverview,
@@ -73,6 +75,7 @@ export type LedgerEntry = {
   id: string;
   type: "income" | "expense" | "adjustment";
   amount: number;
+  currency: string;
   merchant: string;
   note?: string | null;
   occurredAt: string;
@@ -125,6 +128,7 @@ export type AutomationRule = {
 export type RecurringPattern = {
   merchant: string;
   merchantId: string | null;
+  currency: string;
   type: "income" | "expense";
   cadence: "weekly" | "biweekly" | "monthly";
   medianAmount: number;
@@ -237,6 +241,7 @@ function normalizeEntry(value: Record<string, unknown>): LedgerEntry {
     type:
       rawType === "income" || rawType === "adjustment" ? rawType : "expense",
     amount: numberValue(value.amount),
+    currency: String(value.currency ?? "USD"),
     merchant: String(value.merchant ?? value.note ?? "Untitled entry"),
     note: typeof value.note === "string" ? value.note : null,
     occurredAt: String(value.occurredAt),
@@ -390,6 +395,50 @@ export async function getLedgerEntries(
 export async function getLedgerEntry(id: string): Promise<LedgerEntry> {
   return normalizeEntry(
     await request<Record<string, unknown>>(`/ledger-entries/${id}`),
+  );
+}
+
+export async function exportLedgerCsv(
+  query: Record<string, string | number | undefined>,
+): Promise<Blob> {
+  const parameters = new URLSearchParams();
+  Object.entries(query).forEach(([key, value]) => {
+    if (
+      key !== "page" &&
+      key !== "pageSize" &&
+      value !== undefined &&
+      value !== ""
+    )
+      parameters.set(key, String(value));
+  });
+  let response: Response;
+  try {
+    response = await fetch(
+      `${baseUrl}/ledger-entries/export.csv?${parameters}`,
+      { cache: "no-store" },
+    );
+  } catch {
+    throw new ApiError("Unable to reach the finance API.");
+  }
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    throw new ApiError(
+      Array.isArray(body?.message)
+        ? body.message.join(", ")
+        : (body?.message ?? "Could not export the ledger."),
+      response.status,
+    );
+  }
+  return response.blob();
+}
+
+export async function getGroupBreakdown(
+  month: string,
+): Promise<AnalyticsGroupBreakdown> {
+  return request<AnalyticsGroupBreakdown>(
+    `/analytics/group-breakdown?month=${encodeURIComponent(month)}`,
   );
 }
 export async function getLedgerOptions(): Promise<LedgerOptions> {
@@ -668,10 +717,8 @@ export async function getInputSessions(): Promise<InputSessionTrace[]> {
   return payload.data;
 }
 
-export const money = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
-    value,
-  );
+export const money = (value: number, currency = "USD") =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency }).format(value);
 export const dateLabel = (value: string) => {
   const iso = value.includes("T") ? value : `${value}T12:00:00`;
   return new Intl.DateTimeFormat("en-US", {

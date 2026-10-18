@@ -16,6 +16,27 @@ function query(
 }
 
 describe('buildLedgerWhere', () => {
+  it('composes financial report filters and the ungrouped bucket', () => {
+    expect(
+      buildLedgerWhere(
+        userId,
+        query({
+          month: '2026-01',
+          status: 'posted',
+          currency: 'USD',
+          ungrouped: 'true',
+          financialOnly: 'true',
+        }),
+      ),
+    ).toEqual({
+      userId,
+      monthKey: '2026-01',
+      status: 'POSTED',
+      currency: 'USD',
+      groupId: null,
+      type: { in: ['INCOME', 'EXPENSE'] },
+    });
+  });
   it('always scopes to the configured user', () => {
     expect(buildLedgerWhere(userId, query())).toEqual({ userId });
   });

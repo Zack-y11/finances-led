@@ -1,7 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Suspense, useEffect, useMemo, useState, type FormEvent } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { monthKeySchema } from "@finance/contracts";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +42,25 @@ const statusDetails: Record<
 };
 
 export default function BudgetsPage() {
-  const [month, setMonth] = useState(currentMonth);
+  return (
+    <Suspense fallback={<LoadingCard label="Loading budgets…" />}>
+      <BudgetsView />
+    </Suspense>
+  );
+}
+
+function BudgetsView() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selected = monthKeySchema.safeParse(searchParams.get("month"));
+  const month = selected.success ? selected.data : currentMonth();
+  function setMonth(value: string) {
+    if (!monthKeySchema.safeParse(value).success) return;
+    const next = new URLSearchParams(searchParams.toString());
+    next.set("month", value);
+    router.replace(`${pathname}?${next}`, { scroll: false });
+  }
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [alerts, setAlerts] = useState<BudgetAlert[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -143,7 +163,7 @@ export default function BudgetsPage() {
       <PageHeading
         eyebrow="Plan your spending"
         title="Budgets"
-        description="Set recurring monthly limits for a category, an account, or both, then see when a limit is approaching or exceeded."
+        description="Set recurring monthly USD limits for a category, an account, or both, and compare them with posted USD expenses."
         action={
           <Button className="shrink-0" onClick={startNewBudget} type="button">
             {!formOpen ? <Icon className="size-4" name="plus" /> : null}

@@ -24,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   dateLabel,
   deleteLedgerEntry,
+  exportLedgerCsv,
   getLedgerEntries,
   getLedgerEntry,
   getLedgerOptions,
@@ -50,6 +51,11 @@ export function LedgerView() {
   const searchParams = useSearchParams();
   const startDate = searchParams.get("startDate") || "";
   const endDate = searchParams.get("endDate") || "";
+  const month = searchParams.get("month") || "";
+  const status = searchParams.get("status") || "";
+  const currency = searchParams.get("currency") || "";
+  const ungrouped = searchParams.get("ungrouped") === "true";
+  const financialOnly = searchParams.get("financialOnly") === "true";
   const query = searchParams.get("search") || "";
   const typeParam = searchParams.get("type");
   const type: "all" | LedgerEntry["type"] =
@@ -80,6 +86,8 @@ export function LedgerView() {
   const [detailError, setDetailError] = useState<string>();
   const [reload, setReload] = useState(0);
   const [notice, setNotice] = useState<string>();
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string>();
   const [searchInput, setSearchInput] = useState(query);
 
   useEffect(() => {
@@ -132,6 +140,11 @@ export function LedgerView() {
     setLoading(true);
     setListError(undefined);
     getLedgerEntries({
+      month: month || undefined,
+      status: status || undefined,
+      currency: currency || undefined,
+      ungrouped: ungrouped ? "true" : undefined,
+      financialOnly: financialOnly ? "true" : undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
       type: type === "all" ? undefined : type,
@@ -161,6 +174,11 @@ export function LedgerView() {
       active = false;
     };
   }, [
+    month,
+    status,
+    currency,
+    ungrouped,
+    financialOnly,
     accountId,
     categoryId,
     endDate,
@@ -207,6 +225,8 @@ export function LedgerView() {
     const next = new URLSearchParams(searchParams.toString());
     if (value) next.set(key, value);
     else next.delete(key);
+    if (key === "startDate" || key === "endDate") next.delete("month");
+    if (key === "groupId") next.delete("ungrouped");
     if (key !== "page") next.delete("page");
     const queryString = next.toString();
     router.replace(queryString ? `${pathname}?${queryString}` : pathname, {
@@ -230,7 +250,33 @@ export function LedgerView() {
     if (endDate) {
       return `Through ${dateLabel(endDate)}`;
     }
-    return "All time";
+    return month || "All time";
+  }
+
+  async function exportCsv() {
+    setExporting(true);
+    setExportError(undefined);
+    try {
+      const blob = await exportLedgerCsv(
+        Object.fromEntries(searchParams.entries()),
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "ledger-entries.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (reason) {
+      setExportError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not export the ledger.",
+      );
+    } finally {
+      setExporting(false);
+    }
   }
 
   function updatePage(nextPage: number) {
@@ -251,14 +297,24 @@ export function LedgerView() {
         title="Transactions"
         description="Every financial movement recorded in your ledger."
         action={
-          <Button
-            className="shrink-0"
-            onClick={() => setShowForm((value) => !value)}
-            type="button"
-          >
-            <Icon className="size-4" name="plus" />
-            New transaction
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              disabled={exporting}
+              onClick={exportCsv}
+              type="button"
+              variant="secondary"
+            >
+              {exporting ? "Exporting…" : "Export CSV"}
+            </Button>
+            <Button
+              className="shrink-0"
+              onClick={() => setShowForm((value) => !value)}
+              type="button"
+            >
+              <Icon className="size-4" name="plus" />
+              New transaction
+            </Button>
+          </div>
         }
       />
       {showForm ? (
@@ -269,6 +325,48 @@ export function LedgerView() {
         />
       ) : null}
       {notice ? <StatusMessage tone="success">{notice}</StatusMessage> : null}
+      {exportError ? (
+        <StatusMessage tone="error">{exportError}</StatusMessage>
+      ) : null}
+      {month || status || currency || ungrouped || financialOnly ? (
+        <div
+          className="flex flex-wrap gap-2"
+          aria-label="Active report filters"
+        >
+          {[
+            { key: "month", value: month, label: `Month: ${month}` },
+            {
+              key: "status",
+              value: status,
+              label: `Status: ${status.replaceAll("_", " ")}`,
+            },
+            {
+              key: "currency",
+              value: currency,
+              label: `Currency: ${currency}`,
+            },
+            { key: "ungrouped", value: ungrouped, label: "Ungrouped" },
+            {
+              key: "financialOnly",
+              value: financialOnly,
+              label: "Income and expenses",
+            },
+          ]
+            .filter((filter) => filter.value)
+            .map((filter) => (
+              <Button
+                key={filter.key}
+                onClick={() => updateFilter(filter.key, "")}
+                size="sm"
+                type="button"
+                variant="secondary"
+                aria-label={`Remove ${filter.label} filter`}
+              >
+                {filter.label} ×
+              </Button>
+            ))}
+        </div>
+      ) : null}
       {optionsError ? (
         <StatusMessage tone="error">{optionsError}</StatusMessage>
       ) : null}
@@ -292,7 +390,12 @@ export function LedgerView() {
                   {formatPeriodLabel()}
                 </p>
               </div>
-              {startDate ||
+              {month ||
+              status ||
+              currency ||
+              ungrouped ||
+              financialOnly ||
+              startDate ||
               endDate ||
               query ||
               type !== "all" ||
@@ -470,9 +573,12 @@ export function LedgerView() {
                   onChange={(event) =>
                     updateFilter("groupId", event.target.value)
                   }
-                  value={groupId}
+                  value={ungrouped ? "ungrouped" : groupId}
                 >
                   <option value="">All groups</option>
+                  {ungrouped ? (
+                    <option value="ungrouped">Ungrouped</option>
+                  ) : null}
                   {options?.groups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
@@ -511,7 +617,7 @@ export function LedgerView() {
                     }
                   >
                     {entry.type === "income" ? "+" : "-"}
-                    {money(entry.amount)}
+                    {money(entry.amount, entry.currency)}
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center justify-between gap-2">
@@ -579,7 +685,7 @@ export function LedgerView() {
                       }
                     >
                       {entry.type === "income" ? "+" : "-"}
-                      {money(entry.amount)}
+                      {money(entry.amount, entry.currency)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -871,8 +977,8 @@ function EntryDetails({
         <p className="font-semibold text-danger">Delete Transaction?</p>
         <p className="text-xs text-muted leading-relaxed">
           Are you sure you want to remove <strong>{entry.merchant}</strong> (
-          {money(entry.amount)}) from your financial records? This action is
-          logged in audit logs.
+          {money(entry.amount, entry.currency)}) from your financial records?
+          This action is logged in audit logs.
         </p>
         {error ? (
           <p className="text-xs font-semibold text-danger">{error}</p>
@@ -922,7 +1028,7 @@ function EntryDetails({
           }
         >
           {entry.type === "income" ? "+" : "-"}
-          {money(entry.amount)}
+          {money(entry.amount, entry.currency)}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-4 text-sm">
